@@ -81,6 +81,8 @@ class EmployeeController extends Controller
             }
         }
 
+        $filterOptionsQuery = clone $query;
+
         if ($division) {
             $query->where(is_numeric($division) ? 'j.unit_kerja' : 'm.nama_unit_kerja', $division);
         }
@@ -144,9 +146,31 @@ class EmployeeController extends Controller
             ->orderBy('kode_kantor_detail')
             ->get(['kode_kantor_detail', 'nama_kantor', 'level', 'kode_cabang']);
 
+        $divisions = (clone $filterOptionsQuery)
+            ->whereNotNull('m.nama_unit_kerja')
+            ->where('m.nama_unit_kerja', '<>', '')
+            ->select('m.nama_unit_kerja')
+            ->distinct()
+            ->orderBy('m.nama_unit_kerja')
+            ->pluck('m.nama_unit_kerja')
+            ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
+            ->values();
+
+        $positions = (clone $filterOptionsQuery)
+            ->whereNotNull('j.jabatan')
+            ->where('j.jabatan', '<>', '')
+            ->select('j.jabatan')
+            ->distinct()
+            ->orderBy('j.jabatan')
+            ->pluck('j.jabatan')
+            ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
+            ->values();
+
         return Inertia::render('Employees/Index', [
             'employees' => $employees,
             'offices' => $offices,
+            'divisions' => $divisions,
+            'positions' => $positions,
             'years' => $years,
             'filters' => [
                 'tab' => $tab,

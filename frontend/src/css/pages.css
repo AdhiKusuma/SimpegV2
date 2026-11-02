@@ -5,3 +5,48 @@
 @import './quota.css';
 @import './reports.css';
 @import './filters.css';
+
+.employees-index-filter-form {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.employees-index-filter-grid {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: end;
+    gap: 1rem;
+}
+
+.employees-index-desktop-filter-apply {
+    display: none !important;
+}
+
+@media (min-width: 768px) {
+    .employees-index-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .employees-index-filter-grid .employees-index-desktop-filter-apply {
+        display: inline-flex !important;
+        min-height: 3rem;
+        align-items: center;
+        justify-content: center;
+        grid-column: 1 / -1;
+        border-radius: 0.75rem;
+        padding-inline: 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+}
+
+@media (min-width: 1280px) {
+    .employees-index-filter-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    }
+
+    .employees-index-filter-grid .employees-index-desktop-filter-apply {
+        grid-column: auto;
+    }
+}
