@@ -1,4 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useRef, useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
@@ -6,6 +7,53 @@ import SelectCombobox from '../../Components/SelectCombobox';
 
 export default function EmployeesIndex({ employees, offices, divisions, positions, years, filters, canManage }) {
     const { flash } = usePage().props;
+    const [officeValue, setOfficeValue] = useState(String(filters.kantor || ''));
+    const [divisionValue, setDivisionValue] = useState(String(filters.divisi || ''));
+    const [positionValue, setPositionValue] = useState(String(filters.jabatan || ''));
+    const [divisionOptions, setDivisionOptions] = useState(divisions || []);
+    const [positionOptions, setPositionOptions] = useState(positions || []);
+    const [loadingOptions, setLoadingOptions] = useState(false);
+    const optionRequest = useRef(null);
+
+    async function changeOffice(nextOffice) {
+        setOfficeValue(nextOffice);
+        setDivisionValue('');
+        setPositionValue('');
+        setDivisionOptions([]);
+        setPositionOptions([]);
+        optionRequest.current?.abort();
+
+        if (!nextOffice) {
+            setLoadingOptions(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        optionRequest.current = controller;
+        setLoadingOptions(true);
+
+        try {
+            const params = new URLSearchParams({ kantor: nextOffice, tab: filters.tab });
+            const response = await fetch(`/pegawai/filter-options?${params}`, {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                signal: controller.signal,
+            });
+
+            if (!response.ok) throw new Error('Filter options request failed');
+            const options = await response.json();
+            setDivisionOptions(options.divisions || []);
+            setPositionOptions(options.positions || []);
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                setDivisionOptions([]);
+                setPositionOptions([]);
+            }
+        } finally {
+            if (!controller.signal.aborted) setLoadingOptions(false);
+        }
+    }
+
     function submit(event) {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -27,11 +75,11 @@ export default function EmployeesIndex({ employees, offices, divisions, position
                 </nav>
                 <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel employees-index-filter-form grid gap-4 border-b border-slate-100 p-4">
                     <div className="simpeg-mobile-filter-search"><label htmlFor="search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari nama / NIK</label><input id="search" name="search" defaultValue={filters.search} placeholder="Cari nama, NIK, atau ID pegawai" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
-                    <MobileFilterGroup id="employees-mobile-filters" activeCount={Number(Boolean(filters.kantor)) + Number(Boolean(filters.divisi)) + Number(Boolean(filters.jabatan)) + Number(Boolean(filters.year))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
+                    <MobileFilterGroup id="employees-mobile-filters" activeCount={Number(Boolean(officeValue)) + Number(Boolean(divisionValue)) + Number(Boolean(positionValue)) + Number(Boolean(filters.year))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
                         <div className="employees-index-filter-grid">
-                            <SearchableCombobox id="kantor" name="kantor" label="Kantor / Area" value={filters.kantor} options={offices} optionValue={(office) => office.kode_kantor_detail} optionLabel={(office) => office.nama_kantor || office.kode_kantor_detail} placeholder="Cari kantor atau area" />
-                            <SearchableCombobox id="employee-division" name="divisi" label="Unit kerja / Divisi" value={filters.divisi} options={divisions} placeholder="Cari unit kerja atau divisi" />
-                            <SearchableCombobox id="employee-position" name="jabatan" label="Jabatan" value={filters.jabatan} options={positions} placeholder="Cari jabatan" />
+                            <SearchableCombobox id="kantor" name="kantor" label="Kantor / Area" value={officeValue} onChange={changeOffice} options={offices} optionValue={(office) => office.kode_kantor_detail} optionLabel={(office) => office.nama_kantor || office.kode_kantor_detail} placeholder="Cari kantor atau area" />
+                            <SearchableCombobox id="employee-division" name="divisi" label="Unit kerja / Divisi" value={divisionValue} onChange={setDivisionValue} options={divisionOptions} placeholder={officeValue ? 'Cari unit kerja atau divisi' : 'Pilih kantor terlebih dahulu'} disabled={!officeValue || loadingOptions} description={loadingOptions ? 'Memuat unit kerja dan jabatan…' : undefined} />
+                            <SearchableCombobox id="employee-position" name="jabatan" label="Jabatan" value={positionValue} onChange={setPositionValue} options={positionOptions} placeholder={officeValue ? 'Cari jabatan' : 'Pilih kantor terlebih dahulu'} disabled={!officeValue || loadingOptions} />
                             <SelectCombobox id="employee-start-year" name="year" label="Tahun mulai kerja" value={filters.year} options={years} emptyLabel="Semua tahun" />
                             <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
                             <button type="submit" className="simpeg-primary employees-index-desktop-filter-apply">Terapkan</button>

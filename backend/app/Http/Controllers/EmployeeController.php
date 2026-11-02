@@ -146,31 +146,15 @@ class EmployeeController extends Controller
             ->orderBy('kode_kantor_detail')
             ->get(['kode_kantor_detail', 'nama_kantor', 'level', 'kode_cabang']);
 
-        $divisions = (clone $filterOptionsQuery)
-            ->whereNotNull('m.nama_unit_kerja')
-            ->where('m.nama_unit_kerja', '<>', '')
-            ->select('m.nama_unit_kerja')
-            ->distinct()
-            ->orderBy('m.nama_unit_kerja')
-            ->pluck('m.nama_unit_kerja')
-            ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
-            ->values();
-
-        $positions = (clone $filterOptionsQuery)
-            ->whereNotNull('j.jabatan')
-            ->where('j.jabatan', '<>', '')
-            ->select('j.jabatan')
-            ->distinct()
-            ->orderBy('j.jabatan')
-            ->pluck('j.jabatan')
-            ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
-            ->values();
+        $filterOptions = $office !== ''
+            ? $this->employeeFilterOptions($filterOptionsQuery)
+            : ['divisions' => [], 'positions' => []];
 
         return Inertia::render('Employees/Index', [
             'employees' => $employees,
             'offices' => $offices,
-            'divisions' => $divisions,
-            'positions' => $positions,
+            'divisions' => $filterOptions['divisions'],
+            'positions' => $filterOptions['positions'],
             'years' => $years,
             'filters' => [
                 'tab' => $tab,
@@ -183,6 +167,40 @@ class EmployeeController extends Controller
             'canManage' => $role === 'admin',
             'role' => $role,
         ]);
+    }
+
+    public function filterOptions(Request $request): JsonResponse
+    {
+        $this->ensureStaffAccess($request);
+
+        $tab = $request->string('tab')->trim()->value() ?: 'active';
+        $office = $request->string('kantor')->trim()->value();
+
+        if ($office === '') {
+            return response()->json(['divisions' => [], 'positions' => []]);
+        }
+
+        $query = $this->baseQuery($tab);
+        $role = strtolower((string) $request->session()->get('hak_akses'));
+        $unit = $role === 'kepala' ? $request->session()->get('kode_kantor') : null;
+
+        if ($unit) {
+            $query->where('j.unit_kerja', $unit);
+        }
+
+        $selectedOffice = TbKantor::query()->find($office);
+
+        if (! $selectedOffice) {
+            return response()->json(['divisions' => [], 'positions' => []]);
+        }
+
+        if ($selectedOffice->level === 'KC') {
+            $query->where('k.kode_cabang', $selectedOffice->kode_cabang);
+        } else {
+            $query->where('j.unit_kerja', $office);
+        }
+
+        return response()->json($this->employeeFilterOptions($query));
     }
 
     public function show(Request $request, string $id): Response
@@ -562,6 +580,31 @@ class EmployeeController extends Controller
         }
 
         return $query->where('p.status_aktif', 1)->whereNotNull('j.id_jab');
+    }
+
+    private function employeeFilterOptions(Builder $query): array
+    {
+        $divisions = (clone $query)
+            ->whereNotNull('m.nama_unit_kerja')
+            ->where('m.nama_unit_kerja', '<>', '')
+            ->select('m.nama_unit_kerja')
+            ->distinct()
+            ->orderBy('m.nama_unit_kerja')
+            ->pluck('m.nama_unit_kerja')
+            ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
+            ->values();
+
+        $positions = (clone $query)
+            ->whereNotNull('j.jabatan')
+            ->where('j.jabatan', '<>', '')
+            ->select('j.jabatan')
+            ->distinct()
+            ->orderBy('j.jabatan')
+            ->pluck('j.jabatan')
+            ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
+            ->values();
+
+        return ['divisions' => $divisions, 'positions' => $positions];
     }
 
     private function presentEmployee(TbPegawai $employee): array

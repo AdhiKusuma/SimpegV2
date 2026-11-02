@@ -72,6 +72,7 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::delete('/payroll/history', [PayrollController::class, 'clearDevelopmentHistory'])->name('payroll.history.clear');
 
     Route::get('/pegawai', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/pegawai/filter-options', [EmployeeController::class, 'filterOptions'])->name('employees.filter-options');
     Route::get('/pegawai/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/pegawai', [EmployeeController::class, 'store'])->name('employees.store');
     Route::get('/pegawai/import', [EmployeeController::class, 'importForm'])->name('employees.import');
