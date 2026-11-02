@@ -1,0 +1,295 @@
+@layer utilities {
+.simpeg-profile-intro {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    border-bottom: 1px solid var(--simpeg-border);
+    padding-bottom: 1.75rem;
+}
+
+.simpeg-profile-eyebrow,
+.simpeg-profile-section-kicker,
+.simpeg-profile-identity-kicker {
+    color: var(--simpeg-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.simpeg-profile-intro-mark {
+    color: var(--simpeg-subtle);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+}
+
+.simpeg-profile-page {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.simpeg-profile-hero {
+    display: grid;
+    min-width: 0;
+    overflow: hidden;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1.5rem;
+    background: var(--simpeg-card);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.simpeg-profile-identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--simpeg-primary);
+    color: var(--simpeg-primary-foreground);
+    padding: 1.5rem;
+}
+
+.simpeg-profile-avatar {
+    display: flex;
+    height: 5.5rem;
+    width: 5.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    background: var(--simpeg-primary-foreground);
+    color: var(--simpeg-primary);
+    font-size: 2rem;
+    font-weight: 500;
+}
+
+.simpeg-profile-status {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--simpeg-primary-foreground) 26%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--simpeg-primary-foreground) 12%, transparent);
+    color: var(--simpeg-primary-foreground);
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+}
+
+.simpeg-profile-facts {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0.5rem;
+}
+
+.simpeg-profile-fact {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.35rem;
+    border-bottom: 1px solid var(--simpeg-border);
+    padding: 1rem;
+}
+
+.simpeg-profile-fact:nth-child(odd) {
+    border-right: 1px solid var(--simpeg-border);
+}
+
+.simpeg-profile-fact:nth-last-child(-n + 2) {
+    border-bottom: 0;
+}
+
+.simpeg-profile-fact span {
+    color: var(--simpeg-muted);
+    font-size: 0.75rem;
+}
+
+.simpeg-profile-fact strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--simpeg-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-overflow: ellipsis;
+}
+
+.simpeg-profile-workspace {
+    display: grid;
+    min-width: 0;
+    align-items: start;
+    gap: 1.5rem;
+    grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr);
+}
+
+.simpeg-profile-navigation {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1.5rem;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1.25rem;
+    background: var(--simpeg-card);
+    padding: 1rem;
+}
+
+.simpeg-profile-tabs {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.simpeg-profile-tab {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 0.85rem;
+    color: var(--simpeg-muted);
+    padding: 0.7rem 0.8rem;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.simpeg-profile-tab:hover {
+    background: var(--simpeg-primary-soft);
+    color: var(--simpeg-primary);
+}
+
+.simpeg-profile-tab-active {
+    border-color: var(--simpeg-primary);
+    background: var(--simpeg-primary);
+    color: var(--simpeg-primary-foreground);
+}
+
+.simpeg-profile-tab-active:hover {
+    background: var(--simpeg-primary-hover);
+    color: var(--simpeg-primary-foreground);
+}
+
+.simpeg-profile-records {
+    display: grid;
+    gap: 0.75rem;
+    border-top: 1px solid var(--simpeg-border);
+    padding-top: 1rem;
+}
+
+.simpeg-profile-records > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.simpeg-profile-records span {
+    color: var(--simpeg-text);
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.simpeg-profile-records p {
+    color: var(--simpeg-muted);
+    font-size: 0.75rem;
+}
+
+.simpeg-profile-content {
+    min-width: 0;
+}
+
+.simpeg-profile-panel {
+    overflow: hidden;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1.25rem;
+    background: var(--simpeg-card);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.simpeg-profile-panel-heading,
+.simpeg-profile-panel-heading-block {
+    color: var(--simpeg-text);
+}
+
+.simpeg-profile-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    border-bottom: 1px solid var(--simpeg-border);
+    background: var(--simpeg-card-soft);
+    padding: 1.25rem 1rem;
+}
+
+.simpeg-profile-panel-heading-block {
+    border-bottom: 1px solid var(--simpeg-border);
+    padding-bottom: 1.25rem;
+}
+
+.simpeg-profile-count {
+    display: inline-flex;
+    min-width: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--simpeg-primary-border);
+    border-radius: 999px;
+    background: var(--simpeg-primary-soft);
+    color: var(--simpeg-primary);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.simpeg-profile-fields {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.simpeg-profile-field {
+    min-width: 0;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 0.85rem;
+    background: var(--simpeg-card-soft);
+    padding: 0.85rem 1rem;
+}
+
+.simpeg-profile-table-wrap {
+    overflow-x: auto;
+}
+
+.simpeg-profile-table {
+    color: var(--simpeg-text);
+}
+
+.simpeg-profile-table thead {
+    background: transparent;
+}
+
+.simpeg-profile-table th,
+.simpeg-profile-table td {
+    border-bottom: 1px solid var(--simpeg-border);
+}
+
+.simpeg-profile-table th {
+    color: var(--simpeg-muted);
+}
+
+.simpeg-profile-table td {
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-profile-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.simpeg-profile-table tbody tr:hover {
+    background: #f8fafc !important;
+}
+
+}

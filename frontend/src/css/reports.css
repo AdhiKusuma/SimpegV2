@@ -1,0 +1,85 @@
+.simpeg-formation-filter {
+    border-color: var(--simpeg-border) !important;
+    background: var(--simpeg-card) !important;
+}
+
+.simpeg-formation-filter label {
+    color: var(--simpeg-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.simpeg-formation-filter :is(input[role='combobox'], button[role='combobox']) {
+    height: 3.5rem !important;
+    border-color: var(--simpeg-border) !important;
+    border-radius: 0.875rem;
+    background: var(--simpeg-input) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-formation-filter__action {
+    min-height: 3.5rem;
+}
+
+.simpeg-condition-filter label {
+    color: var(--simpeg-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.simpeg-condition-filter :is(input[role='combobox'], button[role='combobox']) {
+    height: 3rem !important;
+    border-color: var(--simpeg-border) !important;
+    border-radius: 0.75rem;
+    background: var(--simpeg-input) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-condition-filter__action {
+    min-width: 0;
+}
+
+.simpeg-condition-filter__actions {
+    min-width: 0;
+}
+
+.simpeg-condition-filter__actions > .simpeg-condition-filter__action {
+    min-width: 0;
+    flex: 1 1 0;
+}
+
+@media (min-width: 640px) and (max-width: 1279px) {
+    .simpeg-condition-filter .simpeg-condition-filter__actions {
+        grid-column: 1 / -1;
+        justify-self: end;
+        width: min(100%, 18rem);
+    }
+}
+
+@media (min-width: 1280px) {
+    .simpeg-condition-filter .simpeg-condition-filter__form {
+        grid-template-columns: minmax(0, 1fr) 15rem 18rem;
+    }
+
+    .simpeg-condition-filter .simpeg-condition-filter__actions {
+        width: 18rem;
+    }
+}
+
+@media (min-width: 1280px) {
+    .simpeg-nominative-filter__actions {
+        display: contents;
+    }
+}
+
+@media (max-width: 639px) {
+    .simpeg-formation-filter__actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .simpeg-nominative-filter__actions > a {
+        min-height: 3rem;
+    }
+}

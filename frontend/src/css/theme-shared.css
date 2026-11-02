@@ -1,0 +1,79 @@
+@layer utilities {
+    .simpeg-header {
+        background: var(--simpeg-header) !important;
+        border-color: var(--simpeg-border) !important;
+    }
+
+    .simpeg-utility,
+    .simpeg-theme-toggle {
+        background-color: var(--simpeg-card-soft) !important;
+        border-color: var(--simpeg-border) !important;
+        color: var(--simpeg-text) !important;
+    }
+
+    .simpeg-utility:hover,
+    .simpeg-theme-toggle:hover {
+        background-color: var(--simpeg-card) !important;
+        color: var(--simpeg-text) !important;
+    }
+
+    .simpeg-input {
+        background-color: var(--simpeg-input) !important;
+        border-color: var(--simpeg-border) !important;
+        color: var(--simpeg-text) !important;
+    }
+
+    .simpeg-input::placeholder {
+        color: var(--simpeg-subtle) !important;
+    }
+
+    .simpeg-text {
+        color: var(--simpeg-text) !important;
+    }
+
+    .simpeg-muted {
+        color: var(--simpeg-muted) !important;
+    }
+
+    .simpeg-combobox-menu {
+        background-color: var(--simpeg-card) !important;
+        border-color: var(--simpeg-border) !important;
+    }
+
+    .simpeg-combobox-option {
+        color: var(--simpeg-text);
+    }
+
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option-active {
+        background-color: var(--simpeg-primary-soft);
+        color: var(--simpeg-text);
+    }
+
+    .simpeg-subtle {
+        color: var(--simpeg-subtle) !important;
+    }
+
+    .simpeg-border {
+        border-color: var(--simpeg-border) !important;
+    }
+
+    .simpeg-track {
+        background-color: var(--simpeg-track) !important;
+    }
+
+    .simpeg-progress-fill {
+        background-color: var(--simpeg-chart-1) !important;
+    }
+
+    html.dark .simpeg-progress-fill {
+        background-color: var(--simpeg-chart-1) !important;
+    }
+
+    .simpeg-empty {
+        background-color: var(--simpeg-card-soft) !important;
+        border-color: var(--simpeg-border) !important;
+        color: var(--simpeg-muted) !important;
+    }
+
+}

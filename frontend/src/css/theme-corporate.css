@@ -1,0 +1,331 @@
+@layer utilities {
+/* Keep the corporate header anchored to the brand blue while preserving the
+ * existing controls, search flow, and theme menu behavior. */
+html[data-theme="corporate"] .simpeg-header {
+    background: var(--simpeg-header) !important;
+    border-color: var(--simpeg-header-border) !important;
+    color: var(--simpeg-header-foreground) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header > div > .hidden .simpeg-text,
+html[data-theme="corporate"] .simpeg-header .simpeg-live-datetime {
+    color: var(--simpeg-header-foreground) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header > div > .hidden .simpeg-muted,
+html[data-theme="corporate"] .simpeg-header .simpeg-live-datetime {
+    color: var(--simpeg-header-muted) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-live-datetime {
+    border-color: var(--simpeg-header-border) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-utility,
+html[data-theme="corporate"] .simpeg-header .simpeg-theme-toggle,
+html[data-theme="corporate"] .simpeg-header .simpeg-search-trigger {
+    background-color: var(--simpeg-header-control) !important;
+    border-color: var(--simpeg-header-border) !important;
+    color: var(--simpeg-header-foreground) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-utility .simpeg-text,
+html[data-theme="corporate"] .simpeg-header .simpeg-utility .simpeg-muted {
+    color: var(--simpeg-header-foreground) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-utility .simpeg-muted {
+    color: var(--simpeg-header-muted) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-utility .bg-slate-900 {
+    background-color: var(--simpeg-header-accent) !important;
+    color: var(--simpeg-header-ink) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-utility:hover,
+html[data-theme="corporate"] .simpeg-header .simpeg-theme-toggle:hover {
+    background-color: var(--simpeg-header-accent) !important;
+    border-color: var(--simpeg-header-accent) !important;
+    color: var(--simpeg-header-ink) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-search-trigger:hover,
+html[data-theme="corporate"] .simpeg-header .simpeg-search-trigger:focus-visible {
+    background-color: var(--simpeg-header-control-hover) !important;
+    border-color: var(--simpeg-header-accent) !important;
+    color: var(--simpeg-header-foreground) !important;
+    box-shadow: 0 0 0 3px rgb(235 152 60 / 0.32) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-text {
+    color: var(--simpeg-header-foreground) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-muted {
+    color: var(--simpeg-header-muted) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header-context .simpeg-text {
+    color: var(--simpeg-header-foreground) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header-context .simpeg-muted,
+html[data-theme="corporate"] .simpeg-live-datetime .simpeg-muted {
+    color: var(--simpeg-header-accent) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header > div > .hidden .simpeg-muted,
+html[data-theme="corporate"] .simpeg-header .simpeg-live-datetime .simpeg-muted {
+    color: var(--simpeg-header-accent) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-utility .text-slate-400 {
+    color: var(--simpeg-header-muted) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-notification-popover .simpeg-text {
+    color: var(--simpeg-text) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-notification-popover .simpeg-muted {
+    color: var(--simpeg-muted) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-account-menu .simpeg-text {
+    color: var(--simpeg-text) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-account-menu .simpeg-muted {
+    color: var(--simpeg-muted) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-account-menu .simpeg-account-menu-logout {
+    color: var(--simpeg-text) !important;
+}
+
+html[data-theme="corporate"] .simpeg-header .simpeg-account-menu .simpeg-account-menu-logout:hover,
+html[data-theme="corporate"] .simpeg-header .simpeg-account-menu .simpeg-account-menu-logout:focus-visible {
+    background-color: var(--simpeg-accent-soft) !important;
+    color: var(--simpeg-text) !important;
+}
+}
+
+html[data-theme="corporate"] .bg-slate-900,
+html[data-theme="corporate"] [class*="bg-[#131822]"] {
+    background-color: var(--simpeg-primary) !important;
+}
+
+html[data-theme="corporate"] [class*="text-[#131822]"] {
+    color: var(--simpeg-text) !important;
+}
+
+html[data-theme="corporate"] [class*="text-[#FAD873]"] {
+    color: var(--simpeg-hover-surface) !important;
+}
+
+html[data-theme="corporate"] [class*="bg-[#FAD873]"] {
+    background-color: var(--simpeg-hover-surface) !important;
+}
+
+html[data-theme="corporate"] [class*="bg-[#F7F5F0]"] {
+    background-color: var(--simpeg-card-soft) !important;
+}
+
+html[data-theme="corporate"] [class*="border-[#131822]"] {
+    border-color: var(--simpeg-border) !important;
+}
+
+html[data-theme="corporate"] [class*="hover:bg-[#FAD873]"]:hover {
+    background-color: rgb(235 152 60 / 0.18) !important;
+    color: var(--simpeg-text) !important;
+}
+
+html[data-theme="corporate"] [class*="hover:border-[#F5CE59]"]:hover,
+html[data-theme="corporate"] [class*="focus:border-[#F5CE59]"]:focus {
+    border-color: var(--simpeg-hover-border) !important;
+}
+
+html[data-theme="corporate"] [class*="focus:ring-[#F5CE59]"]:focus,
+html[data-theme="corporate"] [class*="focus-visible:ring-[#FAD873]"]:focus-visible {
+    --tw-ring-color: var(--simpeg-focus-ring) !important;
+}
+
+/* Keep the corporate theme limited to its two brand colors plus neutral surfaces. */
+html[data-theme="corporate"] :is(
+    .text-blue-600, .text-blue-700, .text-blue-800, .text-blue-900,
+    .text-indigo-600, .text-indigo-700, .text-indigo-800, .text-indigo-900,
+    .text-violet-600, .text-violet-700, .text-violet-800, .text-violet-900,
+    .text-cyan-700, .text-cyan-800, .text-cyan-900,
+    .text-sky-700, .text-sky-800, .text-sky-900,
+    .text-emerald-600, .text-emerald-700, .text-emerald-800, .text-emerald-900,
+    .text-green-600, .text-green-700, .text-green-800, .text-green-900,
+    .text-teal-600, .text-teal-700, .text-teal-800, .text-teal-900,
+    .text-purple-600, .text-purple-700, .text-purple-800, .text-purple-900
+) {
+    color: var(--simpeg-primary) !important;
+}
+
+html[data-theme="corporate"] :is(
+    .text-amber-600, .text-amber-700, .text-amber-800, .text-amber-900,
+    .text-yellow-600, .text-yellow-700, .text-yellow-800, .text-yellow-900,
+    .text-orange-600, .text-orange-700, .text-orange-800, .text-orange-900,
+    .text-red-500, .text-red-600, .text-red-700, .text-red-800, .text-red-900,
+    .text-rose-600, .text-rose-700, .text-rose-800, .text-rose-900,
+    .text-pink-600, .text-pink-700, .text-pink-800, .text-pink-900,
+    .text-lime-600, .text-lime-700, .text-lime-800, .text-lime-900,
+    .text-fuchsia-600, .text-fuchsia-700, .text-fuchsia-800, .text-fuchsia-900
+) {
+    color: var(--simpeg-primary) !important;
+}
+
+html[data-theme="corporate"] :is(
+    .bg-blue-50, .bg-blue-100, .bg-blue-200,
+    .bg-indigo-50, .bg-indigo-100, .bg-indigo-200,
+    .bg-violet-50, .bg-violet-100, .bg-violet-200,
+    .bg-cyan-50, .bg-cyan-100, .bg-cyan-200,
+    .bg-sky-50, .bg-sky-100, .bg-sky-200,
+    .bg-emerald-50, .bg-emerald-100, .bg-emerald-200,
+    .bg-green-50, .bg-green-100, .bg-green-200,
+    .bg-teal-50, .bg-teal-100, .bg-teal-200,
+    .bg-purple-50, .bg-purple-100, .bg-purple-200
+) {
+    background-color: var(--simpeg-primary-soft) !important;
+}
+
+html[data-theme="corporate"] :is(
+    .bg-amber-50, .bg-amber-100, .bg-amber-200,
+    .bg-yellow-50, .bg-yellow-100, .bg-yellow-200,
+    .bg-orange-50, .bg-orange-100, .bg-orange-200,
+    .bg-red-50, .bg-red-100, .bg-red-200,
+    .bg-rose-50, .bg-rose-100, .bg-rose-200,
+    .bg-pink-50, .bg-pink-100, .bg-pink-200,
+    .bg-lime-50, .bg-lime-100, .bg-lime-200,
+    .bg-fuchsia-50, .bg-fuchsia-100, .bg-fuchsia-200
+) {
+    background-color: var(--simpeg-accent-soft) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class~="bg-emerald-100/80"], [class~="bg-sky-100/80"]
+) {
+    background-color: var(--simpeg-primary-soft) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class~="bg-amber-100/80"], [class~="bg-rose-100/80"],
+    [class~="bg-amber-50/50"]
+) {
+    background-color: var(--simpeg-accent-soft) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="border-blue-"], [class*="border-indigo-"], [class*="border-violet-"],
+    [class*="border-cyan-"], [class*="border-sky-"], [class*="border-emerald-"],
+    [class*="border-green-"], [class*="border-teal-"], [class*="border-purple-"]
+) {
+    border-color: var(--simpeg-primary-border) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="border-amber-"], [class*="border-yellow-"], [class*="border-orange-"],
+    [class*="border-red-"], [class*="border-rose-"], [class*="border-pink-"],
+    [class*="border-lime-"], [class*="border-fuchsia-"]
+) {
+    border-color: var(--simpeg-accent-border) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="hover:bg-blue-"], [class*="hover:bg-indigo-"], [class*="hover:bg-violet-"],
+    [class*="hover:bg-cyan-"], [class*="hover:bg-sky-"], [class*="hover:bg-emerald-"],
+    [class*="hover:bg-green-"], [class*="hover:bg-teal-"], [class*="hover:bg-purple-"]
+):hover {
+    background-color: var(--simpeg-primary-soft) !important;
+    color: var(--simpeg-primary) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="hover:bg-amber-"], [class*="hover:bg-yellow-"], [class*="hover:bg-orange-"],
+    [class*="hover:bg-red-"], [class*="hover:bg-rose-"], [class*="hover:bg-pink-"],
+    [class*="hover:bg-lime-"], [class*="hover:bg-fuchsia-"]
+):hover {
+    background-color: var(--simpeg-accent-soft) !important;
+    color: var(--simpeg-primary) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="hover:border-blue-"], [class*="hover:border-indigo-"], [class*="hover:border-violet-"],
+    [class*="hover:border-cyan-"], [class*="hover:border-sky-"], [class*="hover:border-emerald-"],
+    [class*="hover:border-green-"], [class*="hover:border-teal-"], [class*="hover:border-purple-"],
+    [class*="focus:border-blue-"], [class*="focus:border-indigo-"], [class*="focus:border-violet-"],
+    [class*="focus:border-cyan-"], [class*="focus:border-sky-"], [class*="focus:border-emerald-"],
+    [class*="focus:border-green-"], [class*="focus:border-teal-"], [class*="focus:border-purple-"]
+):is(:hover, :focus) {
+    border-color: var(--simpeg-primary) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="hover:border-amber-"], [class*="hover:border-yellow-"], [class*="hover:border-orange-"],
+    [class*="hover:border-red-"], [class*="hover:border-rose-"], [class*="hover:border-pink-"],
+    [class*="hover:border-lime-"], [class*="hover:border-fuchsia-"],
+    [class*="focus:border-amber-"], [class*="focus:border-yellow-"], [class*="focus:border-orange-"],
+    [class*="focus:border-red-"], [class*="focus:border-rose-"], [class*="focus:border-pink-"],
+    [class*="focus:border-lime-"], [class*="focus:border-fuchsia-"]
+):is(:hover, :focus) {
+    border-color: var(--simpeg-hover-border) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="ring-blue-"], [class*="ring-indigo-"], [class*="ring-violet-"],
+    [class*="ring-cyan-"], [class*="ring-sky-"], [class*="ring-emerald-"],
+    [class*="ring-green-"], [class*="ring-teal-"], [class*="ring-purple-"],
+    [class*="focus:ring-blue-"], [class*="focus:ring-indigo-"], [class*="focus:ring-violet-"],
+    [class*="focus:ring-cyan-"], [class*="focus:ring-sky-"], [class*="focus:ring-emerald-"],
+    [class*="focus:ring-green-"], [class*="focus:ring-teal-"], [class*="focus:ring-purple-"],
+    [class*="focus-visible:ring-blue-"], [class*="focus-visible:ring-indigo-"], [class*="focus-visible:ring-violet-"],
+    [class*="focus-visible:ring-cyan-"], [class*="focus-visible:ring-sky-"], [class*="focus-visible:ring-emerald-"],
+    [class*="focus-visible:ring-green-"], [class*="focus-visible:ring-teal-"], [class*="focus-visible:ring-purple-"]
+):is(:focus, :focus-visible) {
+    --tw-ring-color: var(--simpeg-focus-ring) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="ring-amber-"], [class*="ring-yellow-"], [class*="ring-orange-"],
+    [class*="ring-red-"], [class*="ring-rose-"], [class*="ring-pink-"],
+    [class*="ring-lime-"], [class*="ring-fuchsia-"],
+    [class*="focus:ring-amber-"], [class*="focus:ring-yellow-"], [class*="focus:ring-orange-"],
+    [class*="focus:ring-red-"], [class*="focus:ring-rose-"], [class*="focus:ring-pink-"],
+    [class*="focus:ring-lime-"], [class*="focus:ring-fuchsia-"],
+    [class*="focus-visible:ring-amber-"], [class*="focus-visible:ring-yellow-"], [class*="focus-visible:ring-orange-"],
+    [class*="focus-visible:ring-red-"], [class*="focus-visible:ring-rose-"], [class*="focus-visible:ring-pink-"],
+    [class*="focus-visible:ring-lime-"], [class*="focus-visible:ring-fuchsia-"]
+):is(:focus, :focus-visible) {
+    --tw-ring-color: var(--simpeg-focus-ring) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="from-[#FAD873]"], [class*="from-[#F1C5B6]"], [class*="from-[#D8C8E9]"],
+    [class*="from-[#BBDCD2]"], [class*="from-[#90C6D6]"], [class*="from-[#E8A99B]"]
+) {
+    --tw-gradient-from: #263285 var(--tw-gradient-from-position) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="to-[#F5CE59]"], [class*="to-[#E8A99B]"], [class*="to-[#E7B83F]"],
+    [class*="to-[#C97165]"]
+) {
+    --tw-gradient-to: #eb983c var(--tw-gradient-to-position) !important;
+}
+
+html[data-theme="corporate"] :is(
+    [class*="to-[#B9A1D4]"], [class*="to-[#8FC7B8]"], [class*="to-[#65B29F]"],
+    [class*="to-[#5A9FB6]"]
+) {
+    --tw-gradient-to: #263285 var(--tw-gradient-to-position) !important;
+}
+
+html[data-theme="corporate"] [class*="text-[#8A6820]"],
+html[data-theme="corporate"] [class*="text-[#9A473E]"] {
+    color: var(--simpeg-primary) !important;
+}
+

@@ -1,0 +1,61 @@
+/* Theme picker and corporate palette overrides stay separate from workflow styles. */
+.simpeg-theme-menu {
+    background-color: var(--simpeg-card);
+    border-color: var(--simpeg-border);
+    color: var(--simpeg-text);
+}
+
+.simpeg-theme-option {
+    color: var(--simpeg-text);
+}
+
+.simpeg-theme-option:hover,
+.simpeg-theme-option:focus-visible {
+    background-color: var(--simpeg-primary-soft);
+    color: var(--simpeg-text);
+}
+
+.simpeg-theme-option-active,
+.simpeg-theme-option-active:hover,
+.simpeg-theme-option-active:focus-visible {
+    background-color: var(--simpeg-primary);
+    color: var(--simpeg-primary-foreground);
+}
+
+html[data-theme="corporate"] .simpeg-nav-link,
+html[data-theme="corporate"] .simpeg-nav-group-link {
+    color: #555555 !important;
+}
+
+html[data-theme="corporate"] .simpeg-nav-link:hover,
+html[data-theme="corporate"] .simpeg-nav-group-link:hover {
+    background-color: rgb(235 152 60 / 0.14) !important;
+    color: #263285 !important;
+}
+
+html[data-theme="corporate"] .simpeg-nav-active,
+html[data-theme="corporate"] .simpeg-nav-active:hover {
+    background-color: #263285 !important;
+    color: #ffffff !important;
+}
+
+html[data-theme="corporate"] .simpeg-nav-group-active {
+    background-color: rgb(38 50 133 / 0.08) !important;
+    color: #263285 !important;
+    box-shadow: inset 0 0 0 1px rgb(235 152 60 / 0.85);
+}
+
+html[data-theme="corporate"] .simpeg-nav-icon {
+    color: #666666 !important;
+}
+
+html[data-theme="corporate"] .simpeg-nav-link:hover .simpeg-nav-icon,
+html[data-theme="corporate"] .simpeg-nav-group-link:hover .simpeg-nav-icon,
+html[data-theme="corporate"] .simpeg-nav-group-active-icon {
+    color: #263285 !important;
+}
+
+html[data-theme="corporate"] .simpeg-nav-active-icon {
+    color: #ffffff !important;
+}
+

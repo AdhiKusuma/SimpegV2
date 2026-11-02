@@ -1,0 +1,260 @@
+@layer utilities {
+.simpeg-config-page {
+    display: flex;
+    max-width: 72rem;
+    min-width: 0;
+    margin-inline: auto;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.simpeg-config-intro {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    border-bottom: 1px solid var(--simpeg-border);
+    padding-bottom: 1.5rem;
+}
+
+.simpeg-config-eyebrow,
+.simpeg-config-section-kicker {
+    color: var(--simpeg-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.simpeg-config-title {
+    margin-top: 0.35rem;
+    color: var(--simpeg-text);
+    font-size: clamp(1.75rem, 3vw, 2.35rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+}
+
+.simpeg-config-description {
+    margin-top: 0.5rem;
+    color: var(--simpeg-muted);
+    font-size: 0.95rem;
+}
+
+.simpeg-config-intro-mark {
+    color: var(--simpeg-subtle);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+}
+
+.simpeg-config-flash {
+    border: 1px solid var(--simpeg-primary-border);
+    border-radius: 0.9rem;
+    background: var(--simpeg-primary-soft);
+    color: var(--simpeg-text);
+    padding: 0.8rem 1rem;
+    font-size: 0.875rem;
+}
+
+.simpeg-config-form {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.simpeg-config-overview {
+    display: grid;
+    min-width: 0;
+    overflow: hidden;
+    grid-template-columns: minmax(0, 1.2fr) minmax(16rem, 0.8fr);
+    border: 1px solid var(--simpeg-primary-border);
+    border-radius: 1.5rem;
+    background: var(--simpeg-primary);
+    color: var(--simpeg-primary-foreground);
+}
+
+.simpeg-config-preview {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+}
+
+.simpeg-config-logo-frame {
+    display: flex;
+    height: 5.75rem;
+    width: 5.75rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--simpeg-primary) 25%, var(--simpeg-primary-foreground));
+    border-radius: 1.25rem;
+    background: var(--simpeg-primary-foreground);
+    color: var(--simpeg-primary);
+}
+
+.simpeg-config-preview-kicker {
+    color: color-mix(in srgb, var(--simpeg-primary-foreground) 64%, transparent);
+    font-size: 0.75rem;
+}
+
+.simpeg-config-preview-title {
+    overflow: hidden;
+    margin-top: 0.25rem;
+    color: var(--simpeg-primary-foreground);
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.simpeg-config-preview-alias {
+    margin-top: 0.2rem;
+    color: color-mix(in srgb, var(--simpeg-primary-foreground) 80%, transparent);
+    font-size: 0.875rem;
+}
+
+.simpeg-config-preview-description {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-top: 0.7rem;
+    color: color-mix(in srgb, var(--simpeg-primary-foreground) 62%, transparent);
+    font-size: 0.8rem;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.simpeg-config-upload {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    border-left: 1px solid var(--simpeg-primary-border);
+    padding: 1.5rem;
+}
+
+.simpeg-config-upload-description,
+.simpeg-config-upload-note {
+    color: color-mix(in srgb, var(--simpeg-primary-foreground) 68%, transparent);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.simpeg-config-upload-description {
+    max-width: 22rem;
+    margin-top: 0.5rem;
+}
+
+.simpeg-config-upload-button {
+    display: inline-flex;
+    min-height: 2.75rem;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1rem;
+    cursor: pointer;
+    border-radius: 0.8rem;
+    background: var(--simpeg-primary-foreground);
+    color: var(--simpeg-primary);
+    padding: 0.65rem 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 160ms ease, color 160ms ease;
+}
+
+.simpeg-config-upload-button:hover {
+    background: var(--simpeg-primary-hover);
+    color: var(--simpeg-primary-foreground);
+}
+
+.simpeg-config-upload-note {
+    margin-top: 0.55rem;
+    color: color-mix(in srgb, var(--simpeg-primary-foreground) 52%, transparent);
+    font-size: 0.7rem;
+}
+
+.simpeg-config-details {
+    min-width: 0;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1.5rem;
+    background: var(--simpeg-card);
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.simpeg-config-details-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--simpeg-border);
+    padding-bottom: 1.25rem;
+}
+
+.simpeg-config-details-title {
+    margin-top: 0.35rem;
+    color: var(--simpeg-text);
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.simpeg-config-details-note {
+    color: var(--simpeg-subtle);
+    font-size: 0.75rem;
+}
+
+.simpeg-config-details > .grid {
+    padding-top: 1.5rem;
+}
+
+.simpeg-config-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--simpeg-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.simpeg-config-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.simpeg-config-secondary-action,
+.simpeg-config-primary-action {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.8rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.simpeg-config-secondary-action {
+    border: 1px solid var(--simpeg-border);
+    color: var(--simpeg-muted);
+}
+
+.simpeg-config-secondary-action:hover {
+    border-color: var(--simpeg-text);
+    color: var(--simpeg-text);
+}
+
+.simpeg-config-primary-action {
+    border: 1px solid var(--simpeg-primary);
+}
+
+.simpeg-config-primary-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+}

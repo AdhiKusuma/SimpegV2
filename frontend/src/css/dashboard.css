@@ -1,0 +1,89 @@
+@layer utilities {
+.simpeg-dashboard-card-header {
+    padding: 1.5rem;
+}
+
+.simpeg-dashboard-card-content {
+    margin-top: 1.25rem;
+    padding: 0 1.5rem 1.5rem;
+}
+
+.simpeg-status-chart-value,
+.simpeg-status-chart-label {
+    color: var(--simpeg-muted);
+}
+
+.simpeg-chart-container .recharts-cartesian-axis-tick text {
+    fill: var(--simpeg-muted);
+}
+
+.simpeg-chart-container .recharts-cartesian-grid line {
+    stroke: var(--simpeg-border);
+}
+
+.simpeg-chart-tooltip {
+    border-color: var(--simpeg-border);
+    background: var(--simpeg-card);
+    color: var(--simpeg-text);
+}
+
+.simpeg-tenure-dialog {
+    width: min(42rem, calc(100vw - 2rem));
+    max-width: none;
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    padding: 0;
+    overflow: hidden;
+    color: var(--simpeg-text);
+    background: var(--simpeg-card);
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1rem;
+    box-shadow: 0 24px 72px rgb(15 23 42 / 24%);
+}
+
+.simpeg-tenure-dialog::backdrop {
+    background: rgb(15 23 42 / 48%);
+    backdrop-filter: blur(3px);
+}
+
+.simpeg-tenure-page-slider {
+    width: 100%;
+    min-height: 1.5rem;
+    margin: 0;
+    accent-color: var(--simpeg-primary);
+    cursor: pointer;
+}
+
+.simpeg-tenure-page-slider:focus-visible {
+    outline: 2px solid var(--simpeg-primary);
+    outline-offset: 3px;
+    border-radius: 999px;
+}
+
+.simpeg-tenure-page-slider:disabled {
+    cursor: wait;
+    opacity: 0.55;
+}
+
+@media (max-width: 639px) {
+    .simpeg-tenure-dialog {
+        width: calc(100vw - 1rem);
+        height: calc(100dvh - 1rem);
+        max-height: calc(100dvh - 1rem);
+    }
+
+    .simpeg-tenure-dialog > div {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .simpeg-tenure-dialog > div > header,
+    .simpeg-tenure-dialog > div > footer {
+        flex-shrink: 0;
+    }
+
+    .simpeg-tenure-pagination {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+}
+}

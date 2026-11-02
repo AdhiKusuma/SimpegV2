@@ -1,0 +1,161 @@
+@keyframes simpeg-fade-in-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.simpeg-fade-in-up {
+    animation: simpeg-fade-in-up 0.8s ease-out;
+}
+
+@media (max-width: 1023px) {
+    .simpeg-dashboard-deferred {
+        content-visibility: auto;
+        contain-intrinsic-size: 0 1120px;
+    }
+}
+
+@media (min-width: 640px) {
+    .simpeg-form-card {
+        padding: 0;
+    }
+}
+
+@media (max-width: 639px) {
+    .simpeg-search-overlay {
+        padding: 5rem 0.75rem 1rem;
+    }
+
+    .simpeg-search-dialog {
+        border-radius: 1rem;
+    }
+
+    .simpeg-search-dialog-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .simpeg-support-dialog-contacts {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .simpeg-form-card {
+        padding: 0;
+    }
+
+    .simpeg-form-card > section {
+        padding: 1.5rem 0 !important;
+    }
+
+    .simpeg-employee-form-card > section,
+    .simpeg-employee-form-card > div:last-child {
+        padding: 1.25rem 1rem !important;
+    }
+
+    .simpeg-dashboard-card-header {
+        padding: 1.25rem;
+    }
+
+    .simpeg-dashboard-card-content {
+        margin-top: 1rem;
+        padding: 0 1.25rem 1.25rem;
+    }
+}
+
+@keyframes simpeg-search-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(-0.5rem) scale(0.99);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes simpeg-support-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.5rem) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 767px) {
+    .simpeg-login-shell {
+        min-height: 0;
+    }
+
+    .simpeg-login-topbar-meta {
+        display: none;
+    }
+
+    .simpeg-login-stage {
+        gap: 3rem;
+        grid-template-columns: minmax(0, 1fr);
+        padding: 3rem 0 1.5rem;
+    }
+
+    .simpeg-login-context {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .simpeg-login-context-line {
+        height: 1px;
+        min-height: 1px;
+        width: 3rem;
+    }
+
+    .simpeg-login-resource-dialog-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .simpeg-login-resource-dialog-cancel,
+    .simpeg-login-resource-dialog-link {
+        width: 100%;
+    }
+
+    .simpeg-login-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .simpeg-login-intro,
+    .simpeg-login-form-panel {
+        min-height: 0;
+    }
+
+    .simpeg-login-intro-copy {
+        margin-top: 4.5rem;
+    }
+
+    .simpeg-login-info {
+        content-visibility: auto;
+        contain-intrinsic-size: 0 320px;
+    }
+}
+
+@keyframes simpeg-shimmer {
+    0%, 55% { transform: translateX(-130%); }
+    80%, 100% { transform: translateX(130%); }
+}
+
+@keyframes simpeg-border-beam {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}

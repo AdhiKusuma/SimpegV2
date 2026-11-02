@@ -1,0 +1,93 @@
+@layer utilities {
+@media (max-width: 767px) {
+    .simpeg-config-intro {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .simpeg-config-intro-mark {
+        display: none;
+    }
+
+    .simpeg-config-overview {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .simpeg-config-upload {
+        border-top: 1px solid var(--simpeg-primary-border);
+        border-left: 0;
+    }
+
+    .simpeg-config-details-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .simpeg-config-actions {
+        justify-content: stretch;
+    }
+
+    .simpeg-config-secondary-action,
+    .simpeg-config-primary-action {
+        flex: 1;
+    }
+
+    .simpeg-profile-intro {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .simpeg-profile-intro-mark {
+        display: none;
+    }
+
+    .simpeg-profile-hero,
+    .simpeg-profile-workspace {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .simpeg-profile-identity {
+        align-items: flex-start;
+        padding: 1.25rem;
+    }
+
+    .simpeg-profile-fact:nth-child(odd) {
+        border-right: 0;
+    }
+
+    .simpeg-profile-fact:nth-child(-n + 2) {
+        border-top: 0;
+    }
+
+    .simpeg-profile-fact:nth-last-child(-n + 2) {
+        border-bottom: 1px solid var(--simpeg-border);
+    }
+
+    .simpeg-profile-fact:last-child {
+        border-bottom: 0;
+    }
+}
+
+@media (min-width: 640px) {
+    .simpeg-profile-panel-heading {
+        padding-inline: 1.5rem;
+    }
+}
+
+@media (max-width: 639px) {
+    .simpeg-profile-facts,
+    .simpeg-profile-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .simpeg-profile-fact,
+    .simpeg-profile-fact:nth-last-child(-n + 2) {
+        border-right: 0;
+        border-bottom: 1px solid var(--simpeg-border);
+    }
+
+    .simpeg-profile-fact:last-child {
+        border-bottom: 0;
+    }
+}
+}

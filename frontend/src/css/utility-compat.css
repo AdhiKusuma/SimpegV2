@@ -1,0 +1,112 @@
+@layer utilities {
+/* Keeps sistem workflow pages on the SIMPEG palette during incremental UI migration. */
+    .text-slate-900,
+    .text-slate-800 {
+        color: #131822 !important;
+    }
+
+    .text-slate-700,
+    .text-slate-600 {
+        color: #323743 !important;
+    }
+
+    .text-slate-500 {
+        color: #5f6673 !important;
+    }
+
+    .text-slate-400 {
+        color: #7a8291 !important;
+    }
+
+    .bg-slate-50 {
+        background-color: #f8fafc !important;
+    }
+
+    .bg-slate-100 {
+        background-color: #f1f5f9 !important;
+    }
+
+    .bg-slate-200 {
+        background-color: #e2e8f0 !important;
+    }
+
+    .border-slate-100 {
+        border-color: rgb(19 24 34 / 0.08) !important;
+    }
+
+    .border-slate-200 {
+        border-color: rgb(19 24 34 / 0.14) !important;
+    }
+
+    .border-slate-300 {
+        border-color: rgb(19 24 34 / 0.24) !important;
+    }
+
+    .simpeg-primary {
+        background-color: var(--simpeg-primary) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    .simpeg-primary:hover:not(:disabled) {
+        background-color: var(--simpeg-primary-hover) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    .bg-blue-600 {
+        background-color: var(--simpeg-primary) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    .bg-blue-700 {
+        background-color: var(--simpeg-primary-hover) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    .bg-blue-50,
+    .bg-blue-100 {
+        background-color: var(--simpeg-primary-soft) !important;
+    }
+
+    .text-blue-600,
+    .text-blue-700,
+    .text-blue-800,
+    .text-blue-900 {
+        color: var(--simpeg-primary) !important;
+    }
+
+    .border-blue-100,
+    .border-blue-200,
+    .border-blue-300 {
+        border-color: var(--simpeg-primary-border) !important;
+    }
+
+    .hover\:bg-blue-50:hover {
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-primary) !important;
+    }
+
+    .hover\:bg-blue-700:hover {
+        background-color: var(--simpeg-primary-hover) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    .hover\:border-blue-600:hover {
+        border-color: var(--simpeg-primary) !important;
+    }
+
+    .hover\:text-blue-600:hover,
+    .hover\:text-blue-700:hover {
+        color: var(--simpeg-primary) !important;
+    }
+
+    .focus\:border-blue-600:focus {
+        border-color: var(--simpeg-primary) !important;
+    }
+
+    .focus\:ring-blue-600\/10:focus,
+    .focus\:ring-blue-600\/20:focus,
+    .focus\:ring-blue-600\/30:focus,
+    .focus-within\:ring-blue-600\/20:focus-within {
+        --tw-ring-color: color-mix(in srgb, var(--simpeg-primary) 24%, transparent) !important;
+    }
+}

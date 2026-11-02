@@ -1,0 +1,133 @@
+@layer utilities {
+    .simpeg-background-grid {
+        background-image: linear-gradient(to right, rgb(148 163 184 / 0.12) 1px, transparent 1px), linear-gradient(to bottom, rgb(148 163 184 / 0.12) 1px, transparent 1px);
+        background-size: 3.5rem 3.5rem;
+        mask-image: linear-gradient(to bottom, black, transparent 72%);
+        opacity: 0.7;
+    }
+
+    .simpeg-card-spotlight {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.5rem;
+        isolation: isolate;
+    }
+
+    .simpeg-card-spotlight::before {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(18rem circle at 0% 0%, rgb(250 216 115 / 0.18), transparent 70%);
+        content: '';
+        opacity: 0;
+        transition: opacity 180ms ease;
+    }
+
+    .simpeg-card-spotlight:hover::before,
+    .simpeg-card-spotlight:focus-within::before {
+        opacity: 1;
+    }
+
+    .simpeg-shimmer-button {
+        position: relative;
+        overflow: hidden;
+        background: var(--simpeg-primary);
+        color: var(--simpeg-primary-foreground);
+    }
+
+    .simpeg-shimmer-button::before {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(110deg, transparent 20%, rgb(255 255 255 / 0.26) 45%, transparent 70%);
+        content: '';
+        transform: translateX(-130%);
+        animation: simpeg-shimmer 3.4s ease-in-out infinite;
+    }
+
+    .simpeg-shimmer-button > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .simpeg-border-beam {
+        position: absolute;
+        inset: -1px;
+        z-index: 1;
+        border-radius: inherit;
+        background: conic-gradient(from 0deg, transparent 0deg, transparent 250deg, #f5ce59 300deg, transparent 340deg);
+        pointer-events: none;
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        mask-composite: exclude;
+        padding: 1px;
+        animation: simpeg-border-beam 6s linear infinite;
+    }
+
+    .simpeg-card {
+        background-color: var(--simpeg-card) !important;
+        border-color: var(--simpeg-border) !important;
+        color: var(--simpeg-text);
+    }
+
+    .simpeg-card-soft {
+        background-color: var(--simpeg-card-soft) !important;
+        border-color: var(--simpeg-border) !important;
+    }
+
+    .simpeg-form-card {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background-color: transparent;
+        color: var(--simpeg-text);
+        box-shadow: none;
+    }
+
+    .simpeg-form-card > section {
+        margin: 0 !important;
+        padding: 2rem 0 !important;
+        border: 0 !important;
+        border-radius: 0;
+        background-color: transparent;
+    }
+
+    .simpeg-form-card > section + section {
+        margin-top: 0 !important;
+        border-top: 1px solid var(--simpeg-border) !important;
+    }
+
+    .simpeg-form-card > section h2 {
+        color: var(--simpeg-text) !important;
+        font-weight: 500 !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+    }
+
+    .simpeg-form-card :is(input:not([type='file']), select, textarea) {
+        background-color: var(--simpeg-input) !important;
+        border-color: var(--simpeg-border) !important;
+        color: var(--simpeg-text) !important;
+    }
+
+    .simpeg-form-card :is(input:not([type='file']), select, textarea):focus {
+        border-color: var(--simpeg-hover-border) !important;
+        box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
+    }
+
+    .simpeg-employee-form-card {
+        overflow: hidden;
+        border: 1px solid var(--simpeg-border);
+        border-radius: 1rem;
+        background-color: var(--simpeg-card);
+        box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+    }
+
+    .simpeg-employee-form-card > section {
+        padding: 1.5rem 1rem !important;
+    }
+
+    .simpeg-employee-form-card > div:last-child {
+        border-top: 1px solid var(--simpeg-border) !important;
+        padding: 1.5rem 1rem !important;
+    }
+
+}

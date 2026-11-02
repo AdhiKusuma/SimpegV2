@@ -1,0 +1,167 @@
+@layer utilities {
+.simpeg-search-trigger {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1rem;
+    background: var(--simpeg-card-soft);
+    color: var(--simpeg-muted);
+    padding: 0 0.75rem;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+    text-align: left;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.simpeg-notification-popover {
+    background: var(--simpeg-card);
+    border-color: var(--simpeg-border);
+    color: var(--simpeg-text);
+}
+
+.simpeg-notification-item:hover,
+.simpeg-notification-item:focus-visible,
+.simpeg-notification-all:hover {
+    background: var(--simpeg-primary-soft);
+}
+
+.simpeg-notification-badge,
+.simpeg-notification-count {
+    background: var(--simpeg-primary);
+    color: var(--simpeg-primary-foreground);
+}
+
+.simpeg-notification-badge {
+    position: absolute;
+    right: -0.2rem;
+    top: -0.2rem;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.25rem;
+    border: 2px solid var(--simpeg-header);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.simpeg-notification-count {
+    flex-shrink: 0;
+    border-radius: 999px;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+}
+
+.simpeg-notification-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+    border-radius: 999px;
+    background: var(--simpeg-primary);
+}
+
+.simpeg-search-trigger:hover,
+.simpeg-search-trigger:focus-visible {
+    border-color: var(--simpeg-primary-border);
+    background: var(--simpeg-card);
+    color: var(--simpeg-text);
+    box-shadow: 0 0 0 3px var(--simpeg-primary-soft);
+    outline: none;
+}
+
+.simpeg-search-shortcut,
+.simpeg-search-close kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 0.45rem;
+    background: var(--simpeg-card-soft);
+    color: var(--simpeg-subtle);
+    padding: 0.2rem 0.4rem;
+    font-family: inherit;
+    font-size: 0.68rem;
+    line-height: 1;
+}
+
+.simpeg-search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(5.5rem, 14vh, 9rem) 1rem 2rem;
+    background: rgb(15 23 42 / 0.22);
+    backdrop-filter: blur(16px) saturate(0.92);
+    -webkit-backdrop-filter: blur(16px) saturate(0.92);
+}
+
+.simpeg-app-canvas.simpeg-search-active > .simpeg-shell-frame {
+    filter: blur(6px);
+}
+
+html.dark .simpeg-search-overlay {
+    background: rgb(0 0 0 / 0.48);
+}
+
+.simpeg-search-dialog {
+    width: min(100%, 46rem);
+    overflow: hidden;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1.25rem;
+    background: var(--simpeg-card);
+    color: var(--simpeg-text);
+    box-shadow: 0 24px 80px rgb(15 23 42 / 0.25);
+    animation: simpeg-search-dialog-in 160ms ease-out;
+}
+
+.simpeg-search-dialog-input {
+    display: flex;
+    min-height: 4.25rem;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--simpeg-border);
+    color: var(--simpeg-muted);
+    padding: 0.75rem 1rem;
+}
+
+.simpeg-search-dialog-input input {
+    min-height: 2.75rem;
+}
+
+.simpeg-search-close {
+    display: inline-flex;
+    min-height: 2.25rem;
+    min-width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 0.6rem;
+    background: transparent;
+    padding: 0;
+}
+
+.simpeg-search-close:hover,
+.simpeg-search-close:focus-visible {
+    background: var(--simpeg-primary-soft);
+    outline: none;
+}
+
+.simpeg-search-dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--simpeg-card-soft);
+    color: var(--simpeg-subtle);
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+}
+}

@@ -1,0 +1,237 @@
+.simpeg-filter-toolbar {
+    min-width: 0;
+    gap: 1rem;
+}
+
+.simpeg-filter-toolbar > * {
+    min-width: 0;
+}
+
+.simpeg-filter-toolbar label:not(.sr-only) {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--simpeg-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.25rem;
+}
+
+.simpeg-filter-toolbar :is(input:not([type='hidden']):not([type='file']), select, button[role='combobox']) {
+    box-sizing: border-box;
+    height: 3rem;
+    min-width: 0;
+}
+
+.simpeg-filter-toolbar :is(input:not([type='hidden']):not([type='file']), select) {
+    border-color: var(--simpeg-border);
+    border-radius: 0.75rem;
+    background-color: var(--simpeg-input);
+    color: var(--simpeg-text);
+}
+
+.simpeg-filter-toolbar input::placeholder {
+    color: var(--simpeg-subtle);
+}
+
+.simpeg-filter-toolbar :is(button[type='submit'], a[href]) {
+    box-sizing: border-box;
+    display: inline-flex;
+    min-height: 3rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+@media (min-width: 640px) and (max-width: 1279px) {
+    .simpeg-filter-toolbar[class*='grid-cols'] {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .simpeg-filter-toolbar > button[type='submit'] {
+        width: 100%;
+    }
+}
+
+@media (max-width: 639px) {
+    .simpeg-filter-toolbar[class*='grid-cols'] {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .simpeg-filter-toolbar > :is(button[type='submit'], a[href]) {
+        width: 100%;
+    }
+
+    .simpeg-filter-toolbar [class*='min-w-'] {
+        min-width: 0;
+    }
+
+    .simpeg-filter-toolbar--mobile-search {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.75rem;
+    }
+
+    .simpeg-filter-toolbar--mobile-search > label.sr-only {
+        display: none;
+    }
+
+    .simpeg-filter-toolbar--mobile-search > input[name='search'] {
+        width: 100%;
+        height: 3rem;
+        min-height: 3rem;
+        padding-inline: 0.875rem;
+        border: 1px solid var(--simpeg-border);
+        border-radius: 0.75rem;
+        background-color: var(--simpeg-input);
+        color: var(--simpeg-text);
+        font-size: 0.875rem;
+        outline: none;
+    }
+
+    .simpeg-filter-toolbar--mobile-search > input[name='search']::placeholder {
+        color: var(--simpeg-subtle);
+        opacity: 1;
+    }
+
+    .simpeg-filter-toolbar--mobile-search > input[name='search']:focus-visible {
+        border-color: var(--simpeg-primary);
+        outline: 2px solid color-mix(in srgb, var(--simpeg-primary) 22%, transparent);
+        outline-offset: 1px;
+    }
+
+    .simpeg-filter-toolbar--mobile-search > button[type='submit'] {
+        width: auto !important;
+        min-width: 4.25rem;
+        min-height: 3rem;
+        height: 3rem;
+        padding-inline: 0.875rem;
+        border-radius: 0.75rem;
+        white-space: nowrap;
+    }
+}
+
+.simpeg-mobile-filter-toggle {
+    display: none;
+}
+
+.simpeg-mobile-filter-fields {
+    display: contents;
+}
+
+.simpeg-mobile-filter-apply {
+    display: none !important;
+}
+
+.simpeg-filter-active-count {
+    display: inline-grid;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    place-items: center;
+    padding-inline: 0.25rem;
+    border-radius: 999px;
+    background: var(--simpeg-primary);
+    color: var(--simpeg-primary-foreground);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+@media (max-width: 767px) {
+    .simpeg-filter-toolbar--mobile-panel {
+        grid-template-columns: minmax(0, 1fr) auto !important;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-toggle {
+        display: inline-flex;
+        min-height: 3rem;
+        width: fit-content;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding-inline: 0.875rem;
+        border: 1px solid var(--simpeg-border);
+        border-radius: 0.75rem;
+        cursor: pointer;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-toggle--after-search {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-fields {
+        display: none !important;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-fields.is-open {
+        display: grid !important;
+        grid-column: 1 / -1;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--simpeg-border);
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-apply {
+        display: inline-flex !important;
+        min-height: 3rem;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        padding-inline: 1rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-desktop-filter-apply {
+        display: none !important;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-search {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-actions--top {
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-actions--after-search {
+        grid-column: 2;
+        grid-row: 2;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-actions--full {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel :is(.simpeg-mobile-filter-actions, .simpeg-mobile-filter-actions--top, .simpeg-mobile-filter-actions--after-search, .simpeg-mobile-filter-actions--full) > :is(a, button) {
+        min-width: 0;
+        min-height: 3rem;
+        height: auto;
+        padding-inline: 0.75rem;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-actions--top > :is(a, button),
+    .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-actions--after-search > :is(a, button) {
+        width: auto !important;
+    }
+}

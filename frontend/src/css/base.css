@@ -1,0 +1,17 @@
+@layer base {
+    :where(a, button, input, select, textarea):focus-visible {
+        outline: 2px solid var(--color-simpeg-gold);
+        outline-offset: 2px;
+    }
+
+    html {
+        background: var(--simpeg-canvas);
+    }
+
+    body {
+        min-width: 320px;
+        font-family: var(--font-sans);
+        background: var(--simpeg-canvas);
+        color: var(--simpeg-text);
+    }
+}
