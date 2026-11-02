@@ -142,8 +142,7 @@ class AuthorizationController extends Controller
         $endDate = $this->normaliseDate($request->string('tgl_akhir')->trim()->value());
         $dateColumn = $dateBy === 'otorisasi' ? 'ep.tanggal_otorisasi' : 'ep.tanggal_pengajuan';
 
-        $query = $this->pendingQuery($request)
-            ->when($status !== 'Semua', fn (Builder $builder) => $builder->where('ep.status_otorisasi', $status))
+        $query = $this->applyStatusFilter($this->pendingQuery($request), 'ep.status_otorisasi', $status)
             ->when($startDate !== null, fn (Builder $builder) => $builder->whereDate($dateColumn, '>=', $startDate))
             ->when($endDate !== null, fn (Builder $builder) => $builder->whereDate($dateColumn, '<=', $endDate))
             ->orderByRaw('COALESCE(ep.tanggal_otorisasi, ep.tanggal_pengajuan) DESC')
@@ -173,9 +172,11 @@ class AuthorizationController extends Controller
             $status = 'Semua';
         }
 
-        $requests = TbEditPending::query()
-            ->where('id_user', $idUser)
-            ->when($status !== 'Semua', fn (Builder $builder) => $builder->where('status_otorisasi', $status))
+        $requests = $this->applyStatusFilter(
+            TbEditPending::query()->where('id_user', $idUser),
+            'status_otorisasi',
+            $status,
+        )
             ->orderByRaw('COALESCE(tanggal_otorisasi, tanggal_pengajuan) DESC')
             ->orderByDesc('id_edit')
             ->paginate(20)
@@ -300,6 +301,20 @@ class AuthorizationController extends Controller
                     ->whereRaw('LEFT(target_job.unit_kerja, 3) = ?', [$office]);
             });
         });
+    }
+
+    private function applyStatusFilter(Builder $query, string $column, string $status): Builder
+    {
+        return match ($status) {
+            'Menunggu' => $query->where(function (Builder $builder) use ($column): void {
+                $builder->where($column, 'pending')
+                    ->orWhereNull($column)
+                    ->orWhere($column, '');
+            }),
+            'Disetujui' => $query->where($column, 'approved'),
+            'Ditolak' => $query->where($column, 'rejected'),
+            default => $query,
+        };
     }
 
     private function presentListItem(TbEditPending $item, string $dateBy): array

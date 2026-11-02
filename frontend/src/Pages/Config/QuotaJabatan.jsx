@@ -137,8 +137,7 @@ export default function QuotaJabatan({ branchOptions = [], positionOptions = [],
                             optionLabel={(option) => option.nama_jabatan}
                             optionDescription={(option) => [
                                 `Kode ${option.kode_jabatan}`,
-                                option.nama_unit_kerja || 'Unit tidak tercatat',
-                                `Jabatan induk: ${option.nama_induk_jabatan || 'Tidak tercatat'}`,
+                                `Lingkup ${option.lingkup || '-'}`,
                                 option.group_jabatan || 'Kelompok tidak tercatat',
                             ].join(' · ')}
                             onChange={(value) => form.setData('jabatan_id', value)}
@@ -170,8 +169,8 @@ export default function QuotaJabatan({ branchOptions = [], positionOptions = [],
                     </form>
                     <p className="simpeg-quota-position-note" aria-live="polite">
                         {selectedPosition
-                            ? `Kode ${selectedPosition.kode_jabatan} · Unit: ${selectedPosition.nama_unit_kerja} · Jabatan induk: ${selectedPosition.nama_induk_jabatan || 'Tidak tercatat'}. ${selectedBranch ? `Lokasi kuota: ${selectedBranch.label}.` : 'Pilih kantor atau wilayah pada kolom Kode cabang.'} ${selectedQuota?.source === 'master' ? 'Nilai saat ini mengikuti kuota master; simpan untuk membuat kuota khusus cabang.' : ''}`
-                            : 'Pilih jabatan untuk melihat jenis unit dan jabatan induknya. Tentukan kantor atau wilayah pada kolom Kode cabang.'}
+                            ? `Kode ${selectedPosition.kode_jabatan} · Lingkup ${selectedPosition.lingkup || '-'} · Kelompok ${selectedPosition.group_jabatan || '-'}. ${selectedBranch ? `Lokasi kuota: ${selectedBranch.label}.` : 'Pilih kantor atau wilayah pada kolom Kode cabang.'} ${selectedQuota?.source === 'master' ? 'Nilai saat ini mengikuti kuota master; simpan untuk membuat kuota khusus cabang.' : ''}`
+                            : 'Pilih jabatan untuk melihat lingkup dan kelompoknya. Tentukan kantor atau wilayah pada kolom Kode cabang.'}
                     </p>
                 </section>
 
@@ -206,7 +205,7 @@ export default function QuotaJabatan({ branchOptions = [], positionOptions = [],
                                         </td>
                                         <td>
                                             <strong>{quota.nama_jabatan}</strong>
-                                            <span>Kode {quota.jabatan_id} · {quota.nama_unit_kerja || 'Unit tidak tercatat'} · Induk: {quota.nama_induk_jabatan || 'Tidak tercatat'}</span>
+                                            <span>Kode {quota.jabatan_id} · Lingkup {quota.lingkup || '-'} · {quota.group_jabatan || '-'}</span>
                                         </td>
                                         <td>
                                             <strong>{quota.group_jabatan || '-'}</strong>
@@ -244,7 +243,7 @@ export default function QuotaJabatan({ branchOptions = [], positionOptions = [],
                                 <div>
                                     <strong>{quota.nama_jabatan}</strong>
                                     <span>{quota.kode_cabang} · {quota.nama_cabang}</span>
-                                    <span>Kode {quota.jabatan_id} · {quota.nama_unit_kerja || 'Unit tidak tercatat'} · Induk: {quota.nama_induk_jabatan || 'Tidak tercatat'}</span>
+                                    <span>Kode {quota.jabatan_id} · Lingkup {quota.lingkup || '-'} · {quota.group_jabatan || '-'}</span>
                                     <span>{quota.group_jabatan || 'Kelompok belum ditentukan'}</span>
                                     <span className={`simpeg-quota-source is-${quota.source}`}>
                                         {quota.source === 'master' ? 'Bawaan master' : 'Pengaturan cabang'}

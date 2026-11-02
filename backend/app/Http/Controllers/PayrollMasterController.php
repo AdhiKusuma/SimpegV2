@@ -85,11 +85,11 @@ class PayrollMasterController extends Controller
         $activeJobs = [];
 
         foreach (DB::table('tb_jabatan as j')
-            ->leftJoin('tb_master_jabatan as master', 'j.jabatan', '=', 'master.nama_jabatan')
+            ->leftJoin('tb_kantor as office', 'j.unit_kerja', '=', 'office.kode_kantor_detail')
             ->where('j.status_jab', 'Aktif')
             ->orderByDesc('j.tmt_jabatan')
             ->orderByDesc('j.id_jab')
-            ->get(['j.id_peg', 'j.unit_kerja', 'j.jabatan', 'master.nama_unit_kerja as division_name']) as $job) {
+            ->get(['j.id_peg', 'j.unit_kerja', 'j.jabatan', 'office.nama_kantor as division_name']) as $job) {
             $employeeId = (string) $job->id_peg;
             if (isset($activeOffices[$employeeId])) {
                 continue;

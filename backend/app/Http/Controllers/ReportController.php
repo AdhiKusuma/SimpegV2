@@ -7,9 +7,9 @@ use App\Models\Legacy\TbDiklat;
 use App\Models\Legacy\TbHukuman;
 use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbKantor;
-use App\Models\Legacy\TbMasterJabatan;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbPendidikan;
+use App\Models\Legacy\TbRefJabatan;
 use App\Services\XlsxExportService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -643,10 +643,10 @@ class ReportController extends Controller
 
     private function formationRows(string $office): array
     {
-        $masterQuery = TbMasterJabatan::query()
-            ->from('tb_master_jabatan as m')
+        $masterQuery = TbRefJabatan::query()
+            ->from('tb_ref_jabatan as m')
             ->leftJoin('tb_jabatan as j', function ($join) use ($office): void {
-                $join->on('j.jabatan', '=', 'm.nama_jabatan')
+                $join->on('j.kode_jabatan', '=', 'm.kode_jabatan')
                     ->where('j.status_jab', 'Aktif');
 
                 if ($office !== '' && $office !== 'PUSAT') {
@@ -661,13 +661,13 @@ class ReportController extends Controller
         if ($office === 'PUSAT') {
             $masterQuery->whereIn('m.lingkup', ['KP', 'KANWIL']);
         } elseif ($office !== '') {
-            $masterQuery->whereIn('m.lingkup', ['KC', 'KK']);
+            $masterQuery->where('m.lingkup', 'KC');
         }
 
         $masterRows = $masterQuery
-            ->select(['m.nama_jabatan', 'm.kuota'])
+            ->select(['m.jabatan as nama_jabatan', 'm.kuota'])
             ->selectRaw('COUNT(DISTINCT p.id_peg) as terisi')
-            ->groupBy('m.nama_jabatan', 'm.kuota')
+            ->groupBy('m.kode_jabatan', 'm.jabatan', 'm.kuota')
             ->get()
             ->map(fn ($row): array => $this->presentFormationRow($row->nama_jabatan, (int) $row->kuota, (int) $row->terisi, 'Master'));
 
@@ -677,8 +677,8 @@ class ReportController extends Controller
                 $join->on('p.id_peg', '=', 'j.id_peg')
                     ->where('p.status_aktif', 1);
             })
-            ->leftJoin('tb_master_jabatan as m', 'm.nama_jabatan', '=', 'j.jabatan')
-            ->whereNull('m.nama_jabatan')
+            ->leftJoin('tb_ref_jabatan as m', 'm.kode_jabatan', '=', 'j.kode_jabatan')
+            ->whereNull('m.kode_jabatan')
             ->where('j.status_jab', 'Aktif')
             ->when($office !== '' && $office !== 'PUSAT', fn (Builder $builder) => $builder->where('j.unit_kerja', $office));
 

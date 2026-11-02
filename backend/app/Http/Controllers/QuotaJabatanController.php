@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbKantor;
-use App\Models\Legacy\TbMasterJabatan;
+use App\Models\Legacy\TbRefJabatan;
 use App\Models\QuotaJabatan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,13 +43,14 @@ class QuotaJabatanController extends Controller
             $defaults = DB::table('tb_jabatan as j')
                 ->join('tb_pegawai as p', 'p.id_peg', '=', 'j.id_peg')
                 ->join('tb_kantor as k', 'k.kode_kantor_detail', '=', 'j.unit_kerja')
-                ->join('tb_master_jabatan as m', 'm.nama_jabatan', '=', 'j.jabatan')
+                ->join('tb_ref_jabatan as m', 'm.kode_jabatan', '=', 'j.kode_jabatan')
                 ->where('j.status_jab', 'Aktif')
                 ->where('p.status_aktif', 1)
-                ->whereIn('m.group_jabatan', ['PE', 'PS'])
-                ->select(['k.kode_cabang', 'm.kode_jabatan', 'm.nama_jabatan', 'm.group_jabatan'])
+                ->whereIn('m.group', ['PE', 'PS'])
+                ->select(['k.kode_cabang', 'm.kode_jabatan'])
+                ->selectRaw('m.jabatan as nama_jabatan, m.`group` as group_jabatan, m.lingkup')
                 ->selectRaw('MAX(m.kuota) as kuota_bawaan')
-                ->groupBy('k.kode_cabang', 'm.kode_jabatan', 'm.nama_jabatan', 'm.group_jabatan')
+                ->groupBy('k.kode_cabang', 'm.kode_jabatan', 'm.jabatan', 'm.`group`', 'm.lingkup')
                 ->get();
 
             foreach ($defaults as $default) {
@@ -73,8 +74,7 @@ class QuotaJabatanController extends Controller
                     'nama_cabang' => $branch['nama_cabang'] ?? $branchCode,
                     'jabatan_id' => (int) $positionId,
                     'nama_jabatan' => (string) $default->nama_jabatan,
-                    'nama_unit_kerja' => $position['nama_unit_kerja'] ?? 'Unit tidak tercatat',
-                    'nama_induk_jabatan' => $position['nama_induk_jabatan'] ?? null,
+                    'lingkup' => (string) ($default->lingkup ?: '-'),
                     'group_jabatan' => (string) ($default->group_jabatan ?: '-'),
                     'kuota_pegawai' => $override ? (int) $override->kuota_pegawai : max((int) $default->kuota_bawaan, 1),
                     'updated_at' => $override?->updated_at?->format('d-m-Y H:i'),
@@ -98,8 +98,7 @@ class QuotaJabatanController extends Controller
                 'nama_cabang' => $branch['nama_cabang'] ?? (string) $quota->kode_cabang,
                 'jabatan_id' => (int) $quota->jabatan_id,
                 'nama_jabatan' => $position['nama_jabatan'] ?? 'Jabatan tidak ditemukan',
-                'nama_unit_kerja' => $position['nama_unit_kerja'] ?? 'Unit tidak tercatat',
-                'nama_induk_jabatan' => $position['nama_induk_jabatan'] ?? null,
+                'lingkup' => $position['lingkup'] ?? '-',
                 'group_jabatan' => $position['group_jabatan'] ?? null,
                 'kuota_pegawai' => (int) $quota->kuota_pegawai,
                 'updated_at' => $quota->updated_at?->format('d-m-Y H:i'),
@@ -121,7 +120,7 @@ class QuotaJabatanController extends Controller
 
         $validated = $request->validate([
             'kode_cabang' => ['required', 'string', 'max:20', 'exists:tb_kantor,kode_cabang'],
-            'jabatan_id' => ['required', 'integer', 'exists:tb_master_jabatan,kode_jabatan'],
+            'jabatan_id' => ['required', 'integer', 'exists:tb_ref_jabatan,kode_jabatan'],
             'kuota_pegawai' => ['required', 'integer', 'min:0', 'max:100000'],
         ]);
 
@@ -152,7 +151,7 @@ class QuotaJabatanController extends Controller
             'jabatan_id' => [
                 'required',
                 'integer',
-                'exists:tb_master_jabatan,kode_jabatan',
+                'exists:tb_ref_jabatan,kode_jabatan',
                 Rule::unique('kuota_jabatan', 'jabatan_id')
                     ->where('kode_cabang', $request->input('kode_cabang'))
                     ->ignore($quota->getKey()),
@@ -199,24 +198,17 @@ class QuotaJabatanController extends Controller
 
     private function positionOptions(): array
     {
-        return TbMasterJabatan::query()
-            ->leftJoin('tb_master_jabatan as induk', 'induk.kode_jabatan', '=', 'tb_master_jabatan.parent_kode_jabatan')
-            ->select([
-                'tb_master_jabatan.kode_jabatan',
-                'tb_master_jabatan.nama_jabatan',
-                'tb_master_jabatan.nama_unit_kerja',
-                'tb_master_jabatan.group_jabatan',
-                'induk.nama_jabatan as nama_induk_jabatan',
-            ])
-            ->orderBy('tb_master_jabatan.group_jabatan')
-            ->orderBy('tb_master_jabatan.nama_jabatan')
+        return TbRefJabatan::query()
+            ->selectRaw('kode_jabatan, jabatan as nama_jabatan, `group` as group_jabatan, lingkup')
+            ->whereIn('group', ['PE', 'PS'])
+            ->orderBy('group')
+            ->orderBy('jabatan')
             ->get()
-            ->map(fn (TbMasterJabatan $position): array => [
+            ->map(fn (TbRefJabatan $position): array => [
                 'kode_jabatan' => (string) $position->kode_jabatan,
                 'nama_jabatan' => (string) $position->nama_jabatan,
-                'nama_unit_kerja' => (string) ($position->nama_unit_kerja ?: 'Unit tidak tercatat'),
-                'nama_induk_jabatan' => $position->nama_induk_jabatan ? (string) $position->nama_induk_jabatan : null,
                 'group_jabatan' => (string) ($position->group_jabatan ?: '-'),
+                'lingkup' => (string) ($position->lingkup ?: '-'),
             ])
             ->values()
             ->all();

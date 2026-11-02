@@ -90,7 +90,7 @@ class WorkflowSmokeTest extends TestCase
                 ->where('id_user', 'smoke-user')
                 ->where('id_peg', $employeeId)
                 ->where('jenis_data', 'keluarga_anak_create')
-                ->where('status_otorisasi', 'Menunggu')
+                ->where('status_otorisasi', 'pending')
                 ->latest('id_edit')
                 ->first();
 
@@ -130,7 +130,7 @@ class WorkflowSmokeTest extends TestCase
             $approval->assertRedirect();
             $this->assertDatabaseHas('tb_edit_pending', [
                 'id_edit' => $pending->id_edit,
-                'status_otorisasi' => 'Disetujui',
+                'status_otorisasi' => 'approved',
             ]);
             $this->assertDatabaseHas('tb_anak', [
                 'id_peg' => $employeeId,
@@ -154,7 +154,7 @@ class WorkflowSmokeTest extends TestCase
     public function test_kepala_can_reject_a_pending_authorization(): void
     {
         $pending = DB::table('tb_edit_pending')
-            ->where('status_otorisasi', 'Menunggu')
+            ->where('status_otorisasi', 'pending')
             ->latest('id_edit')
             ->first();
 
@@ -177,7 +177,7 @@ class WorkflowSmokeTest extends TestCase
             $response->assertRedirectToRoute('authorizations.show', ['id' => $pending->id_edit]);
             $this->assertDatabaseHas('tb_edit_pending', [
                 'id_edit' => $pending->id_edit,
-                'status_otorisasi' => 'Ditolak',
+                'status_otorisasi' => 'rejected',
                 'komentar_otorisasi' => 'Smoke test rejection',
             ]);
         } finally {

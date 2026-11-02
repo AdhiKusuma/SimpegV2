@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbKantor;
-use App\Models\Legacy\TbMasterJabatan;
 use App\Models\Legacy\TbPegawai;
+use App\Models\Legacy\TbRefJabatan;
 use App\Services\RbacService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -244,7 +244,7 @@ class JabatanController extends Controller
                 ->keyBy('id_peg');
 
             foreach ($rows as $row) {
-                if (!$employees->has($row['id_peg']) || (int) $employees->get($row['id_peg'])->status_aktif !== 1) {
+                if (! $employees->has($row['id_peg']) || (int) $employees->get($row['id_peg'])->status_aktif !== 1) {
                     throw ValidationException::withMessages([
                         'preview_token' => "Pegawai {$row['id_peg']} tidak lagi aktif. Unggah ulang file untuk memeriksa data.",
                     ]);
@@ -314,12 +314,12 @@ class JabatanController extends Controller
         }
 
         $employees = TbPegawai::query()->where('status_aktif', 1)->get(['id_peg', 'nama'])->keyBy('id_peg');
-        $positions = TbMasterJabatan::query()->get(['kode_jabatan', 'nama_jabatan']);
+        $positions = TbRefJabatan::query()->get(['kode_jabatan', 'jabatan']);
         $positionsByCode = [];
         $positionsByName = [];
         foreach ($positions as $position) {
             $positionsByCode[$this->normaliseCode((string) $position->kode_jabatan)] = $position;
-            $positionsByName[$this->normaliseName((string) $position->nama_jabatan)][] = $position;
+            $positionsByName[$this->normaliseName((string) $position->jabatan)][] = $position;
         }
 
         $units = TbKantor::query()->get(['kode_kantor_detail', 'nama_kantor']);
@@ -343,7 +343,7 @@ class JabatanController extends Controller
             $employee = $employees->get($employeeId);
             if ($employeeId === '') {
                 $errors[] = 'ID pegawai wajib diisi.';
-            } elseif (!$employee) {
+            } elseif (! $employee) {
                 $errors[] = 'ID pegawai tidak ditemukan atau statusnya tidak aktif.';
             }
             $employeeKey = $this->normaliseCode($employeeId);
@@ -357,7 +357,7 @@ class JabatanController extends Controller
             $position = null;
             if ($positionCode !== '') {
                 $position = $positionsByCode[$this->normaliseCode($positionCode)] ?? null;
-                if (!$position) {
+                if (! $position) {
                     $errors[] = 'Kode jabatan tidak ditemukan di master jabatan.';
                 }
             }
@@ -380,7 +380,7 @@ class JabatanController extends Controller
             $unit = $unitCode === '' ? null : ($unitsByCode[$this->normaliseCode($unitCode)] ?? null);
             if ($unitCode === '') {
                 $errors[] = 'Kode unit kerja wajib diisi.';
-            } elseif (!$unit) {
+            } elseif (! $unit) {
                 $errors[] = 'Kode unit kerja tidak ditemukan.';
             }
             if ($skNumber === '') {
@@ -402,7 +402,7 @@ class JabatanController extends Controller
                 'id_peg' => $employeeId,
                 'nama_pegawai' => $employee?->nama,
                 'kode_jabatan' => $position ? (string) $position->kode_jabatan : $positionCode,
-                'nama_jabatan' => $position?->nama_jabatan ?: $positionName,
+                'nama_jabatan' => $position?->jabatan ?: $positionName,
                 'unit_kerja' => $unit ? (string) $unit->kode_kantor_detail : $unitCode,
                 'nama_unit' => $unit?->nama_kantor,
                 'no_sk' => $skNumber,
@@ -515,7 +515,7 @@ class JabatanController extends Controller
         $validated = $request->validate([
             'id_peg' => ['required', 'exists:tb_pegawai,id_peg'],
             'form_mode' => ['required', 'in:active,history'],
-            'kode_jabatan' => ['required', 'string', 'max:20', 'exists:tb_master_jabatan,kode_jabatan'],
+            'kode_jabatan' => ['required', 'string', 'max:20', 'exists:tb_ref_jabatan,kode_jabatan'],
             'unit_kerja' => ['required', 'string', 'max:64', 'exists:tb_kantor,kode_kantor_detail'],
             'no_sk' => ['required', 'string', 'max:64'],
             'tgl_sk' => ['required', 'date'],
@@ -590,7 +590,7 @@ class JabatanController extends Controller
         $this->ensureCanManage($request);
         $record = TbJabatan::query()->findOrFail($id);
         $validated = $request->validate([
-            'kode_jabatan' => ['required', 'string', 'max:20', 'exists:tb_master_jabatan,kode_jabatan'],
+            'kode_jabatan' => ['required', 'string', 'max:20', 'exists:tb_ref_jabatan,kode_jabatan'],
             'unit_kerja' => ['required', 'string', 'max:64', 'exists:tb_kantor,kode_kantor_detail'],
             'tmt_jabatan' => ['required', 'date'],
             'no_sk' => ['required', 'string', 'max:64'],
@@ -673,12 +673,12 @@ class JabatanController extends Controller
 
     private function masterPositions()
     {
-        return TbMasterJabatan::query()
-            ->orderBy('nama_jabatan')
-            ->get(['kode_jabatan', 'nama_jabatan'])
-            ->map(fn (TbMasterJabatan $position): array => [
+        return TbRefJabatan::query()
+            ->orderBy('jabatan')
+            ->get(['kode_jabatan', 'jabatan'])
+            ->map(fn (TbRefJabatan $position): array => [
                 'kode_jabatan' => (string) $position->kode_jabatan,
-                'nama_jabatan' => $position->nama_jabatan,
+                'nama_jabatan' => $position->jabatan,
             ])
             ->values();
     }
@@ -697,11 +697,11 @@ class JabatanController extends Controller
 
     private function resolvePosition(string $code): array
     {
-        $master = TbMasterJabatan::query()->where('kode_jabatan', (int) $code)->firstOrFail();
+        $master = TbRefJabatan::query()->where('kode_jabatan', (int) $code)->firstOrFail();
 
         return [
             'kode' => (string) $master->kode_jabatan,
-            'nama' => $master->nama_jabatan,
+            'nama' => $master->jabatan,
         ];
     }
 

@@ -84,7 +84,7 @@ class EmployeeController extends Controller
         $filterOptionsQuery = clone $query;
 
         if ($division) {
-            $query->where(is_numeric($division) ? 'j.unit_kerja' : 'm.nama_unit_kerja', $division);
+            $query->where('j.unit_kerja', $division);
         }
 
         if ($position) {
@@ -130,7 +130,7 @@ class EmployeeController extends Controller
                 'j.jabatan',
                 'j.unit_kerja',
                 'k.nama_kantor',
-                'm.nama_unit_kerja as divisi',
+                DB::raw('COALESCE(k.nama_kantor, j.unit_kerja) as divisi'),
                 'mut.jns_mutasi',
                 'mut.tgl_mutasi',
             ])
@@ -550,8 +550,7 @@ class EmployeeController extends Controller
                 $join->on('p.id_peg', '=', 'j.id_peg')
                     ->where('j.status_jab', 'Aktif');
             })
-            ->leftJoin('tb_kantor as k', 'j.unit_kerja', '=', 'k.kode_kantor_detail')
-            ->leftJoin('tb_master_jabatan as m', 'j.jabatan', '=', 'm.nama_jabatan');
+            ->leftJoin('tb_kantor as k', 'j.unit_kerja', '=', 'k.kode_kantor_detail');
 
         if ($tab === 'purna') {
             $latestMutation = TbMutasi::query()
@@ -585,13 +584,16 @@ class EmployeeController extends Controller
     private function employeeFilterOptions(Builder $query): array
     {
         $divisions = (clone $query)
-            ->whereNotNull('m.nama_unit_kerja')
-            ->where('m.nama_unit_kerja', '<>', '')
-            ->select('m.nama_unit_kerja')
+            ->whereNotNull('j.unit_kerja')
+            ->where('j.unit_kerja', '<>', '')
+            ->select('j.unit_kerja as value', 'k.nama_kantor as label')
             ->distinct()
-            ->orderBy('m.nama_unit_kerja')
-            ->pluck('m.nama_unit_kerja')
-            ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
+            ->orderBy('k.nama_kantor')
+            ->get()
+            ->map(fn ($unit): array => [
+                'value' => (string) $unit->value,
+                'label' => trim((string) ($unit->label ?: $unit->value)),
+            ])
             ->values();
 
         $positions = (clone $query)

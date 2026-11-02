@@ -133,9 +133,14 @@ class JabatanSmartImportTest extends TestCase
             $table->integer('status_aktif');
         });
 
-        Schema::create('tb_master_jabatan', function (Blueprint $table): void {
+        Schema::create('tb_ref_jabatan', function (Blueprint $table): void {
             $table->integer('kode_jabatan')->primary();
-            $table->string('nama_jabatan');
+            $table->string('jabatan');
+            $table->string('level')->nullable();
+            $table->string('group')->nullable();
+            $table->integer('kuota')->nullable();
+            $table->integer('status')->nullable();
+            $table->string('lingkup')->nullable();
         });
 
         Schema::create('tb_kantor', function (Blueprint $table): void {
@@ -180,9 +185,9 @@ class JabatanSmartImportTest extends TestCase
             'kode_kantor_detail' => '000000',
             'nama_kantor' => 'Kantor Uji',
         ]);
-        DB::table('tb_master_jabatan')->insert([
-            ['kode_jabatan' => 10, 'nama_jabatan' => 'Analis Kredit'],
-            ['kode_jabatan' => 20, 'nama_jabatan' => 'Kepala Cabang'],
+        DB::table('tb_ref_jabatan')->insert([
+            ['kode_jabatan' => 10, 'jabatan' => 'Analis Kredit', 'group' => 'PS', 'lingkup' => 'KC'],
+            ['kode_jabatan' => 20, 'jabatan' => 'Kepala Cabang', 'group' => 'PS', 'lingkup' => 'KC'],
         ]);
 
         foreach (['TEST-0001', 'TEST-0002'] as $id) {
@@ -240,6 +245,7 @@ class JabatanSmartImportTest extends TestCase
 
                 if ($value === '') {
                     $cell->removeAttribute('t');
+
                     continue;
                 }
 
