@@ -304,7 +304,7 @@ Atur document root domain ke:
 /www/wwwroot/devsimpeg.bkkjateng.co.id/current/public
 ```
 
-Pastikan server memiliki PHP yang sesuai `composer.json` (saat ini PHP `^8.5.12`), Composer, Node.js/npm, Git, dan akses read-only ke repository GitHub. Jika repository private, pasang deploy key GitHub di server atau gunakan `DEPLOY_REPO_URL` yang sudah memiliki akses; jangan menaruh token di file yang di-commit. Deploy akan gagal dengan pesan yang jelas bila versi PHP server masih di bawah `8.5.12`.
+Pastikan server memiliki PHP yang sesuai `composer.json` (saat ini PHP `^8.4.1`), Composer, Node.js/npm, Git, dan akses read-only ke repository GitHub. Jika repository private, pasang deploy key GitHub di server atau gunakan `DEPLOY_REPO_URL` yang sudah memiliki akses; jangan menaruh token di file yang di-commit. Deploy akan gagal dengan pesan yang jelas bila versi PHP server masih di bawah `8.4.1`.
 
 #### Secrets GitHub yang wajib
 
