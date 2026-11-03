@@ -6,7 +6,7 @@ use App\Models\Legacy\TbDiklat;
 use App\Models\Legacy\TbHukuman;
 use App\Models\Legacy\TbKantor;
 use App\Models\Legacy\TbPegawai;
-use App\Models\Legacy\TbRefJabatan;
+use App\Models\Legacy\TbMasterJabatan;
 use App\Models\QuotaJabatan;
 use App\Services\RbacService;
 use Illuminate\Database\Eloquent\Builder;
@@ -450,8 +450,8 @@ class DashboardController extends Controller
 
     private function positionAvailability(string $group, ?string $unit): array
     {
-        $rows = TbRefJabatan::query()
-            ->from('tb_ref_jabatan as m')
+        $rows = TbMasterJabatan::query()
+            ->from('tb_master_jabatan as m')
             ->leftJoin('tb_jabatan as j', function ($join) use ($unit): void {
                 $join->on('m.kode_jabatan', '=', 'j.kode_jabatan')->where('j.status_jab', 'Aktif');
                 if ($unit !== null) {
@@ -471,11 +471,11 @@ class DashboardController extends Controller
             ->leftJoin('tb_pegawai as p', function ($join): void {
                 $join->on('j.id_peg', '=', 'p.id_peg')->where('p.status_aktif', 1);
             })
-            ->where('m.group', $group)
+            ->where('m.group_jabatan', $group)
             ->select(['m.kode_jabatan', 'm.kuota'])
-            ->selectRaw('m.jabatan as nama_jabatan')
+            ->selectRaw('m.nama_jabatan as nama_jabatan')
             ->selectRaw('COUNT(DISTINCT p.id_peg) as terisi')
-            ->groupBy('m.kode_jabatan', 'm.jabatan', 'm.kuota')
+            ->groupBy('m.kode_jabatan', 'm.nama_jabatan', 'm.kuota')
             ->orderBy('m.kode_jabatan')
             ->get();
 
@@ -518,8 +518,8 @@ class DashboardController extends Controller
 
         $query = QuotaJabatan::query()
             ->from('kuota_jabatan as q')
-            ->join('tb_ref_jabatan as m', 'm.kode_jabatan', '=', 'q.jabatan_id')
-            ->where('m.group', $group)
+            ->join('tb_master_jabatan as m', 'm.kode_jabatan', '=', 'q.jabatan_id')
+            ->where('m.group_jabatan', $group)
             ->select('q.jabatan_id')
             ->selectRaw('SUM(q.kuota_pegawai) as total_kuota')
             ->groupBy('q.jabatan_id');
