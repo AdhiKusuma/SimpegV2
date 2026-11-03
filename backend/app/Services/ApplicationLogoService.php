@@ -18,10 +18,6 @@ class ApplicationLogoService
             return asset('uploads/config/'.rawurlencode($filename));
         }
 
-        if (File::isFile(base_path('../dist/img/'.$filename))) {
-            return route('config.application.logo', ['filename' => $filename]);
-        }
-
         return $fallback;
     }
 }

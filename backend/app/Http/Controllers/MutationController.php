@@ -301,7 +301,6 @@ class MutationController extends Controller
 
         $paths = [
             Storage::disk('public')->path('sk_mutasi/'.$filename),
-            base_path('../pages/assets/sk_mutasi/'.$filename),
         ];
 
         foreach ($paths as $path) {
@@ -395,8 +394,7 @@ class MutationController extends Controller
     {
         $safeFilename = basename($filename);
 
-        return is_file(Storage::disk('public')->path('sk_mutasi/'.$safeFilename))
-            || is_file(base_path('../pages/assets/sk_mutasi/'.$safeFilename));
+        return is_file(Storage::disk('public')->path('sk_mutasi/'.$safeFilename));
     }
 
     private function ensureMutationVisible(Request $request, TbMutasi $record): void

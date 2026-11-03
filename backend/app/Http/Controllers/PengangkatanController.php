@@ -170,9 +170,7 @@ class PengangkatanController extends Controller
 
         $paths = [
             Storage::disk('public')->path('sk_angkat/'.$filename),
-            base_path('../pages/assets/sk_mutasi/'.$filename),
-            base_path('../pages/asset/sk_mutasi/'.$filename),
-            base_path('../assets/dokumen/sk_angkat/'.$filename),
+            Storage::disk('public')->path('sk_mutasi/'.$filename),
         ];
 
         foreach ($paths as $path) {
@@ -249,9 +247,7 @@ class PengangkatanController extends Controller
         $safeFilename = basename($filename);
 
         return is_file(Storage::disk('public')->path('sk_angkat/'.$safeFilename))
-            || is_file(base_path('../pages/assets/sk_mutasi/'.$safeFilename))
-            || is_file(base_path('../pages/asset/sk_mutasi/'.$safeFilename))
-            || is_file(base_path('../assets/dokumen/sk_angkat/'.$safeFilename));
+            || is_file(Storage::disk('public')->path('sk_mutasi/'.$safeFilename));
     }
 
     private function canManage(Request $request): bool

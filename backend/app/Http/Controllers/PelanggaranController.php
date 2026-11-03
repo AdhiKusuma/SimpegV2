@@ -251,7 +251,6 @@ class PelanggaranController extends Controller
 
         $paths = [
             Storage::disk('public')->path('dokumen_hukuman/'.$filename),
-            base_path('../pages/assets/dokumen_hukuman/'.$filename),
         ];
 
         foreach ($paths as $path) {
@@ -356,8 +355,7 @@ class PelanggaranController extends Controller
     {
         $safeFilename = basename($filename);
 
-        return is_file(Storage::disk('public')->path('dokumen_hukuman/'.$safeFilename))
-            || is_file(base_path('../pages/assets/dokumen_hukuman/'.$safeFilename));
+        return is_file(Storage::disk('public')->path('dokumen_hukuman/'.$safeFilename));
     }
 
     private function ensurePenaltyVisible(Request $request, TbHukuman $record): void

@@ -530,7 +530,6 @@ class EmployeeController extends Controller
 
         $paths = [
             public_path('uploads/pegawai/'.$filename),
-            base_path('../pages/assets/foto/'.$filename),
         ];
 
         foreach ($paths as $path) {

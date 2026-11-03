@@ -56,7 +56,6 @@ class ApplicationConfigController extends Controller
 
         $paths = [
             public_path('uploads/config/'.$filename),
-            base_path('../dist/img/'.$filename),
         ];
 
         foreach ($paths as $path) {
