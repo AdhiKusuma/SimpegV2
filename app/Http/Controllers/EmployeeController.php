@@ -30,6 +30,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class EmployeeController extends Controller
 {
+    private const GENERIC_UNIT_LABELS = ['kantor cabang', 'area kantor wilayah'];
+
     private const IMPORT_HEADERS = [
         'ID Pegawai (Wajib)',
         'NIP',
@@ -62,6 +64,9 @@ class EmployeeController extends Controller
         $requestedYear = $request->string('year')->trim()->value();
         $year = preg_match('/^\d{4}$/', $requestedYear) === 1 ? $requestedYear : '';
         $division = $request->string('divisi')->trim()->value();
+        if ($this->isGenericUnitLabel($division)) {
+            $division = '';
+        }
         $position = $request->string('jabatan')->trim()->value();
         $unit = $role === 'kepala' ? $request->session()->get('kode_kantor') : null;
 
@@ -587,6 +592,7 @@ class EmployeeController extends Controller
         $divisions = (clone $query)
             ->whereNotNull('mj.nama_unit_kerja')
             ->where('mj.nama_unit_kerja', '<>', '')
+            ->whereRaw('LOWER(TRIM(mj.nama_unit_kerja)) NOT IN (?, ?)', self::GENERIC_UNIT_LABELS)
             ->selectRaw('mj.nama_unit_kerja as value, mj.nama_unit_kerja as label')
             ->distinct()
             ->orderBy('mj.nama_unit_kerja')
@@ -618,13 +624,18 @@ class EmployeeController extends Controller
             'ttl' => trim(implode(', ', array_filter([$employee->tempat_lhr, $this->formatDate($employee->tgl_lhr)]))),
             'jabatan' => $employee->jabatan,
             'kantor' => $employee->nama_kantor,
-            'divisi' => $employee->divisi,
+            'divisi' => $this->isGenericUnitLabel($employee->divisi) ? null : $employee->divisi,
             'tmt_kerja' => $this->formatDate($employee->tmt_kerja),
             'telp' => $employee->telp,
             'status_kepeg' => $employee->status_kepeg,
             'status_mutasi' => $employee->jns_mutasi,
             'tgl_mutasi' => $this->formatDate($employee->tgl_mutasi),
         ];
+    }
+
+    private function isGenericUnitLabel(?string $unit): bool
+    {
+        return in_array(strtolower(trim((string) $unit)), self::GENERIC_UNIT_LABELS, true);
     }
 
     private function formatDate(mixed $value): ?string
