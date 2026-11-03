@@ -71,7 +71,8 @@ class PayrollEntryValidationService
         foreach ($rows as $input) {
             $rowNumber = (int) ($input['row_number'] ?? 1);
             $employeeId = trim((string) ($input['employee_id'] ?? ''));
-            $officeCode = $this->normaliseOfficeCode($input['office_code'] ?? '', $directory);
+            $rawOfficeCode = trim((string) ($input['office_code'] ?? ''));
+            $officeCode = $this->normaliseOfficeCode($rawOfficeCode, $directory);
             $account = $this->nullableText($input['no_rekening'] ?? null, 64);
             $customerName = $this->nullableText($input['nama_nasabah'] ?? null, 150);
             $bankDigits = preg_replace('/\D+/', '', (string) $account) ?? '';
@@ -89,9 +90,9 @@ class PayrollEntryValidationService
                 }
             }
 
-            if ($officeCode === null) {
+            if ($rawOfficeCode !== '' && $officeCode === null) {
                 $rowErrors[] = 'Kode Kantor tidak cocok dengan data kantor';
-            } elseif (($scope['restricted'] ?? false) && ! in_array($officeCode, $scope['codes'] ?? [], true)) {
+            } elseif ($officeCode !== null && ($scope['restricted'] ?? false) && ! in_array($officeCode, $scope['codes'] ?? [], true)) {
                 $rowErrors[] = 'Kode Kantor berada di luar wilayah akses akun';
             }
 
@@ -122,17 +123,12 @@ class PayrollEntryValidationService
                 $rowErrors[] = 'No HP Keris harus berisi nomor telepon yang valid';
             }
 
-            foreach (['source_jabatan' => 'Jabatan', 'source_unit_kerja' => 'Unit Kerja', 'source_status' => 'Status'] as $field => $label) {
-                if (array_key_exists($field, $input) && trim((string) $input[$field]) === '') {
-                    $rowErrors[] = $label.' wajib diisi sesuai data pegawai aktif';
-                }
-            }
-
             $normalisedRows[$rowNumber] = [
                 'input' => $input,
                 'errors' => $rowErrors,
                 'employee_id' => $employeeId,
                 'office_code' => $officeCode,
+                'office_code_provided' => $rawOfficeCode !== '',
                 'account' => $account,
                 'customer_name' => $customerName,
                 'payroll_date' => $payrollDate,
@@ -159,6 +155,11 @@ class PayrollEntryValidationService
                 $employeeOfficeCode = $this->normaliseOfficeCode($employee->active_unit_kerja, $directory);
                 if ($employeeOfficeCode === null) {
                     $rowErrors[] = 'Pegawai tidak memiliki kantor pada jabatan aktif yang terdaftar';
+                } elseif (! $row['office_code_provided']) {
+                    $row['office_code'] = $employeeOfficeCode;
+                    if (($scope['restricted'] ?? false) && ! in_array($employeeOfficeCode, $scope['codes'] ?? [], true)) {
+                        $rowErrors[] = 'Kantor aktif pegawai berada di luar wilayah akses akun';
+                    }
                 } elseif ($row['office_code'] !== null && ! $this->payrollOfficeMatchesEmployee($row['office_code'], $employeeOfficeCode, $directory)) {
                     $office = $directory['by_detail']->get($employeeOfficeCode);
                     $officeLabel = $office?->nama_kantor
@@ -170,15 +171,15 @@ class PayrollEntryValidationService
                 if ($row['customer_name'] !== null && ! $this->payrollNamesMatch((string) $employee->nama, $row['customer_name'])) {
                     $rowErrors[] = 'Nama Nasabah tidak sesuai dengan nama pegawai pada ID tersebut';
                 }
-                if (array_key_exists('source_jabatan', $input)
+                if (trim((string) ($input['source_jabatan'] ?? '')) !== ''
                     && $this->normaliseComparableText((string) $input['source_jabatan']) !== $this->normaliseComparableText((string) $employee->active_jabatan)) {
                     $rowErrors[] = 'Jabatan pada file tidak sesuai dengan jabatan aktif pegawai';
                 }
-                if (array_key_exists('source_unit_kerja', $input)
+                if (trim((string) ($input['source_unit_kerja'] ?? '')) !== ''
                     && ! $this->payrollUnitMatchesEmployee((string) $input['source_unit_kerja'], (string) $employee->active_unit_kerja, $employeeOfficeCode, $directory)) {
                     $rowErrors[] = 'Unit Kerja pada file tidak sesuai dengan kantor aktif pegawai';
                 }
-                if (array_key_exists('source_status', $input)
+                if (trim((string) ($input['source_status'] ?? '')) !== ''
                     && $this->normaliseEmploymentStatus((string) $input['source_status']) !== $this->normaliseEmploymentStatus((string) $employee->status_kepeg)) {
                     $rowErrors[] = 'Status pada file tidak sesuai dengan status kepegawaian pegawai';
                 }

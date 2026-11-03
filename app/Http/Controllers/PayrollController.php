@@ -629,7 +629,7 @@ class PayrollController extends Controller
 
         if ($header === null && $hasPartialPayrollHeader) {
             throw ValidationException::withMessages([
-                'file_xlsx' => 'Struktur kolom sheet payroll belum lengkap. Unduh template terbaru dan pastikan semua kolom tersedia.',
+                'file_xlsx' => 'Struktur kolom sheet payroll belum lengkap. Unduh template terbaru dan pastikan kolom payroll inti tersedia. Kode kantor, jabatan, unit/divisi, dan status pegawai boleh dikosongkan.',
             ]);
         }
         if ($header === null) {
@@ -688,8 +688,7 @@ class PayrollController extends Controller
     private function requiredPayrollFields(): array
     {
         return [
-            'office_code', 'employee_id', 'bank_office_code', 'no_rekening', 'nama_nasabah',
-            'source_jabatan', 'source_unit_kerja', 'source_status',
+            'employee_id', 'bank_office_code', 'no_rekening', 'nama_nasabah',
             ...PayrollEntryValidationService::EARNING_FIELDS,
             ...PayrollEntryValidationService::DEDUCTION_FIELDS,
             'jumlah_gaji', 'jumlah_potongan', 'gaji_bersih',
@@ -707,7 +706,7 @@ class PayrollController extends Controller
                     $fields[$field] = $columnIndex;
                 }
             }
-            if (isset($fields['office_code'], $fields['employee_id'], $fields['no_rekening'])) {
+            if (isset($fields['employee_id'], $fields['no_rekening'])) {
                 return ['row_index' => $rowIndex, 'fields' => $fields];
             }
         }

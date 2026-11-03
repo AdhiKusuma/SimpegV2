@@ -39,7 +39,7 @@ export default function Import({ preview, filters, willRequireApproval = false, 
                 <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                         <span className="simpeg-card-soft inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"><FileSpreadsheet aria-hidden="true" className="h-5 w-5" /></span>
-                        <div><h2 className="simpeg-text font-semibold">Workbook payroll</h2><p className="simpeg-muted mt-1 text-sm">Nama sheet bebas. Sistem mengenali data dari header kolom payroll; pastikan semua kolom template tersedia sebelum mengunggah. Nominal Golongan Pegawai ditambahkan ke Gaji Pokok, dan nilai kosong dihitung Rp0.</p>
+                        <div><h2 className="simpeg-text font-semibold">Workbook payroll</h2><p className="simpeg-muted mt-1 text-sm">Nama sheet bebas. ID Pegawai menjadi kunci pencocokan dengan master. Kode kantor, jabatan, unit/divisi, dan status pegawai boleh dikosongkan; jika diisi hanya dicocokkan dengan data master. Kolom payroll dan nominal tetap divalidasi. Nominal Golongan Pegawai ditambahkan ke Gaji Pokok, dan nilai kosong dihitung Rp0.</p>
                             <p className="simpeg-muted mt-2 text-xs">{willRequireApproval ? 'Setelah valid, import diajukan ke supervisor kantor terkait. Data baru aktif setelah disetujui.' : 'Setelah valid, data payroll dan Master Gaji langsung diperbarui.'}</p>
                         </div>
                     </div>
