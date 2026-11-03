@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+@import './theme-tokens.css';
+@import './foundation.css';
+@import './login.css';
+@import './pages.css';
+@import './theme-compat.css';
+@import './themes.css';
+
+@source '../js/**/*.jsx';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';

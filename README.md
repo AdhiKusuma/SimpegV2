@@ -6,26 +6,26 @@ SIMPEG adalah aplikasi pengelolaan data kepegawaian yang mempertahankan tabel, r
 
 ```text
 .
-├── backend/                 # Laravel: route, autentikasi, business logic, model, database
-│   ├── app/
-│   ├── config/
-│   ├── database/
-│   ├── resources/views/     # Blade shell untuk Inertia
-│   ├── routes/
-│   ├── public/
-│   └── tests/
-├── frontend/                # React/Inertia: halaman, komponen UI, CSS, dan Vite
-│   ├── src/app.js
-│   ├── src/Pages/
-│   ├── src/Components/
-│   ├── src/css/app.css
-│   └── package.json
-├── pages/                   # Aplikasi PHP legacy, dipertahankan untuk pembanding
-├── templates/               # Layout legacy
-└── db/                      # Dump atau struktur database lokal
+├── app/                 # Controller, middleware, service, model, dan policy
+├── bootstrap/           # Bootstrap Laravel
+├── config/              # Konfigurasi aplikasi
+├── database/            # Migration, factory, dan seeder
+├── public/              # Document root, aset publik, dan hasil build
+├── resources/
+│   ├── css/              # Stylesheet aplikasi
+│   ├── js/               # React, Inertia, komponen, dan halaman
+│   ├── templates/        # Template XLSX payroll
+│   └── views/            # Shell Blade
+├── routes/               # Route web dan console
+├── storage/              # Log, cache, session, dan file aplikasi
+├── tests/                # Test fitur dan unit
+├── artisan
+├── composer.json
+├── package.json
+└── vite.config.js
 ```
 
-Frontend tidak mengakses database. Halaman React mengirim request Inertia ke route backend. Controller, service, middleware, model Eloquent legacy, validasi, dan transaksi berada di `backend/`.
+SIMPEG adalah aplikasi mandiri berbasis Laravel 13, Inertia.js, React, Tailwind CSS, dan MySQL. Aplikasi mengikuti struktur standar Laravel dari root project; source React berada di `resources/js`. Database SIMPEG tetap dipetakan oleh model Laravel tanpa mengganti tabel atau alur bisnis.
 
 ## Fitur sistem
 
@@ -33,7 +33,7 @@ Frontend tidak mengakses database. Halaman React mengirim request Inertia ke rou
 
 - Login memakai ID user atau ID pegawai.
 - Login lokal memakai data `tb_user` dan dapat meningkatkan hash password legacy secara bertahap.
-- Integrasi SSO tersedia secara opsional melalui `backend/app/Services/Sso/SsoClient.php`.
+- Integrasi SSO tersedia secara opsional melalui `app/Services/Sso/SsoClient.php`.
 - Role yang didukung adalah `admin`, `superadmin`, `kepala`, dan `user`.
 - Middleware memeriksa status aktif, role, ID user, ID pegawai, dan konteks kantor sebelum route dibuka.
 - Matriks akses RBAC dapat diatur berdasarkan role, jabatan, atau ID pegawai.
@@ -161,15 +161,13 @@ Gunakan database MySQL lokal. Jangan arahkan `.env` ke database production.
 Terminal 1, backend:
 
 ```bash
-cd backend
 php artisan serve --host=127.0.0.1 --port=8000
 ```
 
 Terminal 2, frontend:
 
 ```bash
-cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -178,20 +176,25 @@ Buka `http://localhost:8000`.
 Untuk build aset frontend:
 
 ```bash
-cd frontend
 npm run build
 ```
 
 Untuk menjalankan test backend:
 
 ```bash
-cd backend
 php artisan test
 ```
 
 ## Konfigurasi lokal
 
-Salin `backend/.env.example` menjadi `backend/.env`, lalu isi `APP_KEY` dan koneksi MySQL lokal.
+Pasang dependency dari root project, salin `.env.example` menjadi `.env`, lalu isi `APP_KEY` dan koneksi MySQL lokal.
+
+```bash
+composer install
+npm ci
+cp .env.example .env
+php artisan key:generate
+```
 
 Nilai penting:
 
@@ -231,24 +234,38 @@ Backend memetakan model Eloquent ke tabel legacy, termasuk tabel seperti:
 
 Jangan menjalankan `migrate:fresh`, `db:wipe`, truncate, drop table, atau migration destruktif pada database legacy. Schema dan data dipertahankan.
 
-RBAC memakai tabel tambahan rbac_permissions dan rbac_access_rules. Tabel legacy tidak diubah. Setelah mengambil perubahan ini pada database lokal, jalankan:
+RBAC memakai tabel tambahan `rbac_permissions` dan `rbac_access_rules`. Tabel legacy tidak diubah. Setelah meninjau migration dan memastikan backup database tersedia, jalankan migration tambahan dari root project:
 
-    cd backend
     php artisan migrate
 
 Konfigurasi kuota memakai tabel tambahan kuota_jabatan. Tabel ini tidak menambah atau mengubah kolom pada tb_master_jabatan; setiap baris menyimpan kombinasi unik kode_cabang + jabatan_id serta kuota_pegawai. Dashboard memakai konfigurasi baru ini jika tersedia dan tetap memakai kuota master untuk jabatan yang belum dikonfigurasi.
 
 Matriks dapat dibuka dari menu Data User > Matriks akses. Aturan dapat disimpan untuk role, jabatan, atau ID pegawai. Jika tabel RBAC belum dimigrasikan, aplikasi tetap memakai hak akses legacy sebagai fallback.
 
-Import pegawai tersedia dari menu Data Pegawai > Import Excel. Gunakan template resmi di `backend/public/templates/Template_Import_Pegawai_V2.xlsx`; aplikasi menerima file `.xlsx`, memvalidasi 18 nama kolom, menampilkan preview, lalu menyimpan setelah dikonfirmasi. Menu import lain dan seluruh tombol ekspor laporan juga menggunakan `.xlsx` agar format file konsisten.
+Import pegawai tersedia dari menu Data Pegawai > Import Excel. Gunakan template resmi di `public/templates/Template_Import_Pegawai_V2.xlsx`; aplikasi menerima file `.xlsx`, memvalidasi 18 nama kolom, menampilkan preview, lalu menyimpan setelah dikonfirmasi. Menu import lain dan seluruh tombol ekspor laporan juga menggunakan `.xlsx` agar format file konsisten.
 
 ## Pemeriksaan sebelum perubahan
 
-1. Pastikan `backend/.env` memakai MySQL lokal.
+1. Pastikan `.env` memakai MySQL lokal.
 2. Pastikan service MySQL lokal aktif.
-3. Jalankan `php artisan test` dari `backend/`.
-4. Jalankan `npm run build` dari `frontend/`.
+3. Jalankan `php artisan test` dari root project.
+4. Jalankan `npm run build` dari root project.
 5. Uji login dan route sesuai role.
 6. Uji perubahan data pada salinan atau database lokal, bukan production.
 
-Folder root legacy tetap tersedia untuk perbandingan selama proses migrasi. Jangan menghapusnya sebelum seluruh modul dan regression test disetujui.
+Repository ini berisi aplikasi SIMPEG Refactor mandiri; deploy dengan document root diarahkan ke folder `public/`.
+
+## Deploy
+
+Upload seluruh project di luar document root web, kemudian arahkan document root domain langsung ke folder `public/`. Jangan jadikan root repository sebagai document root. Siapkan `.env` di server (jangan commit), pasang dependency PHP, dan bangun aset:
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm ci
+npm run build
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+Gunakan kredensial database production hanya pada `.env` server. Tinjau migration dan backup database sebelum menjalankan `php artisan migrate --force`; jangan gunakan `migrate:fresh` atau `db:wipe`.

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import SearchableCombobox from '../../Components/SearchableCombobox';
 import SelectCombobox from '../../Components/SelectCombobox';
-import '../../css/access-matrix.css';
+import '../../../css/access-matrix.css';
 
 const subjectLabels = {
     role: 'Role',

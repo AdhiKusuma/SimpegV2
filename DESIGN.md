@@ -55,20 +55,18 @@ shadcn/ui diperlakukan sebagai distribusi source code komponen yang terbuka dan 
 Target struktur:
 
 ```text
-backend/
-├── app/                     # route handler, service, middleware, model, dan policy
-├── resources/views/         # shell Blade untuk Inertia
-└── routes/                  # route web yang dipakai workflow
-
-frontend/
-├── components.json
-└── src/
-    ├── Components/ui/       # komponen shadcn/ui lokal yang benar-benar dipakai
-    ├── Components/          # komponen domain dan shell legacy
-    └── Pages/               # halaman Inertia berdasarkan workflow
+app/                        # route handler, service, middleware, model, dan policy
+resources/
+├── css/                     # stylesheet aplikasi
+├── js/
+│   ├── Components/ui/       # komponen shadcn/ui lokal yang benar-benar dipakai
+│   ├── Components/          # komponen domain dan shell
+│   └── Pages/               # halaman Inertia berdasarkan workflow
+└── views/                   # shell Blade untuk Inertia
+routes/                      # route web yang dipakai workflow
 ```
 
-Status implementasi tahap ini: `frontend/components.json` dan primitive lokal `frontend/src/Components/ui` sudah tersedia. Shell, dashboard admin, dashboard cabang, chart operasional, tabel operasional, dan login sudah memakai primitive tersebut. Halaman workflow lain tetap dipertahankan dan akan dipindahkan bertahap saat modulnya dikerjakan.
+Status implementasi tahap ini: `components.json` dan primitive lokal `resources/js/Components/ui` sudah tersedia. Shell, dashboard admin, dashboard cabang, chart operasional, tabel operasional, dan login sudah memakai primitive tersebut. Halaman workflow lain tetap dipertahankan dan akan dipindahkan bertahap saat modulnya dikerjakan.
 
 ### Pemetaan komponen
 

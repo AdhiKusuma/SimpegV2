@@ -142,7 +142,7 @@ class PayrollWorkbookService
     {
         $source = base_path($templatePath);
         if (! is_file($source) || ! is_readable($source)) {
-            throw new RuntimeException('Template payroll tidak ditemukan pada backend/resources/templates/payroll.');
+            throw new RuntimeException('Template payroll tidak ditemukan pada resources/templates/payroll.');
         }
 
         $temporaryFile = tempnam(sys_get_temp_dir(), 'simpeg-payroll-');

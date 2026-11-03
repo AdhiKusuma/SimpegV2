@@ -9,10 +9,10 @@
 
         <link rel="preload" as="image" href="{{ asset('images/logo-simpeg-256.png') }}" type="image/png" fetchpriority="high">
         @if ((request()->routeIs('login') || request()->is('login')) && ! Vite::isRunningHot())
-            <link rel="modulepreload" href="{{ Vite::asset('src/Pages/Auth/Login.jsx') }}">
+            <link rel="modulepreload" href="{{ Vite::asset('resources/js/Pages/Auth/Login.jsx') }}">
         @endif
         @viteReactRefresh
-        @vite(['src/css/app.css', 'src/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
         @inertiaHead
     </head>
     <body>

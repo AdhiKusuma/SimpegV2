@@ -1,6 +1,6 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
-    "name": "simpeg-frontend",
+    "name": "simpeg-refactor",
     "private": true,
     "type": "module",
     "scripts": {

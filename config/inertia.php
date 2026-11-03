@@ -3,7 +3,7 @@
 return [
     'pages' => [
         'paths' => [
-            base_path('../frontend/src/Pages'),
+            resource_path('js/Pages'),
         ],
         'extensions' => [
             'js',
