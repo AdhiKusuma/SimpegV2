@@ -269,3 +269,56 @@ php artisan view:cache
 ```
 
 Gunakan kredensial database production hanya pada `.env` server. Tinjau migration dan backup database sebelum menjalankan `php artisan migrate --force`; jangan gunakan `migrate:fresh` atau `db:wipe`.
+
+### Otomasi pull dan deploy branch `dev`
+
+Repository menyediakan workflow `.github/workflows/deploy-dev.yml`. Setiap push ke branch `dev` akan:
+
+1. memvalidasi source dan lock file;
+2. mengambil commit branch `dev` di server;
+3. membuat release baru secara terpisah;
+4. menjalankan `composer install --no-dev`, `npm ci`, dan `npm run build`;
+5. menjalankan migration Laravel dengan `--force` tanpa perintah destruktif;
+6. membersihkan dan membangun cache Laravel; lalu
+7. mengganti symlink `current` secara atomic.
+
+Runtime data tetap berada di `shared`, sehingga `.env`, foto/logo di `public/uploads`, session, log, dan cache tidak ikut tertimpa saat pull. Workflow tidak menyimpan password server atau password database di repository.
+
+Karena `10.0.2.2` adalah alamat private/LAN, workflow menggunakan runner `self-hosted` di server atau jaringan yang sama. GitHub-hosted runner (`ubuntu-latest`) tidak dapat membuka SSH ke alamat tersebut. Jangan mengubahnya menjadi runner publik hanya untuk mengatasi masalah jaringan; pasang GitHub Actions Runner pada server/jaringan internal dengan user non-root, lalu gunakan label `self-hosted`, `linux`, dan `x64`.
+
+#### Persiapan satu kali di server
+
+Jalankan sebagai root atau melalui terminal aaPanel, bukan dari user aplikasi biasa:
+
+```bash
+mkdir -p /www/wwwroot/devsimpeg.bkkjateng.co.id/shared
+cp /path/backup/.env /www/wwwroot/devsimpeg.bkkjateng.co.id/shared/.env
+mkdir -p /www/wwwroot/devsimpeg.bkkjateng.co.id/shared/public/uploads
+chown -R adi:www /www/wwwroot/devsimpeg.bkkjateng.co.id
+chmod 640 /www/wwwroot/devsimpeg.bkkjateng.co.id/shared/.env
+```
+
+Atur document root domain ke:
+
+```text
+/www/wwwroot/devsimpeg.bkkjateng.co.id/current/public
+```
+
+Pastikan server memiliki PHP yang sesuai `composer.json` (saat ini PHP `^8.5.12`), Composer, Node.js/npm, Git, dan akses read-only ke repository GitHub. Jika repository private, pasang deploy key GitHub di server atau gunakan `DEPLOY_REPO_URL` yang sudah memiliki akses; jangan menaruh token di file yang di-commit. Deploy akan gagal dengan pesan yang jelas bila versi PHP server masih di bawah `8.5.12`.
+
+#### Secrets GitHub yang wajib
+
+Tambahkan pada repository settings → Secrets and variables → Actions:
+
+- `DEPLOY_SSH_KEY`: private key khusus deploy, tanpa passphrase interaktif;
+- `DEPLOY_KNOWN_HOSTS`: output host key server yang sudah diverifikasi, bukan hasil `ssh-keyscan` tanpa pemeriksaan.
+
+Workflow menggunakan host `10.0.2.2`, user `adi`, path `/www/wwwroot/devsimpeg.bkkjateng.co.id`, dan branch `dev`. Jangan memasukkan password SSH atau database ke YAML. Jika runner berada langsung di server, SSH tetap harus menggunakan key khusus deploy dan user non-root.
+
+Push normal:
+
+```bash
+git push origin dev
+```
+
+Untuk production, buat workflow terpisah dengan approval environment dan backup database wajib sebelum migration.

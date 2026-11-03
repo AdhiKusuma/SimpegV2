@@ -1,0 +1,82 @@
+name: Deploy SIMPEG Refactor (dev)
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: simpeg-refactor-dev-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DEPLOY_HOST: 10.0.2.2
+  DEPLOY_USER: adi
+  DEPLOY_APP_DIR: /www/wwwroot/devsimpeg.bkkjateng.co.id
+  DEPLOY_BRANCH: dev
+
+jobs:
+  deploy:
+    # 10.0.2.2 is a private/LAN address. A GitHub-hosted runner cannot reach it.
+    # Register a self-hosted runner inside the same network before enabling this.
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Validate source before deploy
+        run: |
+          test -f artisan
+          test -f composer.json
+          test -f composer.lock
+          test -f package-lock.json
+          git diff --check
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          test -n "$DEPLOY_SSH_KEY" || { echo 'DEPLOY_SSH_KEY belum diatur.' >&2; exit 1; }
+          test -n "$DEPLOY_KNOWN_HOSTS" || { echo 'DEPLOY_KNOWN_HOSTS belum diatur.' >&2; exit 1; }
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 644 "$HOME/.ssh/known_hosts"
+
+      - name: Upload deploy script
+        run: |
+          scp -i "$HOME/.ssh/deploy_key" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            deploy/server-deploy.sh \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/simpeg-refactor-deploy-${GITHUB_SHA}.sh"
+
+      - name: Pull and deploy on server
+        run: |
+          ssh -i "$HOME/.ssh/deploy_key" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "chmod 700 /tmp/simpeg-refactor-deploy-${GITHUB_SHA}.sh && \
+             DEPLOY_BRANCH='${DEPLOY_BRANCH}' \
+             bash /tmp/simpeg-refactor-deploy-${GITHUB_SHA}.sh '${DEPLOY_APP_DIR}'"
+
+      - name: Remove temporary deploy script
+        if: always()
+        run: |
+          ssh -i "$HOME/.ssh/deploy_key" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "rm -f /tmp/simpeg-refactor-deploy-${GITHUB_SHA}.sh" || true
