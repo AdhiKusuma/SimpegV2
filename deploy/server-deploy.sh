@@ -28,17 +28,29 @@ fail() {
     exit 1
 }
 
+[ -d "$APP_DIR" ] || fail "App directory tidak ditemukan: $APP_DIR"
+[ -f "$ENV_FILE" ] || fail "File environment tidak ditemukan: $ENV_FILE. Buat shared/.env sebelum deploy."
+
 command -v git >/dev/null 2>&1 || fail 'git tidak tersedia.'
 command -v "$PHP_BIN" >/dev/null 2>&1 || fail "PHP tidak tersedia: $PHP_BIN"
 command -v "$COMPOSER_BIN" >/dev/null 2>&1 || fail "Composer tidak tersedia: $COMPOSER_BIN"
 command -v "$NPM_BIN" >/dev/null 2>&1 || fail "npm tidak tersedia: $NPM_BIN"
 
+[ -r "$ENV_FILE" ] || fail "File environment tidak dapat dibaca: $ENV_FILE"
+
+# Fail before creating a release when the server runtime cannot run Laravel.
+"$PHP_BIN" -r '
+$required = ["ctype", "curl", "dom", "fileinfo", "mbstring", "openssl", "pdo", "pdo_mysql", "session", "tokenizer", "xml", "zip"];
+$missing = array_values(array_filter($required, static fn (string $extension): bool => ! extension_loaded($extension)));
+if ($missing !== []) {
+    fwrite(STDERR, "Extension PHP yang belum tersedia: ".implode(", ", $missing)."\n");
+    exit(1);
+}
+' || fail 'PHP extension wajib belum lengkap.'
+
 CURRENT_PHP_VERSION="$($PHP_BIN -r 'echo PHP_VERSION;')"
 "$PHP_BIN" -r "exit(version_compare(PHP_VERSION, '$MIN_PHP_VERSION', '>=') ? 0 : 1);" \
     || fail "PHP $MIN_PHP_VERSION atau lebih baru diperlukan. Versi aktif: $CURRENT_PHP_VERSION"
-
-[ -f "$ENV_FILE" ] || fail "File environment tidak ditemukan: $ENV_FILE"
-[ -d "$APP_DIR" ] || fail "App directory tidak ditemukan: $APP_DIR"
 
 mkdir -p "$RELEASES_DIR" "$SHARED_DIR/storage/app/public" \
     "$SHARED_DIR/storage/framework/cache" \
@@ -91,8 +103,25 @@ if [ ! -f "$RELEASE_MARKER" ]; then
         --optimize-autoloader \
         --working-dir="$RELEASE_DIR"
 
+    "$COMPOSER_BIN" check-platform-reqs \
+        --no-dev \
+        --working-dir="$RELEASE_DIR" \
+        || fail 'Dependency PHP tidak kompatibel dengan runtime server.'
+
+    [ -f "$RELEASE_DIR/vendor/autoload.php" ] \
+        || fail "vendor/autoload.php tidak terbentuk di $RELEASE_DIR"
+    [ -f "$RELEASE_DIR/public/index.php" ] \
+        || fail "public/index.php tidak ditemukan di $RELEASE_DIR"
+
     "$NPM_BIN" ci --no-audit --no-fund --prefix "$RELEASE_DIR"
     "$NPM_BIN" run build --prefix "$RELEASE_DIR"
+
+    [ -f "$RELEASE_DIR/public/build/manifest.json" ] \
+        || fail "Aset frontend tidak terbentuk: public/build/manifest.json"
+
+    # Validate database connectivity before applying migrations.
+    "$PHP_BIN" "$RELEASE_DIR/artisan" migrate:status >/dev/null \
+        || fail 'Database tidak dapat diakses atau konfigurasi .env tidak valid.'
 
     "$PHP_BIN" "$RELEASE_DIR/artisan" migrate --force
     "$PHP_BIN" "$RELEASE_DIR/artisan" optimize:clear
@@ -124,3 +153,4 @@ for old_release in "${OLD_RELEASES[@]}"; do
 done
 
 printf 'Deploy selesai: %s (%s)\n' "$BRANCH" "$COMMIT"
+printf 'Document root wajib: %s/public\n' "$CURRENT_LINK"

@@ -257,18 +257,79 @@ Repository ini berisi aplikasi SIMPEG Refactor mandiri; deploy dengan document r
 
 ## Deploy
 
-Upload seluruh project di luar document root web, kemudian arahkan document root domain langsung ke folder `public/`. Jangan jadikan root repository sebagai document root. Siapkan `.env` di server (jangan commit), pasang dependency PHP, dan bangun aset:
+Deployment menggunakan release terpisah dan symlink `current`. Dengan pola ini, folder repository bukan document root, file `.env` dan data runtime tidak ikut tertimpa, serta release baru tidak diaktifkan sebelum dependency dan struktur Laravel lolos pemeriksaan.
+
+Jalankan perintah berikut di server melalui SSH, bukan di terminal Mac lokal. Jangan menjalankan `git clone ... .` di dalam folder aplikasi yang sudah berisi file. Script akan menyimpan clone Git di folder internal `.deploy/repository` dan membuat release di `.deploy/releases`.
+
+### Prasyarat server
+
+- PHP `8.4.1` atau lebih baru; branch `dev` saat ini mensyaratkan PHP `^8.4.1`. PHP `8.3.6` belum kompatibel.
+- Extension PHP: `ctype`, `curl`, `dom`, `fileinfo`, `mbstring`, `openssl`, `pdo`, `pdo_mysql`, `session`, `tokenizer`, `xml`, dan `zip`.
+- Composer, Node.js/npm, Git, dan akses clone ke repository.
+- Database MySQL aktif dan `.env` server sudah berisi konfigurasi database yang benar.
+
+Siapkan folder data bersama satu kali. Jika folder aplikasi sudah berisi deployment lama, jangan dihapus sebelum backup dan verifikasi; buat folder `shared` di sampingnya:
 
 ```bash
-composer install --no-dev --optimize-autoloader
-npm ci
+mkdir -p /www/wwwroot/devsimpeg.bkkjateng.co.id/shared/public/uploads
+cp /path/backup/.env /www/wwwroot/devsimpeg.bkkjateng.co.id/shared/.env
+chmod 640 /www/wwwroot/devsimpeg.bkkjateng.co.id/shared/.env
+```
+
+Jika `.env` masih berada di folder deployment lama, salin file tersebut ke `shared/.env` setelah memastikan isinya benar. Jangan commit `.env` ke GitHub.
+
+### Deploy manual yang aman
+
+Di server:
+
+```bash
+cd /tmp
+git clone --branch dev --single-branch https://github.com/AdhiKusuma/SimpegV2.git simpegv2-deploy
+cd simpegv2-deploy
+
+# Ganti PHP_BIN dengan binary PHP 8.4 milik server aaPanel.
+APP_DIR=/www/wwwroot/devsimpeg.bkkjateng.co.id \
+PHP_BIN=/www/server/php/84/bin/php \
+DEPLOY_BRANCH=dev \
+bash deploy/server-deploy.sh
+```
+
+Jika path PHP 8.4 berbeda, cari dari aaPanel atau jalankan `command -v php` setelah memilih versi PHP untuk site tersebut. Composer juga harus menggunakan runtime PHP yang sama; jika Composer global masih memakai PHP 8.3, gunakan `COMPOSER_BIN` yang sesuai, misalnya wrapper Composer yang dijalankan dengan PHP 8.4.
+
+Script akan berhenti sebelum switch `current` apabila PHP belum sesuai, extension kurang, `.env` tidak ada, `vendor/autoload.php` tidak terbentuk, build frontend gagal, atau database tidak dapat diakses. Script hanya menjalankan migration biasa dengan `--force`; jangan gunakan `migrate:fresh` atau `db:wipe`. Backup database sebelum migration tetap wajib.
+
+Setelah deploy berhasil, pastikan file inti ada:
+
+```bash
+test -f /www/wwwroot/devsimpeg.bkkjateng.co.id/current/public/index.php && echo 'public OK'
+test -f /www/wwwroot/devsimpeg.bkkjateng.co.id/current/vendor/autoload.php && echo 'vendor OK'
+```
+
+Atur document root domain di aaPanel tepat ke:
+
+```text
+/www/wwwroot/devsimpeg.bkkjateng.co.id/current/public
+```
+
+Jangan arahkan domain ke `/www/wwwroot/devsimpeg.bkkjateng.co.id`, `backend`, atau folder repository. Error `public/../vendor/autoload.php` sebelumnya terjadi karena document root menunjuk ke deployment lama yang belum memiliki `vendor`, bukan ke release Laravel yang sudah dibangun.
+
+Untuk pemeriksaan lokal sebelum push:
+
+```bash
+composer check-platform-reqs
+php artisan test
+git diff --check
+```
+
+Build asset lokal jika diperlukan:
+
+```bash
+npm ci --no-audit --no-fund
 npm run build
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 ```
-
-Gunakan kredensial database production hanya pada `.env` server. Tinjau migration dan backup database sebelum menjalankan `php artisan migrate --force`; jangan gunakan `migrate:fresh` atau `db:wipe`.
 
 ### Otomasi pull dan deploy branch `dev`
 
