@@ -84,7 +84,7 @@ class EmployeeController extends Controller
         $filterOptionsQuery = clone $query;
 
         if ($division) {
-            $query->where('j.unit_kerja', $division);
+            $query->where('mj.nama_unit_kerja', $division);
         }
 
         if ($position) {
@@ -112,7 +112,8 @@ class EmployeeController extends Controller
                     ->orWhere('p.nik', 'like', $like)
                     ->orWhere('p.nama', 'like', $like)
                     ->orWhere('j.jabatan', 'like', $like)
-                    ->orWhere('k.nama_kantor', 'like', $like);
+                    ->orWhere('k.nama_kantor', 'like', $like)
+                    ->orWhere('mj.nama_unit_kerja', 'like', $like);
             });
         }
 
@@ -130,7 +131,7 @@ class EmployeeController extends Controller
                 'j.jabatan',
                 'j.unit_kerja',
                 'k.nama_kantor',
-                DB::raw('COALESCE(k.nama_kantor, j.unit_kerja) as divisi'),
+                'mj.nama_unit_kerja as divisi',
                 'mut.jns_mutasi',
                 'mut.tgl_mutasi',
             ])
@@ -549,7 +550,8 @@ class EmployeeController extends Controller
                 $join->on('p.id_peg', '=', 'j.id_peg')
                     ->where('j.status_jab', 'Aktif');
             })
-            ->leftJoin('tb_kantor as k', 'j.unit_kerja', '=', 'k.kode_kantor_detail');
+            ->leftJoin('tb_kantor as k', 'j.unit_kerja', '=', 'k.kode_kantor_detail')
+            ->leftJoin('tb_master_jabatan as mj', 'j.kode_jabatan', '=', 'mj.kode_jabatan');
 
         if ($tab === 'purna') {
             $latestMutation = TbMutasi::query()
@@ -583,15 +585,15 @@ class EmployeeController extends Controller
     private function employeeFilterOptions(Builder $query): array
     {
         $divisions = (clone $query)
-            ->whereNotNull('j.unit_kerja')
-            ->where('j.unit_kerja', '<>', '')
-            ->select('j.unit_kerja as value', 'k.nama_kantor as label')
+            ->whereNotNull('mj.nama_unit_kerja')
+            ->where('mj.nama_unit_kerja', '<>', '')
+            ->selectRaw('mj.nama_unit_kerja as value, mj.nama_unit_kerja as label')
             ->distinct()
-            ->orderBy('k.nama_kantor')
+            ->orderBy('mj.nama_unit_kerja')
             ->get()
             ->map(fn ($unit): array => [
                 'value' => (string) $unit->value,
-                'label' => trim((string) ($unit->label ?: $unit->value)),
+                'label' => trim((string) $unit->label),
             ])
             ->values();
 
