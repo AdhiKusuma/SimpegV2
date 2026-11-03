@@ -153,32 +153,50 @@ class WorkflowSmokeTest extends TestCase
 
     public function test_kepala_can_reject_a_pending_authorization(): void
     {
-        $pending = DB::table('tb_edit_pending')
-            ->where('status_otorisasi', 'pending')
-            ->latest('id_edit')
-            ->first();
+        $employeeId = DB::table('tb_pegawai as p')
+            ->join('tb_jabatan as j', 'j.id_peg', '=', 'p.id_peg')
+            ->where('p.status_aktif', 1)
+            ->where('j.status_jab', 'Aktif')
+            ->where('j.unit_kerja', '001000')
+            ->value('p.id_peg');
 
-        if ($pending === null) {
-            $this->markTestSkipped('Tidak ada pengajuan menunggu untuk smoke test penolakan.');
+        if ($employeeId === null) {
+            $this->markTestSkipped('Tidak ada pegawai aktif di kantor 001000 untuk smoke test penolakan.');
         }
 
         DB::beginTransaction();
 
         try {
+            $pendingId = DB::table('tb_edit_pending')->insertGetId([
+                'kode_kantor' => '001',
+                'id_peg' => $employeeId,
+                'jenis_data' => 'keluarga_anak_create',
+                'data_lama' => null,
+                'data_baru' => json_encode(['nama' => 'Smoke Anak Ditolak'], JSON_THROW_ON_ERROR),
+                'id_user' => 'smoke-user',
+                'status_otorisasi' => 'Menunggu',
+                'tanggal_pengajuan' => now(),
+            ]);
+
             $response = $this->withSession([
                 'id_user' => 'smoke-kepala',
                 'hak_akses' => 'kepala',
                 'kode_kantor' => '001000',
-            ])->post("/otorisasi/{$pending->id_edit}/process", [
+            ])->post("/otorisasi/{$pendingId}/process", [
                 'action' => 'reject',
                 'comment' => 'Smoke test rejection',
             ]);
 
-            $response->assertRedirectToRoute('authorizations.show', ['id' => $pending->id_edit]);
+            $response->assertRedirectToRoute('authorizations.show', ['id' => $pendingId]);
             $this->assertDatabaseHas('tb_edit_pending', [
-                'id_edit' => $pending->id_edit,
+                'id_edit' => $pendingId,
                 'status_otorisasi' => 'Ditolak',
                 'komentar_otorisasi' => 'Smoke test rejection',
+            ]);
+            $this->assertDatabaseHas('tb_notifikasi', [
+                'id_user' => 'smoke-user',
+                'judul' => 'Status Permintaan Edit',
+                'status_baca' => 'unread',
             ]);
         } finally {
             DB::rollBack();
