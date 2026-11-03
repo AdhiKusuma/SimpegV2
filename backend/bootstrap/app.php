@@ -21,8 +21,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'legacy.auth' => RequireLegacySession::class,
         ]);
 
+        // Read trusted proxy addresses from TRUSTED_PROXIES per environment.
         $middleware->trustProxies(
-            at: ['127.0.0.1', '::1'],
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT

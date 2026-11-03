@@ -47,7 +47,7 @@ class WorkflowSmokeTest extends TestCase
         $requests = [
             'children' => [
                 'id_peg' => $employeeId,
-                'nik' => 'SMOKE'.$suffix,
+                'nik' => '20261103'.$suffix,
                 'nama' => 'Smoke Anak',
                 'tmp_lhr' => 'Semarang',
                 'tgl_lhr' => '2020-01-01',
@@ -57,7 +57,7 @@ class WorkflowSmokeTest extends TestCase
             ],
             'parents' => [
                 'id_peg' => $employeeId,
-                'nik' => 'SMOKEP'.$suffix,
+                'nik' => '19700101'.$suffix,
                 'nama' => 'Smoke Orang Tua',
                 'tmp_lhr' => 'Semarang',
                 'tgl_lhr' => '1970-01-01',
@@ -67,7 +67,7 @@ class WorkflowSmokeTest extends TestCase
             ],
             'spouses' => [
                 'id_peg' => $employeeId,
-                'nik' => 'SMOKES'.$suffix,
+                'nik' => '19900101'.$suffix,
                 'nama' => 'Smoke Pasangan',
                 'tmp_lhr' => 'Semarang',
                 'tgl_lhr' => '1990-01-01',
@@ -83,14 +83,14 @@ class WorkflowSmokeTest extends TestCase
         try {
             foreach ($requests as $type => $payload) {
                 $response = $this->withSession($userSession)->post("/keluarga/{$type}", $payload);
-                $response->assertRedirect();
+                $response->assertRedirect()->assertSessionHasNoErrors();
             }
 
             $pending = DB::table('tb_edit_pending')
                 ->where('id_user', 'smoke-user')
                 ->where('id_peg', $employeeId)
                 ->where('jenis_data', 'keluarga_anak_create')
-                ->where('status_otorisasi', 'pending')
+                ->where('status_otorisasi', 'Menunggu')
                 ->latest('id_edit')
                 ->first();
 
@@ -130,11 +130,11 @@ class WorkflowSmokeTest extends TestCase
             $approval->assertRedirect();
             $this->assertDatabaseHas('tb_edit_pending', [
                 'id_edit' => $pending->id_edit,
-                'status_otorisasi' => 'approved',
+                'status_otorisasi' => 'Disetujui',
             ]);
             $this->assertDatabaseHas('tb_anak', [
                 'id_peg' => $employeeId,
-                'nik' => 'SMOKE'.$suffix,
+                'nik' => $requests['children']['nik'],
                 'nama' => 'Smoke Anak',
             ]);
             $this->assertDatabaseHas('tb_notifikasi', [
@@ -177,7 +177,7 @@ class WorkflowSmokeTest extends TestCase
             $response->assertRedirectToRoute('authorizations.show', ['id' => $pending->id_edit]);
             $this->assertDatabaseHas('tb_edit_pending', [
                 'id_edit' => $pending->id_edit,
-                'status_otorisasi' => 'rejected',
+                'status_otorisasi' => 'Ditolak',
                 'komentar_otorisasi' => 'Smoke test rejection',
             ]);
         } finally {

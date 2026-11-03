@@ -22,15 +22,15 @@ class TbEditPending extends Model
     {
         return Attribute::make(
             get: fn (?string $value): ?string => match ($value) {
-                'pending', null, '' => 'Menunggu',
-                'approved' => 'Disetujui',
-                'rejected' => 'Ditolak',
+                'pending', 'Menunggu', null, '' => 'Menunggu',
+                'approved', 'Disetujui' => 'Disetujui',
+                'rejected', 'Ditolak' => 'Ditolak',
                 default => $value,
             },
             set: fn (?string $value): ?string => match ($value) {
-                'Menunggu', 'pending' => 'pending',
-                'Disetujui', 'approved' => 'approved',
-                'Ditolak', 'rejected' => 'rejected',
+                'Menunggu', 'pending' => 'Menunggu',
+                'Disetujui', 'approved' => 'Disetujui',
+                'Ditolak', 'rejected' => 'Ditolak',
                 default => $value,
             },
         );

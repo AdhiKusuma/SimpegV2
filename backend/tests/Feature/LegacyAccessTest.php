@@ -65,8 +65,11 @@ class LegacyAccessTest extends TestCase
             'kode_kantor' => '-',
         ]);
 
-        $this->get('/dashboard/cabang')->assertOk();
-        $this->get('/dashboard')->assertForbidden();
+        $this->get('/dashboard/cabang')->assertRedirectToRoute('dashboard');
+        $this->get('/dashboard')->assertOk()->assertInertia(fn ($page) => $page
+            ->component('Dashboard/Index')
+            ->where('dashboardLocked', true)
+            ->where('canSelectOffice', false));
     }
 
     public function test_kepala_can_open_the_inactive_employee_card_destination(): void
@@ -114,7 +117,8 @@ class LegacyAccessTest extends TestCase
         $dashboard = $this->withSession($session)->get('/dashboard');
         $dashboard->assertOk()->assertInertia(fn ($page) => $page
             ->component('Dashboard/Index')
-            ->where('dashboardType', 'admin'));
+            ->where('dashboardLocked', false)
+            ->where('canSelectOffice', true));
 
         $users = $this->withSession($session)->get('/users');
         $users->assertOk()->assertInertia(fn ($page) => $page
@@ -816,7 +820,7 @@ class LegacyAccessTest extends TestCase
         $rows = [[
             'values' => [
                 $id,
-                '199001012015011001',
+                '1990010120150110',
                 'Pegawai Import Test',
                 'Jakarta',
                 '20-11-1990',

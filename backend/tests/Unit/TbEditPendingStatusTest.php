@@ -11,15 +11,15 @@ class TbEditPendingStatusTest extends TestCase
     {
         $pending = new TbEditPending;
         $pending->status_otorisasi = 'Menunggu';
-        $this->assertSame('pending', $pending->getAttributes()['status_otorisasi']);
+        $this->assertSame('Menunggu', $pending->getAttributes()['status_otorisasi']);
         $this->assertSame('Menunggu', $pending->status_otorisasi);
 
         $pending->status_otorisasi = 'Disetujui';
-        $this->assertSame('approved', $pending->getAttributes()['status_otorisasi']);
+        $this->assertSame('Disetujui', $pending->getAttributes()['status_otorisasi']);
         $this->assertSame('Disetujui', $pending->status_otorisasi);
 
         $pending->status_otorisasi = 'Ditolak';
-        $this->assertSame('rejected', $pending->getAttributes()['status_otorisasi']);
+        $this->assertSame('Ditolak', $pending->getAttributes()['status_otorisasi']);
         $this->assertSame('Ditolak', $pending->status_otorisasi);
     }
 

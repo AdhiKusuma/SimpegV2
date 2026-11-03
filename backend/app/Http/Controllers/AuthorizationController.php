@@ -307,12 +307,12 @@ class AuthorizationController extends Controller
     {
         return match ($status) {
             'Menunggu' => $query->where(function (Builder $builder) use ($column): void {
-                $builder->where($column, 'pending')
+                $builder->whereIn($column, ['Menunggu', 'pending'])
                     ->orWhereNull($column)
                     ->orWhere($column, '');
             }),
-            'Disetujui' => $query->where($column, 'approved'),
-            'Ditolak' => $query->where($column, 'rejected'),
+            'Disetujui' => $query->whereIn($column, ['Disetujui', 'approved']),
+            'Ditolak' => $query->whereIn($column, ['Ditolak', 'rejected']),
             default => $query,
         };
     }
