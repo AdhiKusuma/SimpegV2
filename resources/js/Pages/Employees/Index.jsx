@@ -5,6 +5,8 @@ import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
 import SelectCombobox from '../../Components/SelectCombobox';
 
+const ALL_DIVISIONS = '__all__';
+
 export default function EmployeesIndex({ employees, offices, divisions, positions, years, filters, canManage }) {
     const { flash } = usePage().props;
     const [officeValue, setOfficeValue] = useState(String(filters.kantor || ''));
@@ -43,7 +45,7 @@ export default function EmployeesIndex({ employees, offices, divisions, position
             if (!response.ok) throw new Error('Filter options request failed');
             const options = await response.json();
             setDivisionOptions(options.divisions || []);
-            setPositionOptions(options.positions || []);
+            setPositionOptions([]);
         } catch (error) {
             if (error.name !== 'AbortError') {
                 setDivisionOptions([]);
@@ -53,6 +55,43 @@ export default function EmployeesIndex({ employees, offices, divisions, position
             if (!controller.signal.aborted) setLoadingOptions(false);
         }
     }
+
+    async function changeDivision(nextDivision) {
+        setDivisionValue(nextDivision);
+        setPositionValue('');
+        setPositionOptions([]);
+        optionRequest.current?.abort();
+
+        if (!officeValue || !nextDivision) {
+            setLoadingOptions(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        optionRequest.current = controller;
+        setLoadingOptions(true);
+
+        try {
+            const params = new URLSearchParams({ kantor: officeValue, divisi: nextDivision, tab: filters.tab });
+            const response = await fetch(`/pegawai/filter-options?${params}`, {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                signal: controller.signal,
+            });
+
+            if (!response.ok) throw new Error('Position options request failed');
+            const options = await response.json();
+            setPositionOptions(options.positions || []);
+        } catch (error) {
+            if (error.name !== 'AbortError') setPositionOptions([]);
+        } finally {
+            if (!controller.signal.aborted) setLoadingOptions(false);
+        }
+    }
+
+    const divisionChoices = officeValue
+        ? [{ value: ALL_DIVISIONS, label: '-- Semua Unit/Divisi --' }, ...divisionOptions]
+        : divisionOptions;
 
     function submit(event) {
         event.preventDefault();
@@ -78,8 +117,8 @@ export default function EmployeesIndex({ employees, offices, divisions, position
                     <MobileFilterGroup id="employees-mobile-filters" activeCount={Number(Boolean(officeValue)) + Number(Boolean(divisionValue)) + Number(Boolean(positionValue)) + Number(Boolean(filters.year))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
                         <div className="employees-index-filter-grid">
                             <SearchableCombobox id="kantor" name="kantor" label="Kantor / Area" value={officeValue} onChange={changeOffice} options={offices} optionValue={(office) => office.kode_kantor_detail} optionLabel={(office) => office.nama_kantor || office.kode_kantor_detail} placeholder="Cari kantor atau area" />
-                            <SearchableCombobox id="employee-division" name="divisi" label="Unit kerja / Divisi" value={divisionValue} onChange={setDivisionValue} options={divisionOptions} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : loadingOptions ? 'Memuat unit kerja…' : divisionOptions.length === 0 ? 'Tidak ada divisi terpisah' : 'Cari unit kerja atau divisi'} disabled={!officeValue || loadingOptions || divisionOptions.length === 0} description={loadingOptions ? 'Memuat unit kerja dan jabatan…' : officeValue && divisionOptions.length === 0 ? 'Database belum mencatat divisi terpisah untuk kantor ini.' : undefined} />
-                            <SearchableCombobox id="employee-position" name="jabatan" label="Jabatan" value={positionValue} onChange={setPositionValue} options={positionOptions} placeholder={officeValue ? 'Cari jabatan' : 'Pilih kantor terlebih dahulu'} disabled={!officeValue || loadingOptions} />
+                            <SearchableCombobox id="employee-division" name="divisi" label="Divisi / Unit Kerja" value={divisionValue} onChange={changeDivision} options={divisionChoices} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : loadingOptions && divisionChoices.length === 0 ? 'Memuat unit kerja…' : 'Pilih unit/divisi'} disabled={!officeValue || (loadingOptions && divisionChoices.length === 0)} description={officeValue && divisionOptions.length === 0 && !loadingOptions ? 'Belum ada unit/divisi khusus untuk kantor ini; pilih Semua Unit/Divisi untuk melihat seluruh jabatan.' : undefined} />
+                            <SearchableCombobox id="employee-position" name="jabatan" label="Jabatan" value={positionValue} onChange={setPositionValue} options={positionOptions} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : !divisionValue ? 'Pilih unit dulu' : loadingOptions ? 'Memuat jabatan…' : 'Cari jabatan'} disabled={!officeValue || !divisionValue || loadingOptions} />
                             <SelectCombobox id="employee-start-year" name="year" label="Tahun mulai kerja" value={filters.year} options={years} emptyLabel="Semua tahun" />
                             <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
                             <button type="submit" className="simpeg-primary employees-index-desktop-filter-apply">Terapkan</button>

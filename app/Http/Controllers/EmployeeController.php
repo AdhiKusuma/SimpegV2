@@ -32,6 +32,8 @@ class EmployeeController extends Controller
 {
     private const GENERIC_UNIT_LABELS = ['kantor cabang', 'area kantor wilayah'];
 
+    private const ALL_DIVISIONS = '__all__';
+
     private const IMPORT_HEADERS = [
         'ID Pegawai (Wajib)',
         'NIP',
@@ -68,6 +70,9 @@ class EmployeeController extends Controller
             $division = '';
         }
         $position = $request->string('jabatan')->trim()->value();
+        if ($division === '') {
+            $position = '';
+        }
         $unit = $role === 'kepala' ? $request->session()->get('kode_kantor') : null;
 
         $query = $this->baseQuery($tab);
@@ -88,7 +93,7 @@ class EmployeeController extends Controller
 
         $filterOptionsQuery = clone $query;
 
-        if ($division) {
+        if ($division !== '' && $division !== self::ALL_DIVISIONS) {
             $query->where('mj.nama_unit_kerja', $division);
         }
 
@@ -153,7 +158,7 @@ class EmployeeController extends Controller
             ->get(['kode_kantor_detail', 'nama_kantor', 'level', 'kode_cabang']);
 
         $filterOptions = $office !== ''
-            ? $this->employeeFilterOptions($filterOptionsQuery)
+            ? $this->employeeFilterOptions($filterOptionsQuery, $division)
             : ['divisions' => [], 'positions' => []];
 
         return Inertia::render('Employees/Index', [
@@ -181,6 +186,10 @@ class EmployeeController extends Controller
 
         $tab = $request->string('tab')->trim()->value() ?: 'active';
         $office = $request->string('kantor')->trim()->value();
+        $division = $request->string('divisi')->trim()->value();
+        if ($this->isGenericUnitLabel($division)) {
+            $division = '';
+        }
 
         if ($office === '') {
             return response()->json(['divisions' => [], 'positions' => []]);
@@ -206,7 +215,7 @@ class EmployeeController extends Controller
             $query->where('j.unit_kerja', $office);
         }
 
-        return response()->json($this->employeeFilterOptions($query));
+        return response()->json($this->employeeFilterOptions($query, $division));
     }
 
     public function show(Request $request, string $id): Response
@@ -587,7 +596,7 @@ class EmployeeController extends Controller
         return $query->where('p.status_aktif', 1)->whereNotNull('j.id_jab');
     }
 
-    private function employeeFilterOptions(Builder $query): array
+    private function employeeFilterOptions(Builder $query, string $division = ''): array
     {
         $divisions = (clone $query)
             ->whereNotNull('mj.nama_unit_kerja')
@@ -601,17 +610,26 @@ class EmployeeController extends Controller
                 'value' => (string) $unit->value,
                 'label' => trim((string) $unit->label),
             ])
+            ->reject(fn (array $unit): bool => $this->isGenericUnitLabel($unit['label']))
             ->values();
 
-        $positions = (clone $query)
-            ->whereNotNull('j.jabatan')
-            ->where('j.jabatan', '<>', '')
-            ->select('j.jabatan')
-            ->distinct()
-            ->orderBy('j.jabatan')
-            ->pluck('j.jabatan')
-            ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
-            ->values();
+        $positions = collect();
+
+        if ($division !== '') {
+            $positions = (clone $query)
+                ->when(
+                    $division !== self::ALL_DIVISIONS,
+                    fn (Builder $builder) => $builder->where('mj.nama_unit_kerja', $division),
+                )
+                ->whereNotNull('j.jabatan')
+                ->where('j.jabatan', '<>', '')
+                ->select('j.jabatan')
+                ->distinct()
+                ->orderBy('j.jabatan')
+                ->pluck('j.jabatan')
+                ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
+                ->values();
+        }
 
         return ['divisions' => $divisions, 'positions' => $positions];
     }
@@ -635,7 +653,9 @@ class EmployeeController extends Controller
 
     private function isGenericUnitLabel(?string $unit): bool
     {
-        return in_array(strtolower(trim((string) $unit)), self::GENERIC_UNIT_LABELS, true);
+        $normalized = preg_replace('/\s+/u', ' ', str_replace("\xC2\xA0", ' ', (string) $unit));
+
+        return in_array(strtolower(trim($normalized ?? (string) $unit)), self::GENERIC_UNIT_LABELS, true);
     }
 
     private function formatDate(mixed $value): ?string
