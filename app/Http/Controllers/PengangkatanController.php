@@ -18,17 +18,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PengangkatanController extends Controller
 {
-    private const TYPES = ['Kontrak', 'Calon Pegawai', 'Tetap', 'Perubahan NIP'];
-
-    private const HISTORY_TABLES = [
-        'tb_anak',
-        'tb_hukuman',
-        'tb_jabatan',
-        'tb_mutasi',
-        'tb_ortu',
-        'tb_pendidikan',
-        'tb_suamiistri',
-    ];
+    private const TYPES = ['Kontrak', 'Calon Pegawai', 'Tetap'];
 
     public function index(Request $request): Response
     {
@@ -119,36 +109,26 @@ class PengangkatanController extends Controller
 
         try {
             DB::transaction(function () use ($request, &$data, &$storedFile): void {
-                $oldId = $data['id_peg'];
-                $newId = $data['id_peg_baru'];
-                $storedFile = $this->storeDocument($request, $newId);
+                $employeeId = $data['id_peg'];
+                $storedFile = $this->storeDocument($request, $employeeId);
 
                 TbAngkat::query()->create([
-                    'id_peg' => $oldId,
+                    'id_peg' => $employeeId,
                     'jns_mutasi' => $data['jns_mutasi'],
-                    'id_peg_baru' => $newId,
+                    'id_peg_baru' => $employeeId,
                     'tgl_mutasi' => $data['tgl_mutasi'],
                     'tmt' => $data['tmt'],
                     'no_mutasi' => $data['no_mutasi'],
                     'sk_mutasi' => $storedFile,
                     'date_reg' => now(),
                 ]);
-
-                TbPegawai::query()->where('id_peg', $oldId)->update(array_filter([
-                    'id_peg' => $newId,
-                    'status_kepeg' => in_array($data['jns_mutasi'], ['Kontrak', 'Calon Pegawai', 'Tetap'], true) ? $data['jns_mutasi'] : null,
-                ], static fn ($value): bool => $value !== null));
-
-                foreach (self::HISTORY_TABLES as $table) {
-                    DB::table($table)->where('id_peg', $newId)->update(['id_peg_old' => $oldId]);
-                }
             });
         } catch (\Throwable $exception) {
             $this->deleteDocument($storedFile);
             throw $exception;
         }
 
-        return to_route('pengangkatan.index')->with('success', 'Pengangkatan pegawai berhasil disimpan dan ID pegawai diperbarui.');
+        return to_route('pengangkatan.index')->with('success', 'Pengangkatan pegawai berhasil disimpan.');
     }
 
     public function update(Request $request, int $id): RedirectResponse
@@ -185,9 +165,8 @@ class PengangkatanController extends Controller
     private function validatedData(Request $request): array
     {
         return $request->validate([
-            'id_peg' => ['required', 'string', 'max:12', Rule::exists('tb_pegawai', 'id_peg')->where(fn ($query) => $query->where('status_kepeg', '<>', 'Tetap'))],
+            'id_peg' => ['required', 'string', 'max:12', Rule::exists('tb_pegawai', 'id_peg')],
             'jns_mutasi' => ['required', Rule::in(self::TYPES)],
-            'id_peg_baru' => ['required', 'string', 'max:12', Rule::unique('tb_pegawai', 'id_peg')],
             'tgl_mutasi' => ['required', 'date'],
             'tmt' => ['required', 'date'],
             'no_mutasi' => ['required', 'string', 'max:50'],
@@ -198,7 +177,6 @@ class PengangkatanController extends Controller
     private function employeesForCreate(): array
     {
         return TbPegawai::query()
-            ->where('status_kepeg', '<>', 'Tetap')
             ->orderBy('nama')
             ->get(['id_peg', 'nama', 'status_kepeg'])
             ->map(fn (TbPegawai $employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama, 'status_kepeg' => $employee->status_kepeg])

@@ -5,7 +5,6 @@ import SelectCombobox from '../../Components/SelectCombobox';
 
 const defaults = {
     id_peg: '',
-    id_peg_baru: '',
     jns_mutasi: '',
     tgl_mutasi: '',
     no_mutasi: '',
@@ -59,7 +58,7 @@ export default function PengangkatanForm({ mode, record, employees, types }) {
                     <Link href="/pengangkatan" className="text-sm font-medium text-blue-600 hover:text-blue-700">← Kembali ke Pengangkatan</Link>
                     <p className="mt-4 text-sm font-medium text-blue-600">Referensi kepegawaian</p>
                     <h1 className="mt-2 text-3xl font-medium text-slate-900">{isEdit ? 'Edit' : 'Tambah'} pengangkatan pegawai</h1>
-                    <p className="mt-2 max-w-2xl text-slate-500">Perubahan ID pegawai berjalan dalam satu transaksi agar relasi sistem tetap konsisten.</p>
+                    <p className="mt-2 max-w-2xl text-slate-500">Catat pengangkatan pegawai berdasarkan jenis, tanggal, dan dokumen keputusan.</p>
                 </div>
 
                 <form onSubmit={submit} encType="multipart/form-data" className="simpeg-form-card">
@@ -82,7 +81,6 @@ export default function PengangkatanForm({ mode, record, employees, types }) {
                             <div className="min-w-0">
                                 <EmployeeCombobox employees={employees} value={form.data.id_peg || ''} onChange={(value) => form.setData('id_peg', value)} label="Pegawai" error={form.errors.id_peg} />
                             </div>
-                            {input('id_peg_baru', 'ID pegawai terbaru', 'text', true)}
                             <div className="min-w-0">
                                 <SelectCombobox id="jns_mutasi" name="jns_mutasi" label="Jenis pengangkatan" value={form.data.jns_mutasi || ''} onChange={(value) => form.setData('jns_mutasi', value)} options={types} emptyLabel="Pilih jenis" required error={form.errors.jns_mutasi} />
                             </div>

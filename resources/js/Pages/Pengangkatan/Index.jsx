@@ -19,7 +19,7 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                 <div>
                     <p className="text-sm font-medium text-blue-600">Referensi kepegawaian</p>
                     <h1 className="mt-2 text-3xl font-medium text-slate-900">Pengangkatan pegawai</h1>
-                    <p className="mt-2 max-w-2xl text-slate-500">Daftar pengangkatan dari tabel sistem dengan ID pegawai terbaru.</p>
+                    <p className="mt-2 max-w-2xl text-slate-500">Daftar riwayat pengangkatan pegawai dari tabel sistem.</p>
                 </div>
                 {canManage && <Link href="/pengangkatan/create" className="inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Pengangkatan baru</Link>}
             </div>
