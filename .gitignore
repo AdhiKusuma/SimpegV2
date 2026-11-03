@@ -1,0 +1,26 @@
+# Local environment and credentials
+/backend/.env
+/backend/.env.*
+!/backend/.env.example
+/backend/auth.json
+
+# Dependencies and generated frontend/backend assets
+/backend/vendor/
+/backend/node_modules/
+/backend/public/build/
+/backend/public/hot
+/backend/public/storage
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.vite/
+
+# Local uploads and runtime storage
+/backend/public/uploads/
+/backend/storage/app/private/*
+!/backend/storage/app/private/.gitignore
+/backend/storage/app/public/*
+!/backend/storage/app/public/.gitignore
+/tmp/
+
+# Operating system files
+.DS_Store
