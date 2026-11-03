@@ -50,7 +50,11 @@ class QuotaJabatanController extends Controller
                 ->select(['k.kode_cabang', 'm.kode_jabatan'])
                 ->selectRaw('m.jabatan as nama_jabatan, m.`group` as group_jabatan, m.lingkup')
                 ->selectRaw('MAX(m.kuota) as kuota_bawaan')
-                ->groupBy('k.kode_cabang', 'm.kode_jabatan', 'm.jabatan', 'm.`group`', 'm.lingkup')
+                // `group` is a reserved SQL word. Keep it as a raw identifier here;
+                // passing the backticks through groupBy() makes Laravel escape them
+                // as part of the column name (m.`group`), causing the quota page to fail.
+                ->groupBy('k.kode_cabang', 'm.kode_jabatan', 'm.jabatan', 'm.lingkup')
+                ->groupByRaw('m.`group`')
                 ->get();
 
             foreach ($defaults as $default) {
