@@ -110,6 +110,7 @@ return [
         'dashboard.cabang' => 'dashboard.view',
         'dashboard.tenure.employees' => 'dashboard.view',
         'employees.index' => 'employees.view',
+        'employees.filter-options' => 'employees.view',
         'employees.show' => 'employees.view',
         'employees.photo' => 'employees.view',
         'employees.create' => 'employees.manage',
