@@ -9,17 +9,36 @@ import { formatRupiah } from '../../lib/payrollMoney';
 
 const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
-const amountFields = [
-    ['gaji_pokok', 'Gaji pokok dasar'], ['golongan_pegawai', 'Nominal golongan'], ['tunj_suami_istri', 'Tunj. suami/istri'], ['tunj_anak', 'Tunj. anak'],
-    ['tunj_jabatan', 'Tunj. jabatan'], ['tunj_ops', 'Tunj. operasional'], ['tunj_pajak', 'Tunj. pajak'],
-    ['tunj_kinerja', 'Tunj. kinerja'], ['tunj_fungsional', 'Tunj. fungsional'], ['tunj_masa_kerja', 'Tunj. masa kerja'],
-    ['honor_kontrak', 'Honor kontrak'], ['thl', 'Tenaga harian lepas'], ['uang_makan_kontrak', 'Tunj. uang makan'],
-    ['bpjs_kesehatan', 'BPJS kesehatan'], ['bpjs_tenaga_kerja', 'BPJS ketenagakerjaan'], ['keris', 'Potongan Keris'],
-    ['total', 'Total'],
-];
-
-const summaryFields = [
-    ['gaji_pokok', 'Gaji pokok dasar'], ['golongan_pegawai', 'Nominal golongan'], ['total', 'Total'],
+const stageOptions = [
+    {
+        value: 'draft',
+        label: 'Draft payroll',
+        description: 'Komponen pendapatan sebelum potongan diterapkan.',
+        fields: [
+            ['gaji_pokok', 'Gaji pokok dasar'], ['golongan_pegawai', 'Nominal golongan'], ['tunj_suami_istri', 'Tunj. suami/istri'], ['tunj_anak', 'Tunj. anak'],
+            ['tunj_jabatan', 'Tunj. jabatan'], ['tunj_ops', 'Tunj. operasional'], ['tunj_kinerja', 'Tunj. kinerja'], ['tunj_fungsional', 'Tunj. fungsional'],
+            ['tunj_pajak', 'Tunj. pajak'],
+            ['tunj_masa_kerja', 'Tunj. masa kerja'], ['honor_kontrak', 'Honor kontrak'], ['thl', 'Tenaga harian lepas'], ['uang_makan_kontrak', 'Tunj. uang makan'],
+            ['jumlah_gaji', 'Jumlah gaji'],
+        ],
+    },
+    {
+        value: 'potongan',
+        label: 'Potongan',
+        description: 'Rincian BPJS, absensi, angsuran kredit, dan potongan Keris.',
+        fields: [
+            ['bpjs_kesehatan', 'BPJS kesehatan'], ['bpjs_tenaga_kerja', 'BPJS ketenagakerjaan'], ['absensi', 'Potongan absensi'],
+            ['angsuran_kredit', 'Angsuran kredit'], ['keris', 'Potongan Keris'], ['jumlah_potongan', 'Jumlah potongan'],
+        ],
+    },
+    {
+        value: 'final',
+        label: 'Payroll final',
+        description: 'Hasil akhir setelah seluruh potongan diperhitungkan.',
+        fields: [
+            ['jumlah_gaji', 'Jumlah gaji'], ['jumlah_potongan', 'Jumlah potongan'], ['gaji_bersih', 'Gaji bersih'], ['total', 'Total ekspor'],
+        ],
+    },
 ];
 
 export default function Index({ filters, years = [], offices = [], summaryRows = [], summaryTotals = {}, entries, payrollImport, canImport, canEditMaster = false, canClearHistory = false, payrollHistoryCount = 0, scopeLabel, scopeLocked, flash = {} }) {
@@ -29,6 +48,8 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
     const [clearHistoryOpen, setClearHistoryOpen] = useState(false);
     const clearHistoryDialog = useRef(null);
     const clearHistoryForm = useForm({ confirmation: '' });
+    const activeStage = stageOptions.find((option) => option.value === (filters.stage || 'final')) || stageOptions[2];
+    const stageFields = activeStage.fields;
     useEffect(() => {
         setSelectedOffice(String(filters.office || ''));
         setSelectedYear(String(filters.tahun));
@@ -56,6 +77,10 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
 
     function setView(view) {
         router.get('/payroll', { ...filters, view }, { preserveState: true, preserveScroll: true, replace: true });
+    }
+
+    function setStage(stage) {
+        router.get('/payroll', { ...filters, stage }, { preserveState: true, preserveScroll: true, replace: true });
     }
 
     function submitClearHistory(event) {
@@ -155,6 +180,7 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                         <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
                     </MobileFilterGroup>
                     <input type="hidden" name="view" value={filters.view} />
+                    <input type="hidden" name="stage" value={activeStage.value} />
                     <button type="submit" className="simpeg-primary simpeg-desktop-filter-apply inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)] sm:col-span-2 xl:col-span-1">Terapkan</button>
                 </form>
                 {scopeLabel && <p className="simpeg-muted mt-3 flex items-center gap-2 text-xs"><LockKeyhole aria-hidden="true" className="h-3.5 w-3.5" />{scopeLabel}</p>}
@@ -165,7 +191,7 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                     <div className="flex items-center gap-3">
                         <span className="simpeg-card-soft inline-flex h-10 w-10 items-center justify-center rounded-xl border"><Banknote aria-hidden="true" className="h-5 w-5" /></span>
                         <div>
-                            <h2 className="simpeg-text font-semibold">{filters.view === 'rincian' ? 'Rincian pegawai' : 'Rekap payroll per kantor'}</h2>
+                            <h2 className="simpeg-text font-semibold">{filters.view === 'rincian' ? 'Rincian pegawai' : 'Rekap payroll per kantor'} · {activeStage.label}</h2>
                             <p className="simpeg-muted text-sm">{monthNames[Number(filters.bulan) - 1]} {filters.tahun}{payrollImport ? ` · ${payrollImport.visible_employee_count.toLocaleString('id-ID')} pegawai dalam cakupan ini` : ''}</p>
                         </div>
                     </div>
@@ -173,6 +199,27 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                         <span className="simpeg-muted inline-flex items-center gap-2 text-xs"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />{payrollImport.source_filename}</span>
                         <span className="simpeg-muted text-xs">Diimpor {payrollImport.imported_at} oleh {payrollImport.imported_by_name}</span>
                     </div>}
+                </div>
+
+                <div className="border-b px-4 py-4 sm:px-5">
+                    <div className="mb-3">
+                        <p className="simpeg-text text-sm font-semibold">Tahap payroll</p>
+                        <p className="simpeg-muted mt-1 text-xs">{activeStage.description} Sumber data tetap sama dengan import dan master payroll.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2" role="tablist" aria-label="Tahap payroll">
+                        {stageOptions.map((stage) => (
+                            <button
+                                key={stage.value}
+                                type="button"
+                                role="tab"
+                                aria-selected={activeStage.value === stage.value}
+                                onClick={() => setStage(stage.value)}
+                                className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${activeStage.value === stage.value ? 'simpeg-primary' : 'simpeg-utility border'}`}
+                            >
+                                {stage.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 border-b px-4 py-3 sm:px-5" role="tablist" aria-label="Tampilan payroll">
@@ -188,28 +235,28 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                     <table className="w-full min-w-[900px] text-left text-sm">
                         <thead className="simpeg-muted border-b text-xs uppercase tracking-wide"><tr>
                             <th className="px-5 py-4">Kantor</th><th className="px-4 py-4 text-right">Pegawai</th>
-                            {summaryFields.map(([, label]) => <th key={label} className="px-4 py-4 text-right">{label}</th>)}
+                            {stageFields.map(([, label]) => <th key={label} className="px-4 py-4 text-right">{label}</th>)}
                         </tr></thead>
                         <tbody className="divide-y">
-                            {summaryRows.length === 0 ? <tr><td colSpan="4" className="simpeg-muted px-5 py-12 text-center">Tidak ada data kantor pada periode ini.</td></tr> : summaryRows.map((row) => <tr key={row.office_code} className="transition hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
+                            {summaryRows.length === 0 ? <tr><td colSpan={stageFields.length + 2} className="simpeg-muted px-5 py-12 text-center">Tidak ada data kantor pada periode ini.</td></tr> : summaryRows.map((row) => <tr key={row.office_code} className="transition hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
                                 <td className="px-5 py-4"><span className="simpeg-text block font-semibold">{row.office_name}</span><span className="simpeg-muted mt-1 block font-mono text-xs">{row.office_code}{row.branch_code ? ` · Cabang ${row.branch_code}` : ''}</span></td>
                                 <td className="simpeg-text px-4 py-4 text-right tabular-nums">{row.employee_count.toLocaleString('id-ID')}</td>
-                                {summaryFields.map(([field]) => <td key={field} className="simpeg-text px-4 py-4 text-right tabular-nums">{formatRupiah(row[field])}</td>)}
+                                {stageFields.map(([field]) => <td key={field} className="simpeg-text px-4 py-4 text-right tabular-nums">{formatRupiah(row[field])}</td>)}
                             </tr>)}
                         </tbody>
                         {summaryRows.length > 0 && <tfoot className="simpeg-muted border-t bg-slate-50/70 font-semibold dark:bg-slate-900/40"><tr>
                             <td className="px-5 py-4">Total dalam tampilan</td><td className="px-4 py-4 text-right tabular-nums">{Number(summaryTotals.employee_count || 0).toLocaleString('id-ID')}</td>
-                            {summaryFields.map(([field]) => <td key={field} className="px-4 py-4 text-right tabular-nums">{formatRupiah(summaryTotals[field])}</td>)}
+                            {stageFields.map(([field]) => <td key={field} className="px-4 py-4 text-right tabular-nums">{formatRupiah(summaryTotals[field])}</td>)}
                         </tr></tfoot>}
                     </table>
                 </div> : <>
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[2600px] text-left text-sm">
+                        <table className="w-full min-w-[1900px] text-left text-sm">
                             <thead className="simpeg-muted border-b text-xs uppercase tracking-wide"><tr>
                                 <th className="sticky left-0 z-10 simpeg-card px-4 py-4">Pegawai</th><th className="px-4 py-4">Kantor payroll</th>
                                 <th className="px-4 py-4">Kode kantor rekening</th><th className="px-4 py-4">No rekening</th>
                                 <th className="px-4 py-4">Nama nasabah</th><th className="px-4 py-4">Tanggal gajian</th>
-                                {amountFields.map(([, label]) => <th key={label} className="px-4 py-4 text-right">{label}</th>)}
+                                {stageFields.map(([, label]) => <th key={label} className="px-4 py-4 text-right">{label}</th>)}
                             </tr></thead>
                             <tbody className="divide-y">
                                 {entries?.data?.length ? entries.data.map((entry) => <tr key={entry.id} className="transition hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
@@ -219,8 +266,8 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                                     <td className="simpeg-muted px-4 py-3 font-mono text-xs">{entry.no_rekening || '—'}</td>
                                     <td className="simpeg-text px-4 py-3">{entry.nama_nasabah || '—'}</td>
                                     <td className="simpeg-muted px-4 py-3">{entry.tgl_gajian || '—'}</td>
-                                    {amountFields.map(([field]) => <td key={field} className="simpeg-text px-4 py-3 text-right tabular-nums">{formatRupiah(entry[field])}</td>)}
-                                </tr>) : <tr><td colSpan={amountFields.length + 6} className="simpeg-muted px-5 py-12 text-center">Tidak ada rincian pegawai untuk kantor dan periode ini.</td></tr>}
+                                    {stageFields.map(([field]) => <td key={field} className="simpeg-text px-4 py-3 text-right tabular-nums">{formatRupiah(entry[field])}</td>)}
+                                </tr>) : <tr><td colSpan={stageFields.length + 6} className="simpeg-muted px-5 py-12 text-center">Tidak ada rincian pegawai untuk kantor dan periode ini.</td></tr>}
                             </tbody>
                         </table>
                     </div>

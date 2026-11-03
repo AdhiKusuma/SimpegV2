@@ -91,6 +91,7 @@ class PayrollController extends Controller
             'bulan' => ['nullable', 'integer', 'between:1,12'],
             'office' => ['nullable', 'string', 'max:20'],
             'view' => ['nullable', 'in:rekap,rincian'],
+            'stage' => ['nullable', 'in:draft,potongan,final'],
         ]);
 
         $scope = $this->officeScope($request);
@@ -102,6 +103,7 @@ class PayrollController extends Controller
         $year = (int) ($validated['tahun'] ?? $latestImport?->tahun ?? now()->year);
         $month = (int) ($validated['bulan'] ?? $latestImport?->bulan ?? now()->month);
         $view = $validated['view'] ?? 'rekap';
+        $stage = $validated['stage'] ?? 'final';
         $payrollImport = PayrollImport::query()
             ->where('is_current', true)
             ->where('tahun', $year)
@@ -210,7 +212,8 @@ class PayrollController extends Controller
         $canClearHistory = $this->canClearDevelopmentHistory($request, $rbac);
 
         return Inertia::render('Payroll/Index', [
-            'filters' => ['tahun' => $year, 'bulan' => $month, 'office' => $selectedOffice, 'view' => $view],
+            'filters' => ['tahun' => $year, 'bulan' => $month, 'office' => $selectedOffice, 'view' => $view, 'stage' => $stage],
+            'stage' => $stage,
             'years' => tap(PayrollImport::query()->where('is_current', true), function ($query) use ($scope): void {
                 if ($scope['restricted']) {
                     $query->whereHas('officeSummaries', fn ($summaries) => $summaries->whereIn('office_code', $scope['codes']));
