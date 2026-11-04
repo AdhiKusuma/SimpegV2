@@ -331,10 +331,10 @@ export default function LegacyPageShell({ title, children }) {
 
     const sidebar = (
         <aside id="primary-navigation" className={`simpeg-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[18rem] flex-col overflow-hidden border-r shadow-xl transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:inset-x-auto lg:bottom-auto lg:z-auto lg:h-dvh lg:min-h-0 lg:w-[17rem] lg:self-start lg:translate-x-0 lg:shadow-none ${sidebarCollapsed ? 'simpeg-sidebar-collapsed' : ''} ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-            <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
+            <div className="simpeg-sidebar-inner flex min-h-0 flex-1 flex-col p-4 sm:p-5">
                 <div className="simpeg-sidebar-brand relative flex items-center gap-2">
-                    <Link href={homeHref} onClick={() => setMobileNavOpen(false)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-2 py-2 pr-12 text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 lg:pr-2">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[16px]">
+                    <Link href={homeHref} onClick={() => setMobileNavOpen(false)} className="simpeg-sidebar-brand-link flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-2 py-2 pr-12 text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 lg:pr-2">
+                        <span className="simpeg-sidebar-logo flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[16px]">
                             <img src={appLogoUrl} alt={`Logo ${appName}`} width="44" height="44" decoding="async" className="h-full w-full object-contain" />
                         </span>
                         <span className="simpeg-sidebar-brand-details min-w-0">
