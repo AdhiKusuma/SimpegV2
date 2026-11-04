@@ -14,6 +14,8 @@ import {
     LayoutDashboard,
     LogOut,
     Menu,
+    PanelLeftClose,
+    PanelLeftOpen,
     Search,
     Settings2,
     ShieldAlert,
@@ -26,10 +28,10 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '../components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
-import { Input } from '../components/ui/input';
+import { Button } from '../Components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../Components/ui/collapsible';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../Components/ui/dropdown-menu';
+import { Input } from '../Components/ui/input';
 import LiveDateTime from './LiveDateTime';
 import ThemeToggle from './ThemeToggle';
 
@@ -167,28 +169,29 @@ function navigationItemIsActive(item, url) {
         : routeIsActive(url, item.href);
 }
 
-function NavigationEntry({ item, url, onNavigate, depth = 0 }) {
+function NavigationEntry({ item, url, onNavigate, depth = 0, sidebarCollapsed = false }) {
     const active = navigationItemIsActive(item, url);
     const Icon = item.icon || ChevronRight;
 
     if (item.items) {
-        return <NavigationGroup item={item} url={url} onNavigate={onNavigate} depth={depth} />;
+        return <NavigationGroup item={item} url={url} onNavigate={onNavigate} depth={depth} sidebarCollapsed={sidebarCollapsed} />;
     }
 
     return (
         <Link
             href={item.href}
             onClick={onNavigate}
-            className={`group inline-flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 ${depth > 0 ? 'text-[0.8125rem]' : ''} ${active ? 'simpeg-nav-active shadow-sm' : 'simpeg-nav-link'}`}
+            title={sidebarCollapsed ? item.label : undefined}
+            className={`simpeg-sidebar-nav-link group inline-flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 ${depth > 0 ? 'text-[0.8125rem]' : ''} ${active ? 'simpeg-nav-active shadow-sm' : 'simpeg-nav-link'}`}
         >
             <Icon className={`h-[1.05rem] w-[1.05rem] shrink-0 ${active ? 'simpeg-nav-active-icon' : 'simpeg-nav-icon'}`} strokeWidth={1.8} aria-hidden="true" />
-            <span className="min-w-0 flex-1 truncate">{item.label}</span>
-            {active && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#FAD873]" aria-hidden="true" />}
+            <span className="simpeg-sidebar-nav-label min-w-0 flex-1 truncate">{item.label}</span>
+            {active && <span className="simpeg-sidebar-active-indicator h-1.5 w-1.5 shrink-0 rounded-full bg-[#FAD873]" aria-hidden="true" />}
         </Link>
     );
 }
 
-function NavigationGroup({ item, url, onNavigate, depth }) {
+function NavigationGroup({ item, url, onNavigate, depth, sidebarCollapsed = false }) {
     const active = navigationItemIsActive(item, url);
     const [open, setOpen] = useState(active);
     const Icon = item.icon || ChevronRight;
@@ -200,21 +203,22 @@ function NavigationGroup({ item, url, onNavigate, depth }) {
     }, [active]);
 
     return (
-        <Collapsible open={open} onOpenChange={setOpen} className={`w-full ${depth > 0 ? 'pl-2' : ''}`}>
+        <Collapsible open={open} onOpenChange={setOpen} className={`simpeg-sidebar-nav-group w-full ${depth > 0 ? 'pl-2' : ''}`}>
             <CollapsibleTrigger asChild>
                 <button
                     type="button"
-                    className={`group inline-flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 ${active ? 'simpeg-nav-group-active' : 'simpeg-nav-group-link'}`}
+                    title={sidebarCollapsed ? item.label : undefined}
+                    className={`simpeg-sidebar-group-trigger group inline-flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 ${active ? 'simpeg-nav-group-active' : 'simpeg-nav-group-link'}`}
                 >
                     <span className="flex min-w-0 items-center gap-3">
                         <Icon className={`h-[1.05rem] w-[1.05rem] shrink-0 ${active ? 'simpeg-nav-group-active-icon' : 'simpeg-nav-icon'}`} strokeWidth={1.8} aria-hidden="true" />
-                        <span className="truncate">{item.label}</span>
+                        <span className="simpeg-sidebar-group-label truncate">{item.label}</span>
                     </span>
-                    <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${active ? 'simpeg-nav-group-active-icon' : 'simpeg-nav-icon'} ${open ? 'rotate-180' : ''}`} strokeWidth={1.8} aria-hidden="true" />
+                    <ChevronDown className={`simpeg-sidebar-group-chevron h-4 w-4 shrink-0 transition-transform ${active ? 'simpeg-nav-group-active-icon' : 'simpeg-nav-icon'} ${open ? 'rotate-180' : ''}`} strokeWidth={1.8} aria-hidden="true" />
                 </button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1 flex flex-col gap-1 border-l border-slate-200 pl-3 dark:border-slate-700">
-                {item.items.map((child) => <NavigationEntry key={child.href || child.label} item={child} url={url} onNavigate={onNavigate} depth={depth + 1} />)}
+            <CollapsibleContent className="simpeg-sidebar-nav-content mt-1 flex flex-col gap-1 border-l border-slate-200 pl-3 dark:border-slate-700">
+                {item.items.map((child) => <NavigationEntry key={child.href || child.label} item={child} url={url} onNavigate={onNavigate} depth={depth + 1} sidebarCollapsed={sidebarCollapsed} />)}
             </CollapsibleContent>
         </Collapsible>
     );
@@ -235,6 +239,7 @@ export default function LegacyPageShell({ title, children }) {
     const { appConfig, auth, notificationSummary } = page.props;
     const { url } = page;
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -258,6 +263,22 @@ export default function LegacyPageShell({ title, children }) {
     const profileHref = '/profile';
     const profileLabel = 'Profil Saya';
     const pageLabel = useMemo(() => title || 'SIMPEG', [title]);
+
+    useEffect(() => {
+        try {
+            setSidebarCollapsed(window.localStorage.getItem('simpeg-sidebar-collapsed') === '1');
+        } catch {
+            // Local storage may be unavailable in private browsing; keep the default state.
+        }
+    }, []);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem('simpeg-sidebar-collapsed', sidebarCollapsed ? '1' : '0');
+        } catch {
+            // The collapse control still works for the current page when storage is unavailable.
+        }
+    }, [sidebarCollapsed]);
 
     useEffect(() => {
         if (!mobileNavOpen && !profileOpen && !searchOpen && !notificationsOpen) {
@@ -309,41 +330,44 @@ export default function LegacyPageShell({ title, children }) {
     }
 
     const sidebar = (
-        <aside id="primary-navigation" className={`simpeg-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[18rem] flex-col overflow-hidden border-r shadow-xl transition-transform duration-300 lg:sticky lg:top-0 lg:inset-x-auto lg:bottom-auto lg:z-auto lg:h-dvh lg:min-h-0 lg:w-[17rem] lg:self-start lg:translate-x-0 lg:shadow-none ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <aside id="primary-navigation" className={`simpeg-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[18rem] flex-col overflow-hidden border-r shadow-xl transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:inset-x-auto lg:bottom-auto lg:z-auto lg:h-dvh lg:min-h-0 lg:w-[17rem] lg:self-start lg:translate-x-0 lg:shadow-none ${sidebarCollapsed ? 'simpeg-sidebar-collapsed' : ''} ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
             <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
-                <div className="relative flex items-center justify-center">
-                    <Link href={homeHref} onClick={() => setMobileNavOpen(false)} className="flex min-w-0 items-center gap-3 rounded-2xl px-2 py-2 text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70">
+                <div className="simpeg-sidebar-brand relative flex items-center justify-center">
+                    <Link href={homeHref} onClick={() => setMobileNavOpen(false)} className="flex min-w-0 items-center gap-3 rounded-2xl px-2 py-2 pr-12 text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70">
                         <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[16px]">
                             <img src={appLogoUrl} alt={`Logo ${appName}`} width="44" height="44" decoding="async" className="h-full w-full object-contain" />
                         </span>
-                        <span className="min-w-0">
+                        <span className="simpeg-sidebar-brand-details min-w-0">
                             <span className="block truncate text-base font-medium">{appAlias || appName}</span>
                             <span className="simpeg-muted block truncate text-xs">{appDescription}</span>
                         </span>
                     </Link>
+                    <button type="button" className="simpeg-utility absolute right-0 top-0 hidden min-h-11 min-w-11 items-center justify-center rounded-xl border lg:inline-flex" onClick={() => setSidebarCollapsed((collapsed) => !collapsed)} aria-label={sidebarCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'} aria-expanded={!sidebarCollapsed} aria-controls="primary-navigation" title={sidebarCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'}>
+                        {sidebarCollapsed ? <PanelLeftOpen className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
+                    </button>
                     <button type="button" className="simpeg-utility absolute right-0 top-0 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border lg:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup navigasi">
                         <X className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
                     </button>
                 </div>
 
                 <div className="mt-8 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
-                    <p className="simpeg-muted mb-3 px-3 text-xs font-medium">Menu utama</p>
+                    <p className="simpeg-sidebar-section-label simpeg-muted mb-3 px-3 text-xs font-medium">Menu utama</p>
                     <nav className="flex flex-col gap-1.5" aria-label="Navigasi utama">
-                        {navigation.map((item) => <NavigationEntry key={item.href || item.label} item={item} url={url} onNavigate={() => setMobileNavOpen(false)} />)}
+                        {navigation.map((item) => <NavigationEntry key={item.href || item.label} item={item} url={url} onNavigate={() => setMobileNavOpen(false)} sidebarCollapsed={sidebarCollapsed} />)}
                     </nav>
                 </div>
 
                 <div className="simpeg-border mt-auto shrink-0 border-t pt-4">
-                    <div className="mb-3 flex items-center gap-3 rounded-2xl bg-slate-100 p-3 dark:bg-slate-800">
+                    <div className="simpeg-sidebar-profile mb-3 flex items-center gap-3 rounded-2xl bg-slate-100 p-3 dark:bg-slate-800">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-medium text-[#FAD873] dark:bg-slate-700">{initials(displayName)}</span>
-                        <div className="min-w-0">
+                        <div className="simpeg-sidebar-profile-details min-w-0">
                             <p className="simpeg-text truncate text-sm font-medium">{displayName}</p>
                             <p className="simpeg-muted truncate text-xs">{roleLabel}</p>
                         </div>
                     </div>
-                    <Link href="/logout" method="post" as="button" className="inline-flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 dark:text-rose-300 dark:hover:bg-rose-950/40">
+                    <Link href="/logout" method="post" as="button" className="simpeg-sidebar-logout inline-flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 dark:text-rose-300 dark:hover:bg-rose-950/40">
                         <LogOut className="h-[1.05rem] w-[1.05rem]" strokeWidth={1.8} aria-hidden="true" />
-                        Keluar
+                        <span className="simpeg-sidebar-logout-label">Keluar</span>
                     </Link>
                 </div>
             </div>
