@@ -193,14 +193,12 @@ function NavigationEntry({ item, url, onNavigate, depth = 0, sidebarCollapsed = 
 
 function NavigationGroup({ item, url, onNavigate, depth, sidebarCollapsed = false }) {
     const active = navigationItemIsActive(item, url);
-    const [open, setOpen] = useState(active);
+    const [open, setOpen] = useState(() => !sidebarCollapsed && active);
     const Icon = item.icon || ChevronRight;
 
     useEffect(() => {
-        if (active) {
-            setOpen(true);
-        }
-    }, [active]);
+        setOpen(!sidebarCollapsed && active);
+    }, [active, sidebarCollapsed]);
 
     return (
         <Collapsible open={open} onOpenChange={setOpen} className={`simpeg-sidebar-nav-group w-full ${depth > 0 ? 'pl-2' : ''}`}>
@@ -239,7 +237,17 @@ export default function LegacyPageShell({ title, children }) {
     const { appConfig, auth, notificationSummary } = page.props;
     const { url } = page;
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        try {
+            return window.localStorage.getItem('simpeg-sidebar-collapsed') === '1';
+        } catch {
+            return false;
+        }
+    });
     const [profileOpen, setProfileOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -263,14 +271,6 @@ export default function LegacyPageShell({ title, children }) {
     const profileHref = '/profile';
     const profileLabel = 'Profil Saya';
     const pageLabel = useMemo(() => title || 'SIMPEG', [title]);
-
-    useEffect(() => {
-        try {
-            setSidebarCollapsed(window.localStorage.getItem('simpeg-sidebar-collapsed') === '1');
-        } catch {
-            // Local storage may be unavailable in private browsing; keep the default state.
-        }
-    }, []);
 
     useEffect(() => {
         try {
@@ -332,8 +332,8 @@ export default function LegacyPageShell({ title, children }) {
     const sidebar = (
         <aside id="primary-navigation" className={`simpeg-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[18rem] flex-col overflow-hidden border-r shadow-xl transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:inset-x-auto lg:bottom-auto lg:z-auto lg:h-dvh lg:min-h-0 lg:w-[17rem] lg:self-start lg:translate-x-0 lg:shadow-none ${sidebarCollapsed ? 'simpeg-sidebar-collapsed' : ''} ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
             <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
-                <div className="simpeg-sidebar-brand relative flex items-center justify-center">
-                    <Link href={homeHref} onClick={() => setMobileNavOpen(false)} className="flex min-w-0 items-center gap-3 rounded-2xl px-2 py-2 pr-12 text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70">
+                <div className="simpeg-sidebar-brand relative flex items-center gap-2">
+                    <Link href={homeHref} onClick={() => setMobileNavOpen(false)} className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-2 py-2 pr-12 text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 lg:pr-2">
                         <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[16px]">
                             <img src={appLogoUrl} alt={`Logo ${appName}`} width="44" height="44" decoding="async" className="h-full w-full object-contain" />
                         </span>
@@ -342,7 +342,7 @@ export default function LegacyPageShell({ title, children }) {
                             <span className="simpeg-muted block truncate text-xs">{appDescription}</span>
                         </span>
                     </Link>
-                    <button type="button" className="simpeg-utility absolute right-0 top-0 hidden min-h-11 min-w-11 items-center justify-center rounded-xl border lg:inline-flex" onClick={() => setSidebarCollapsed((collapsed) => !collapsed)} aria-label={sidebarCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'} aria-expanded={!sidebarCollapsed} aria-controls="primary-navigation" title={sidebarCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'}>
+                    <button type="button" className="simpeg-sidebar-collapse-toggle simpeg-utility hidden min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border lg:inline-flex" onClick={() => setSidebarCollapsed((collapsed) => !collapsed)} aria-label={sidebarCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'} aria-expanded={!sidebarCollapsed} aria-controls="primary-navigation" title={sidebarCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'}>
                         {sidebarCollapsed ? <PanelLeftOpen className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
                     </button>
                     <button type="button" className="simpeg-utility absolute right-0 top-0 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border lg:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup navigasi">

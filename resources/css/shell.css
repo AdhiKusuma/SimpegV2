@@ -40,13 +40,21 @@
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-brand {
+            flex-direction: column;
             justify-content: center;
+            gap: 0.5rem;
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-brand > a {
             width: 100%;
+            flex: none;
             justify-content: center;
             padding-right: 0.5rem;
+        }
+
+        .simpeg-sidebar-collapsed .simpeg-sidebar-collapse-toggle {
+            min-height: 2.25rem;
+            min-width: 2.25rem;
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-brand-details,
