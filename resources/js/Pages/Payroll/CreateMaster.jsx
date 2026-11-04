@@ -28,6 +28,17 @@ const salaryFields = [
     ['keris', 'Potongan Keris'],
 ];
 
+const deductionFieldNames = new Set([
+    'bpjs_kesehatan',
+    'bpjs_tenaga_kerja',
+    'absensi',
+    'angsuran_kredit',
+    'keris',
+]);
+
+const earningFields = salaryFields.filter(([name]) => !deductionFieldNames.has(name));
+const deductionFields = salaryFields.filter(([name]) => deductionFieldNames.has(name));
+
 const initialData = {
     employee_id: '',
     office_code: '',
@@ -112,6 +123,22 @@ export default function CreateMaster({ employees = [], scopeLabel, willRequireAp
         const bankCode = account.replace(/\D/g, '').slice(0, 3);
         form.setData({ ...form.data, no_rekening: account, bank_office_code: bankCode });
         form.clearErrors('no_rekening', 'bank_office_code', 'payroll');
+    }
+
+    function renderAmountFields(fields) {
+        return fields.map(([name, label]) => <div key={name}>
+            <label htmlFor={`master-${name}`} className="simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide">
+                {label}{requiredPayrollFields.has(name) && <span className="ml-1 text-red-600">*</span>}
+            </label>
+            <PayrollAmountInput
+                id={`master-${name}`}
+                value={form.data[name]}
+                required={requiredPayrollFields.has(name)}
+                error={form.errors[name]}
+                onChange={(value) => updateField(name, value)}
+            />
+            <FieldError id={`master-${name}-error`} message={form.errors[name]} />
+        </div>);
     }
 
     function submit(event) {
@@ -230,20 +257,32 @@ export default function CreateMaster({ employees = [], scopeLabel, willRequireAp
 
                 <section className="simpeg-card overflow-hidden rounded-2xl border shadow-sm">
                     <div className="border-b p-4 sm:p-6"><SectionHeading icon={Banknote} title="Komponen gaji dan potongan" description="Nominal golongan pegawai ditambahkan ke gaji pokok; jika kosong dihitung Rp0. Jumlah gaji, potongan, dan gaji bersih dihitung otomatis." /></div>
-                    <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-6 xl:grid-cols-3">
-                        {salaryFields.map(([name, label]) => <div key={name}>
-                            <label htmlFor={`master-${name}`} className="simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide">
-                                {label}{requiredPayrollFields.has(name) && <span className="ml-1 text-red-600">*</span>}
-                            </label>
-                            <PayrollAmountInput
-                                id={`master-${name}`}
-                                value={form.data[name]}
-                                required={requiredPayrollFields.has(name)}
-                                error={form.errors[name]}
-                                onChange={(value) => updateField(name, value)}
-                            />
-                            <FieldError id={`master-${name}-error`} message={form.errors[name]} />
-                        </div>)}
+                    <div className="space-y-6 p-4 sm:p-6">
+                        <section aria-labelledby="master-earnings-title">
+                            <div className="mb-4 flex flex-col gap-2 border-b pb-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 id="master-earnings-title" className="simpeg-text text-base font-bold">Pendapatan dan tunjangan</h3>
+                                        <span className="simpeg-card-soft simpeg-text inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wide">Non-potongan</span>
+                                    </div>
+                                    <p className="simpeg-muted mt-1 text-sm">Komponen yang menambah jumlah gaji sebelum potongan diterapkan.</p>
+                                </div>
+                            </div>
+                            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{renderAmountFields(earningFields)}</div>
+                        </section>
+
+                        <section aria-labelledby="master-deductions-title" className="border-t pt-6">
+                            <div className="mb-4 flex flex-col gap-2 border-b pb-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 id="master-deductions-title" className="simpeg-text text-base font-bold">Potongan</h3>
+                                        <span className="simpeg-card-soft simpeg-text inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wide">Mengurangi gaji bersih</span>
+                                    </div>
+                                    <p className="simpeg-muted mt-1 text-sm">BPJS, absensi, angsuran kredit, dan potongan Keris.</p>
+                                </div>
+                            </div>
+                            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{renderAmountFields(deductionFields)}</div>
+                        </section>
                     </div>
                     <p className="simpeg-muted px-4 pb-4 text-sm sm:px-6">Field bertanda * wajib diisi. Field lainnya bernilai awal 0 dan dapat diubah jika ada nominal. Potongan absensi dicatat terpisah setelah rekap bulanan; angsuran kredit dan potongan lain ikut mengurangi gaji bersih serta Total ekspor.</p>
                     <div className="flex flex-col-reverse justify-end gap-2 border-t p-4 sm:flex-row sm:p-5">
