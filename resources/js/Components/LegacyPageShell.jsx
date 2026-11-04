@@ -169,12 +169,12 @@ function navigationItemIsActive(item, url) {
         : routeIsActive(url, item.href);
 }
 
-function NavigationEntry({ item, url, onNavigate, depth = 0, sidebarCollapsed = false }) {
+function NavigationEntry({ item, url, onNavigate, onExpandSidebar, depth = 0, sidebarCollapsed = false }) {
     const active = navigationItemIsActive(item, url);
     const Icon = item.icon || ChevronRight;
 
     if (item.items) {
-        return <NavigationGroup item={item} url={url} onNavigate={onNavigate} depth={depth} sidebarCollapsed={sidebarCollapsed} />;
+        return <NavigationGroup item={item} url={url} onNavigate={onNavigate} onExpandSidebar={onExpandSidebar} depth={depth} sidebarCollapsed={sidebarCollapsed} />;
     }
 
     return (
@@ -191,7 +191,7 @@ function NavigationEntry({ item, url, onNavigate, depth = 0, sidebarCollapsed = 
     );
 }
 
-function NavigationGroup({ item, url, onNavigate, depth, sidebarCollapsed = false }) {
+function NavigationGroup({ item, url, onNavigate, onExpandSidebar, depth, sidebarCollapsed = false }) {
     const active = navigationItemIsActive(item, url);
     const [open, setOpen] = useState(() => !sidebarCollapsed && active);
     const Icon = item.icon || ChevronRight;
@@ -205,6 +205,12 @@ function NavigationGroup({ item, url, onNavigate, depth, sidebarCollapsed = fals
             <CollapsibleTrigger asChild>
                 <button
                     type="button"
+                    onClick={(event) => {
+                        if (sidebarCollapsed) {
+                            event.preventDefault();
+                            onExpandSidebar?.();
+                        }
+                    }}
                     title={sidebarCollapsed ? item.label : undefined}
                     className={`simpeg-sidebar-group-trigger group inline-flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 ${active ? 'simpeg-nav-group-active' : 'simpeg-nav-group-link'}`}
                 >
@@ -216,7 +222,7 @@ function NavigationGroup({ item, url, onNavigate, depth, sidebarCollapsed = fals
                 </button>
             </CollapsibleTrigger>
             <CollapsibleContent className="simpeg-sidebar-nav-content mt-1 flex flex-col gap-1 border-l border-slate-200 pl-3 dark:border-slate-700">
-                {item.items.map((child) => <NavigationEntry key={child.href || child.label} item={child} url={url} onNavigate={onNavigate} depth={depth + 1} sidebarCollapsed={sidebarCollapsed} />)}
+                {item.items.map((child) => <NavigationEntry key={child.href || child.label} item={child} url={url} onNavigate={onNavigate} onExpandSidebar={onExpandSidebar} depth={depth + 1} sidebarCollapsed={sidebarCollapsed} />)}
             </CollapsibleContent>
         </Collapsible>
     );
@@ -271,6 +277,8 @@ export default function LegacyPageShell({ title, children }) {
     const profileHref = '/profile';
     const profileLabel = 'Profil Saya';
     const pageLabel = useMemo(() => title || 'SIMPEG', [title]);
+    const handleNavigation = () => setMobileNavOpen(false);
+    const expandSidebar = () => setSidebarCollapsed(false);
 
     useEffect(() => {
         try {
@@ -353,7 +361,7 @@ export default function LegacyPageShell({ title, children }) {
                 <div className="mt-8 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
                     <p className="simpeg-sidebar-section-label simpeg-muted mb-3 px-3 text-xs font-medium">Menu utama</p>
                     <nav className="flex flex-col gap-1.5" aria-label="Navigasi utama">
-                        {navigation.map((item) => <NavigationEntry key={item.href || item.label} item={item} url={url} onNavigate={() => setMobileNavOpen(false)} sidebarCollapsed={sidebarCollapsed} />)}
+                        {navigation.map((item) => <NavigationEntry key={item.href || item.label} item={item} url={url} onNavigate={handleNavigation} onExpandSidebar={expandSidebar} sidebarCollapsed={sidebarCollapsed} />)}
                     </nav>
                 </div>
 
