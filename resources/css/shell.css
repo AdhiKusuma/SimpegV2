@@ -44,30 +44,30 @@
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-brand {
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0;
+            gap: 0;
+            min-height: 2.75rem;
+            padding: 0;
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-brand-link {
-            width: 100%;
-            flex: none;
-            justify-content: center;
-            padding: 0.25rem 0;
+            display: none !important;
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-logo {
-            width: 2.75rem;
-            height: 2.75rem;
-            border-radius: 0.875rem;
+            display: none !important;
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-collapse-toggle {
-            min-height: 2.25rem;
-            min-width: 2.25rem;
-            border-radius: 0.75rem;
+            display: inline-flex !important;
+            width: 2.75rem;
+            height: 2.75rem;
+            min-height: 2.75rem;
+            min-width: 2.75rem;
+            margin-inline: auto;
+            border-radius: 0.875rem;
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-brand-details,
