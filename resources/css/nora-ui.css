@@ -506,3 +506,111 @@ select:focus {
         padding: 1rem 0.75rem 1.5rem !important;
     }
 }
+
+/* Reference-compatible neutralisation for existing Tailwind page classes. */
+.simpeg-shell-content .bg-white,
+.simpeg-shell-content .bg-slate-50,
+.simpeg-shell-content .bg-slate-100,
+.simpeg-shell-content .dark\:bg-slate-800,
+.simpeg-shell-content .dark\:bg-slate-900 {
+    background: var(--simpeg-card) !important;
+}
+
+.simpeg-shell-content .bg-slate-50,
+.simpeg-shell-content .bg-slate-100 {
+    background: var(--simpeg-card-soft) !important;
+}
+
+.simpeg-shell-content .border-slate-100,
+.simpeg-shell-content .border-slate-200,
+.simpeg-shell-content .border-slate-300 {
+    border-color: var(--simpeg-border) !important;
+}
+
+.simpeg-shell-content .text-slate-900,
+.simpeg-shell-content .text-slate-800,
+.simpeg-shell-content .text-slate-700 {
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-shell-content .text-slate-600,
+.simpeg-shell-content .text-slate-500 {
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-shell-content .text-slate-400 {
+    color: var(--simpeg-subtle) !important;
+}
+
+.simpeg-shell-content .hover\:bg-slate-50:hover,
+.simpeg-shell-content .hover\:bg-slate-100:hover {
+    background: var(--simpeg-hover-surface) !important;
+}
+
+.simpeg-shell-content .hover\:border-blue-700:hover,
+.simpeg-shell-content .hover\:border-blue-300:hover {
+    border-color: var(--simpeg-hover-border) !important;
+}
+
+.simpeg-shell-content .bg-blue-600,
+.simpeg-shell-content .bg-blue-700,
+.simpeg-shell-content .hover\:bg-blue-700:hover {
+    background: var(--simpeg-primary) !important;
+}
+
+.simpeg-shell-content .text-blue-600,
+.simpeg-shell-content .text-blue-700,
+.simpeg-shell-content .text-blue-800 {
+    color: var(--simpeg-primary) !important;
+}
+
+.simpeg-shell-content .border-blue-200,
+.simpeg-shell-content .border-blue-300 {
+    border-color: var(--simpeg-primary-border) !important;
+}
+
+.simpeg-shell-content .hover\:bg-blue-50:hover {
+    background: var(--simpeg-primary-soft) !important;
+}
+
+/* The reference uses a quiet, spreadsheet-like grid for audit and report tables. */
+.simpeg-shell-content table {
+    border: 1px solid var(--simpeg-border) !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.simpeg-shell-content table th,
+.simpeg-shell-content table td {
+    border-right: 1px solid var(--simpeg-border) !important;
+    border-bottom: 1px solid var(--simpeg-border) !important;
+}
+
+.simpeg-shell-content table th:last-child,
+.simpeg-shell-content table td:last-child {
+    border-right: 0 !important;
+}
+
+.simpeg-shell-content table tbody tr:last-child td {
+    border-bottom: 0 !important;
+}
+
+.simpeg-shell-content table thead th {
+    background: var(--simpeg-card-soft) !important;
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-shell-content table tbody tr:hover {
+    background: var(--simpeg-hover-surface) !important;
+}
+
+.simpeg-shell-content input,
+.simpeg-shell-content textarea,
+.simpeg-shell-content select {
+    border-radius: 0.5rem !important;
+}
+
+.simpeg-shell-content [data-slot="button"] {
+    border-radius: 0.5rem !important;
+    box-shadow: none !important;
+}
