@@ -86,7 +86,10 @@ export default function SearchableCombobox({
 
     return (
         <div className={className}>
-            {label && <label htmlFor={id} className="simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide">{label}{required && <span className="text-red-600"> *</span>}</label>}
+            {label && <label htmlFor={id} className={`simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide ${error ? 'simpeg-label-error' : ''}`}>
+                {label}{required && <span className="text-red-600"> *</span>}
+                {error && <span className="ml-2 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-red-700">Perlu diperiksa</span>}
+            </label>}
             <div className="relative">
                 {searchable ? <>
                     <Search aria-hidden="true" className="simpeg-subtle pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2" />
@@ -106,7 +109,7 @@ export default function SearchableCombobox({
                         onKeyDown={handleKeyDown}
                         onBlur={() => window.setTimeout(() => setIsOpen(false), 150)}
                         placeholder={placeholder}
-                        className="simpeg-input h-11 w-full rounded-xl border pl-10 pr-10 text-sm outline-none transition focus:border-[#F5CE59] focus:ring-4 focus:ring-[#F5CE59]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`simpeg-input h-11 w-full rounded-xl border pl-10 pr-10 text-sm outline-none transition focus:border-[#F5CE59] focus:ring-4 focus:ring-[#F5CE59]/20 disabled:cursor-not-allowed disabled:opacity-60 ${error ? 'simpeg-input-error border-red-500 focus:border-red-600 focus:ring-red-600/20' : ''}`}
                     />
                     <button type="button" aria-label={`Buka daftar ${label || 'pilihan'}`} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => (isOpen ? setIsOpen(false) : openList())} className="simpeg-utility absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg border-0 shadow-none focus:outline-none focus:ring-2 focus:ring-[#F5CE59]/30 disabled:cursor-not-allowed disabled:opacity-50">
                         <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -130,7 +133,7 @@ export default function SearchableCombobox({
                         }
                     }}
                     onBlur={() => window.setTimeout(() => setIsOpen(false), 150)}
-                    className="simpeg-input flex h-11 w-full items-center justify-between rounded-xl border px-3 text-left text-sm outline-none transition focus:border-[#F5CE59] focus:ring-4 focus:ring-[#F5CE59]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={`simpeg-input flex h-11 w-full items-center justify-between rounded-xl border px-3 text-left text-sm outline-none transition focus:border-[#F5CE59] focus:ring-4 focus:ring-[#F5CE59]/20 disabled:cursor-not-allowed disabled:opacity-60 ${error ? 'simpeg-input-error border-red-500 focus:border-red-600 focus:ring-red-600/20' : ''}`}
                 >
                     <span className={`truncate ${selected ? 'simpeg-text' : 'simpeg-subtle'}`}>{selected ? String(optionLabel(selected)) : placeholder}</span>
                     <ChevronDown aria-hidden="true" className={`simpeg-subtle h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -149,12 +152,12 @@ export default function SearchableCombobox({
             </div>
             {name && <input type="hidden" name={name} value={selectedValue} disabled={disabled} />}
             {description && <p className="mt-1 text-xs text-slate-500">{description}</p>}
-            {error && <p className="mt-1 text-xs text-red-600" role="alert">{error}</p>}
+            {error && <p id={`${id}-error`} className="simpeg-field-error mt-1 text-xs font-semibold" role="alert">{error}</p>}
         </div>
     );
 }
 
-export function EmployeeCombobox({ employees = [], value = '', onChange, disabled = false, error, required = true, label = 'Pegawai', className = '', id = 'id_peg', placeholder = 'Cari nama, NIK, atau ID pegawai' }) {
+export function EmployeeCombobox({ employees = [], value = '', onChange, disabled = false, error, required = true, label = 'Pegawai', className = '', id = 'id_peg', placeholder = 'Cari nama atau ID pegawai' }) {
     return <SearchableCombobox
         id={id}
         name={id}
@@ -163,7 +166,7 @@ export function EmployeeCombobox({ employees = [], value = '', onChange, disable
         options={employees}
         optionValue={(employee) => employee.id_peg}
         optionLabel={(employee) => employee.nama || 'Tanpa nama'}
-        optionDescription={(employee) => `${employee.nik ? `NIK: ${employee.nik} · ` : ''}ID: ${employee.id_peg}`}
+        optionDescription={(employee) => `ID: ${employee.id_peg}`}
         placeholder={placeholder}
         emptyMessage="Pegawai tidak ditemukan."
         required={required}

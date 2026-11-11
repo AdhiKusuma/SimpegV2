@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PayrollImport extends Model
 {
@@ -34,5 +35,10 @@ class PayrollImport extends Model
     public function officeSummaries(): HasMany
     {
         return $this->hasMany(PayrollOfficeSummary::class);
+    }
+
+    public function publication(): HasOne
+    {
+        return $this->hasOne(PayrollPublication::class);
     }
 }

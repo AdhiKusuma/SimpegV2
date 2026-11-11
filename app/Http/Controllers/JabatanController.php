@@ -7,6 +7,7 @@ use App\Models\Legacy\TbKantor;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbRefJabatan;
 use App\Services\RbacService;
+use App\Services\XlsxExportService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Shuchkin\SimpleXLSX;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JabatanController extends Controller
 {
@@ -59,12 +60,7 @@ class JabatanController extends Controller
             ->when($search !== '', fn (Builder $builder) => $builder->where(function (Builder $scope) use ($search): void {
                 $like = "%{$search}%";
                 $scope->where('p.nama', 'like', $like)
-                    ->orWhere('j.id_peg', 'like', $like)
-                    ->orWhere('j.jabatan', 'like', $like)
-                    ->orWhere('j.kode_jabatan', 'like', $like)
-                    ->orWhere('k.nama_kantor', 'like', $like)
-                    ->orWhere('j.unit_kerja', 'like', $like)
-                    ->orWhere('j.no_sk', 'like', $like);
+                    ->orWhere('j.id_peg', 'like', $like);
             }));
 
         $items = $query
@@ -145,14 +141,56 @@ class JabatanController extends Controller
         return Inertia::render('Jabatan/Import');
     }
 
-    public function downloadImportTemplate(Request $request): BinaryFileResponse
+    public function downloadImportTemplate(Request $request, XlsxExportService $xlsxExport): StreamedResponse
     {
         $this->ensureCanImport($request);
-        $path = public_path('templates/Template_Import_Jabatan_Smart.xlsx');
 
-        abort_unless(is_file($path), 404, 'Template import jabatan tidak ditemukan.');
+        $employeeIds = TbPegawai::query()
+            ->where('status_aktif', 1)
+            ->orderBy('id_peg')
+            ->pluck('id_peg')
+            ->map(fn ($id): string => (string) $id)
+            ->all();
+        $positions = TbRefJabatan::query()
+            ->whereNotNull('kode_jabatan')
+            ->orderBy('jabatan')
+            ->get(['kode_jabatan', 'jabatan']);
+        $positionCodes = $positions->pluck('kode_jabatan')->map(fn ($value): string => (string) $value)->unique()->values()->all();
+        $positionNames = $positions->pluck('jabatan')->map(fn ($value): string => (string) $value)->filter()->unique()->values()->all();
+        $units = TbKantor::query()
+            ->whereNotNull('kode_kantor_detail')
+            ->orderBy('kode_kantor_detail')
+            ->pluck('kode_kantor_detail')
+            ->map(fn ($value): string => (string) $value)
+            ->unique()
+            ->values()
+            ->all();
 
-        return response()->download($path, 'Template_Import_Jabatan_Smart.xlsx');
+        $content = $xlsxExport->makeTemplate(
+            self::IMPORT_HEADERS,
+            'Template Import Jabatan',
+            [['CONTOH-001', $positionCodes[0] ?? 'KODE-CONTOH', $positionNames[0] ?? 'Nama Jabatan Contoh', $units[0] ?? 'UNIT-CONTOH', 'SK/CONTOH/2026', '02-11-2026', 'Aktif']],
+            [
+                'id_peg' => ['title' => 'ID Pegawai aktif', 'values' => $employeeIds],
+                'kode_jabatan' => ['title' => 'Kode jabatan', 'values' => $positionCodes],
+                'nama_jabatan' => ['title' => 'Nama jabatan', 'values' => $positionNames],
+                'unit_kerja' => ['title' => 'Kode unit kerja', 'values' => $units],
+                'status' => ['title' => 'Status jabatan', 'values' => ['Aktif', 'Non']],
+            ],
+            [
+                ['column' => 'A', 'list' => 'id_peg'],
+                ['column' => 'B', 'list' => 'kode_jabatan'],
+                ['column' => 'C', 'list' => 'nama_jabatan'],
+                ['column' => 'D', 'list' => 'unit_kerja'],
+                ['column' => 'G', 'list' => 'status'],
+            ],
+        );
+
+        return response()->streamDownload(static function () use ($content): void {
+            echo $content;
+        }, 'Template_Import_Jabatan_Smart.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function previewImport(Request $request): JsonResponse

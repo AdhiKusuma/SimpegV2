@@ -23,6 +23,41 @@
         color: var(--simpeg-text) !important;
     }
 
+    .simpeg-input-error {
+        background-color: rgb(254 242 242 / 0.7) !important;
+        border-color: #ef4444 !important;
+    }
+
+    .simpeg-label-error {
+        color: #b91c1c !important;
+    }
+
+    .simpeg-field-error {
+        color: #b91c1c !important;
+    }
+
+    .simpeg-validation-summary {
+        border-color: #fecaca;
+        background-color: #fef2f2;
+        color: #7f1d1d;
+    }
+
+    html.dark .simpeg-input-error {
+        background-color: rgb(69 10 10 / 0.32) !important;
+        border-color: #f87171 !important;
+    }
+
+    html.dark .simpeg-label-error,
+    html.dark .simpeg-field-error {
+        color: #fca5a5 !important;
+    }
+
+    html.dark .simpeg-validation-summary {
+        border-color: rgb(248 113 113 / 0.4);
+        background-color: rgb(69 10 10 / 0.32);
+        color: #fee2e2;
+    }
+
     .simpeg-input::placeholder {
         color: var(--simpeg-subtle) !important;
     }

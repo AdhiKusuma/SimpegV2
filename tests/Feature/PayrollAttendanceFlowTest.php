@@ -15,6 +15,8 @@ use ZipArchive;
 
 class PayrollAttendanceFlowTest extends TestCase
 {
+    private string $lastPayrollWorkbookContents = '';
+
     private const EARNINGS = [
         'gaji_pokok', 'tunj_suami_istri', 'tunj_anak', 'tunj_jabatan', 'tunj_ops', 'tunj_pajak',
         'tunj_kinerja', 'tunj_fungsional', 'tunj_masa_kerja', 'honor_kontrak', 'thl', 'uang_makan_kontrak',
@@ -117,7 +119,10 @@ class PayrollAttendanceFlowTest extends TestCase
         $this->assertNotEmpty($preview['token']);
 
         $this->withSession($session)
-            ->post('/payroll/import', ['preview_token' => $preview['token']])
+            ->post('/payroll/import', [
+                'preview_token' => $preview['token'],
+                'file_xlsx' => UploadedFile::fake()->createWithContent('payroll-e2e.xlsx', $this->lastPayrollWorkbookContents),
+            ])
             ->assertRedirect('/payroll?tahun=2026&bulan=10')
             ->assertSessionHasNoErrors();
 
@@ -267,6 +272,7 @@ class PayrollAttendanceFlowTest extends TestCase
         $contents = file_get_contents($temporaryPath);
         @unlink($temporaryPath);
         $this->assertIsString($contents);
+        $this->lastPayrollWorkbookContents = $contents;
 
         return UploadedFile::fake()->createWithContent('payroll-e2e.xlsx', $contents);
     }

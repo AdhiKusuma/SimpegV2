@@ -106,7 +106,7 @@ export default function AccessMatrix({ available, metrics, subjects, selected, m
             {!available ? (
                 <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 sm:p-5" role="alert">
                     <h2 className="font-medium">Matriks belum diaktifkan</h2>
-                    <p className="mt-1">Jalankan migrasi backend terlebih dahulu agar aturan akses dapat disimpan.</p>
+                    <p className="mt-1">Pengaturan akses belum siap digunakan. Silakan hubungi administrator sistem.</p>
                 </section>
             ) : (
                 <form onSubmit={submit} className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

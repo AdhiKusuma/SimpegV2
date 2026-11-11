@@ -9,6 +9,12 @@ export default function SertifikasiIndex({ items, years, types, offices, filters
     const { flash } = usePage().props;
     const [deleteTarget, setDeleteTarget] = useState(null);
     const deleteForm = useForm({ reason: '' });
+    const withFilters = (url) => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
+        const query = params.toString();
+        return query ? `${url}?${query}` : url;
+    };
 
     function filter(event) {
         event.preventDefault();
@@ -20,7 +26,7 @@ export default function SertifikasiIndex({ items, years, types, offices, filters
         deleteForm.delete(`/sertifikasi/${deleteTarget.id_sertif}`, { preserveScroll: true, onSuccess: () => { setDeleteTarget(null); deleteForm.reset(); } });
     }
 
-    return <LegacyPageShell title="Daftar Sertifikasi"><Head title="Daftar Sertifikasi" /><div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-amber-600">Kompetensi Pegawai</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar sertifikasi</h1><p className="mt-2 text-slate-500">Monitoring sertifikat pegawai dari tabel sistem yang sama.</p></div>{canManage && <Link href="/sertifikasi/create" className="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-700">+ Tambah Data</Link>}</div>{flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}<section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><form onSubmit={filter} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[140px_1fr_220px_1fr_auto] lg:items-end">
+    return <LegacyPageShell title="Daftar Sertifikasi"><Head title="Daftar Sertifikasi" /><div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-amber-600">Kompetensi Pegawai</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar sertifikasi</h1><p className="mt-2 text-slate-500">Pantau sertifikat dan masa berlaku kompetensi pegawai.</p></div><div className="flex flex-wrap gap-2"><a href={withFilters('/sertifikasi/export')} className="rounded-xl border border-amber-200 px-4 py-2.5 text-sm font-bold text-amber-700 transition hover:bg-amber-50">Export XLSX</a>{canManage && <Link href="/sertifikasi/import" className="rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-50">Import XLSX</Link>}{canManage && <Link href="/sertifikasi/create" className="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-700">+ Tambah Data</Link>}</div></div>{flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}<section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><form onSubmit={filter} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[140px_1fr_220px_1fr_auto] lg:items-end">
                     <MobileFilterGroup id="certification-mobile-filters" activeCount={[filters.tahun, filters.sertifikasi, filters.kantor].filter((value) => value && value !== 'Semua').length} toggleClassName="simpeg-mobile-filter-toggle--after-search">
                         <SelectCombobox id="cert-year" name="tahun" label="Tahun" value={filters.tahun} options={years} emptyLabel="Semua" />
                         <SearchableCombobox id="cert-type" name="sertifikasi" label="Jenis sertifikasi" value={filters.sertifikasi} options={types} placeholder="Cari jenis sertifikasi" emptyMessage="Jenis sertifikasi tidak ditemukan." />

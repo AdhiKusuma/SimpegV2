@@ -24,6 +24,8 @@ const statuses = {
     spouses: ['Suami', 'Istri'],
 };
 
+const familyUrlTypes = { children: 'anak', spouses: 'suami-istri', parents: 'orang-tua' };
+
 export default function FamilyForm({ type, label, mode, record, employees, employeeId, canRequest }) {
     const initial = { ...defaults, ...(record || {}), id_peg: record?.id_peg || employeeId || '' };
     ['nik', 'bpjs_anak', 'hp', 'bpjs_pasangan', 'pekerjaan'].forEach((field) => {
@@ -33,10 +35,11 @@ export default function FamilyForm({ type, label, mode, record, employees, emplo
     const isEdit = mode === 'edit';
     const isParentCreate = type === 'parents' && !isEdit;
     const recordId = record?.id_anak || record?.id_ortu || record?.id_si;
+    const familyPath = familyUrlTypes[type] || type;
 
     function submit(event) {
         event.preventDefault();
-        const url = isEdit ? `/keluarga/${type}/${recordId}` : `/keluarga/${type}`;
+        const url = isEdit ? `/keluarga/${familyPath}/${recordId}` : `/keluarga/${familyPath}`;
         isEdit ? form.put(url) : form.post(url);
     }
 
@@ -51,7 +54,7 @@ export default function FamilyForm({ type, label, mode, record, employees, emplo
         <LegacyPageShell title={`${isEdit ? 'Edit' : 'Tambah'} ${label}`}>
             <Head title={`${isEdit ? 'Edit' : 'Tambah'} ${label}`} />
             <div className="mx-auto max-w-4xl">
-                <div className="mb-6"><Link href={`/keluarga/${type}${form.data.id_peg ? `?uid=${encodeURIComponent(form.data.id_peg)}` : ''}`} className="text-sm font-bold text-blue-600 hover:text-blue-700">← Kembali ke {label}</Link><p className="mt-4 mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Referensi Keluarga</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{isEdit ? 'Edit' : 'Tambah'} {label}</h1></div>
+                <div className="mb-6"><Link href={`/keluarga/${familyPath}${form.data.id_peg ? `?uid=${encodeURIComponent(form.data.id_peg)}` : ''}`} className="text-sm font-bold text-blue-600 hover:text-blue-700">← Kembali ke {label}</Link><p className="mt-4 mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Referensi Keluarga</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{isEdit ? 'Edit' : 'Tambah'} {label}</h1></div>
                 <form onSubmit={submit} className="simpeg-form-card">
                     {canRequest && <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900" role="status">Perubahan akan diajukan untuk persetujuan kepala cabang dan belum langsung mengubah data aktif.</div>}
                     <div className="grid gap-5 sm:grid-cols-2">
@@ -68,7 +71,7 @@ export default function FamilyForm({ type, label, mode, record, employees, emplo
                         {type === 'spouses' && field('hp', 'No. HP', { maxLength: 13 })}
                         {type === 'spouses' && field('bpjs_pasangan', 'No. BPJS Pasangan', { maxLength: 20 })}
                     </div>
-                    <div className="mt-8 flex justify-end gap-3"><Link href={`/keluarga/${type}${form.data.id_peg ? `?uid=${encodeURIComponent(form.data.id_peg)}` : ''}`} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-600">Batal</Link><button type="submit" disabled={form.processing} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60">{form.processing ? (canRequest ? 'Mengirim...' : 'Menyimpan...') : canRequest ? 'Ajukan persetujuan' : isEdit ? 'Update Data' : 'Simpan Data'}</button></div>
+                    <div className="mt-8 flex justify-end gap-3"><Link href={`/keluarga/${familyPath}${form.data.id_peg ? `?uid=${encodeURIComponent(form.data.id_peg)}` : ''}`} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-600">Batal</Link><button type="submit" disabled={form.processing} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60">{form.processing ? (canRequest ? 'Mengirim...' : 'Menyimpan...') : canRequest ? 'Ajukan persetujuan' : isEdit ? 'Update Data' : 'Simpan Data'}</button></div>
                 </form>
             </div>
         </LegacyPageShell>

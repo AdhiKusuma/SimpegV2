@@ -32,7 +32,7 @@ export default function MutationIndex({ items, filters, years, canManage }) {
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-red-600">Mutasi Kepegawaian</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Penonaktifan pegawai</h1><p className="mt-2 text-slate-500">Data pensiun, meninggal dunia, pengunduran diri, PTDH, dan pemberhentian lainnya.</p></div>
                 <div className="flex flex-wrap items-center gap-3">
-                    <a href={exportHref} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Unduh XLSX</a>
+                    <a href={exportHref} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Export XLSX</a>
                     {canManage && <Link href="/mutasi/create" className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-600/20">+ Tambah Data</Link>}
                 </div>
             </div>
@@ -42,7 +42,7 @@ export default function MutationIndex({ items, filters, years, canManage }) {
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <form method="get" action="/mutasi" className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[minmax(0,1fr)_220px_auto] lg:items-end">
-                    <div className="simpeg-mobile-filter-search"><label htmlFor="mutation-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari data mutasi</label><input id="mutation-search" name="search" defaultValue={filters.search} placeholder="Cari nama, NIK, jenis, jabatan, atau No. SK" className="h-11 min-w-0 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10" /></div>
+                    <div className="simpeg-mobile-filter-search"><label htmlFor="mutation-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari pegawai</label><input id="mutation-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="h-11 min-w-0 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10" /></div>
                     <MobileFilterGroup id="mutation-mobile-filters" activeCount={Number(Boolean(filters.year))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
                         <SelectCombobox id="mutation-year" name="year" label="Tahun penonaktifan (TMT)" value={filters.year} options={years} emptyLabel="Semua tahun" />
                         <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>

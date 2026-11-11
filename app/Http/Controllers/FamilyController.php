@@ -51,8 +51,20 @@ class FamilyController extends Controller
         ],
     ];
 
+    /**
+     * Slug route lama tetap dipertahankan. Alias Indonesia hanya untuk URL
+     * yang lebih ramah pengguna; seluruh logika bisnis tetap memakai key
+     * internal yang sama.
+     */
+    private const TYPE_ALIASES = [
+        'anak' => 'children',
+        'orang-tua' => 'parents',
+        'suami-istri' => 'spouses',
+    ];
+
     public function index(Request $request, string $type): Response
     {
+        $type = $this->canonicalType($type);
         $definition = $this->definition($type);
         $role = strtolower((string) $request->session()->get('hak_akses'));
         abort_unless(in_array($role, ['admin', 'superadmin', 'kepala', 'user'], true), 403);
@@ -111,6 +123,7 @@ class FamilyController extends Controller
 
     public function create(Request $request, string $type): Response
     {
+        $type = $this->canonicalType($type);
         $this->ensureCanSubmit($request);
         $this->definition($type);
 
@@ -127,6 +140,7 @@ class FamilyController extends Controller
 
     public function edit(Request $request, string $type, string $id): Response
     {
+        $type = $this->canonicalType($type);
         $this->ensureCanSubmit($request);
         $definition = $this->definition($type);
         $record = $this->recordForScope($request, $definition, $id);
@@ -144,6 +158,7 @@ class FamilyController extends Controller
 
     public function store(Request $request, string $type): RedirectResponse
     {
+        $type = $this->canonicalType($type);
         $this->ensureCanSubmit($request);
         $definition = $this->definition($type);
         $data = $this->validatedData($request, $type);
@@ -179,6 +194,7 @@ class FamilyController extends Controller
 
     public function update(Request $request, string $type, string $id): RedirectResponse
     {
+        $type = $this->canonicalType($type);
         $this->ensureCanSubmit($request);
         $definition = $this->definition($type);
         $record = $this->recordForScope($request, $definition, $id);
@@ -204,6 +220,7 @@ class FamilyController extends Controller
 
     public function destroy(Request $request, string $type, string $id): RedirectResponse
     {
+        $type = $this->canonicalType($type);
         $this->ensureCanSubmit($request);
         $definition = $this->definition($type);
         $validated = $request->validate([
@@ -239,9 +256,22 @@ class FamilyController extends Controller
 
     private function definition(string $type): array
     {
+        $type = $this->canonicalType($type);
         abort_unless(isset(self::TYPES[$type]), 404);
 
         return self::TYPES[$type];
+    }
+
+    private function canonicalType(string $type): string
+    {
+        $type = strtolower(trim($type));
+
+        return self::TYPE_ALIASES[$type] ?? $type;
+    }
+
+    private function localizedType(string $type): string
+    {
+        return array_search($this->canonicalType($type), self::TYPE_ALIASES, true) ?: $this->canonicalType($type);
     }
 
     private function familyQuery(array $definition): Builder
@@ -595,7 +625,7 @@ class FamilyController extends Controller
 
     private function redirectToIndex(string $type, ?string $uid, string $message): RedirectResponse
     {
-        $parameters = ['type' => $type];
+        $parameters = ['type' => $this->localizedType($type)];
         if ($uid) {
             $parameters['uid'] = $uid;
         }

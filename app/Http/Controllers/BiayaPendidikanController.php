@@ -27,10 +27,18 @@ class BiayaPendidikanController extends Controller
         $quarter = $request->string('kuartal')->trim()->value();
         $search = $request->string('search')->trim()->value();
 
+        $participantStats = DB::table('tb_diklat')
+            ->whereNotNull('diklat_id')
+            ->select('diklat_id')
+            ->selectRaw('COUNT(*) as peserta_terdaftar')
+            ->selectRaw('COALESCE(SUM(COALESCE(biaya_per_peserta, biaya, 0)), 0) as realisasi_biaya')
+            ->groupBy('diklat_id');
+
         $query = TbBiayaPendidikan::query()
             ->from('tb_biaya_pendidikan as b')
             ->leftJoin('tb_ref_pengembangan as rp', 'b.kode_pengembangan', '=', 'rp.kode_sandi')
             ->leftJoin('tb_ref_pelaksana as rpl', 'b.kode_pihak', '=', 'rpl.kode_pihak')
+            ->leftJoinSub($participantStats, 'ps', 'ps.diklat_id', '=', 'b.biaya_id')
             ->when(preg_match('/^\d{4}$/', $year) === 1, fn (Builder $builder) => $builder->whereRaw('YEAR(b.tgl_pengembangan_sdm) = ?', [$year]))
             ->when(in_array($quarter, ['1', '2', '3', '4'], true), function (Builder $builder) use ($quarter): void {
                 [$startMonth, $endMonth] = match ($quarter) {
@@ -53,7 +61,7 @@ class BiayaPendidikanController extends Controller
             });
 
         $items = $query
-            ->select('b.*', 'rp.kategori as nama_kategori', 'rpl.nama_pihak as jenis_pihak')
+            ->select('b.*', 'rp.kategori as nama_kategori', 'rpl.nama_pihak as jenis_pihak', 'ps.peserta_terdaftar', 'ps.realisasi_biaya')
             ->orderByDesc('b.tgl_pengembangan_sdm')
             ->orderByDesc('b.created_at')
             ->paginate(min(max($request->integer('per_page', 10), 1), 50))
@@ -131,6 +139,12 @@ class BiayaPendidikanController extends Controller
         DB::transaction(function () use ($request, $id, $validated): void {
             $record = TbBiayaPendidikan::query()->lockForUpdate()->findOrFail($id);
 
+            if (DB::table('tb_diklat')->where('diklat_id', $record->biaya_id)->exists()) {
+                throw ValidationException::withMessages([
+                    'delete' => 'Kegiatan tidak dapat dihapus karena sudah memiliki peserta terdaftar.',
+                ]);
+            }
+
             TbRecycleBin::query()->create([
                 'tabel_by' => 'tb_biaya_pendidikan',
                 'data_json' => json_encode($record->getAttributes(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
@@ -165,7 +179,7 @@ class BiayaPendidikanController extends Controller
             throw ValidationException::withMessages(['file_excel' => 'File import harus memiliki header dan minimal satu baris data.']);
         }
 
-        array_shift($rows);
+        $this->validateImportHeader(array_shift($rows) ?: []);
 
         return Inertia::render('BiayaPendidikan/Import', [
             'preview' => array_map(fn (array $row): array => $this->previewRow($row), array_slice($rows, 0, 15)),
@@ -181,6 +195,18 @@ class BiayaPendidikanController extends Controller
 
         if (! is_array($rows) || $rows === []) {
             throw ValidationException::withMessages(['data_rows' => 'Data preview import tidak valid. Silakan unggah ulang file.']);
+        }
+
+        $rowErrors = [];
+        foreach ($rows as $index => $row) {
+            $errors = $this->importRowErrors((array) $row);
+            foreach ($errors as $error) {
+                $rowErrors[] = 'Baris '.($index + 2).': '.$error;
+            }
+        }
+
+        if ($rowErrors !== []) {
+            throw ValidationException::withMessages(['data_rows' => implode(' ', $rowErrors)]);
         }
 
         $summary = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
@@ -202,7 +228,20 @@ class BiayaPendidikanController extends Controller
     {
         $this->ensureCanManage($request);
 
-        $content = $xlsxExport->make([
+        $categories = DB::table('tb_ref_pengembangan')
+            ->orderBy('kode_sandi')
+            ->pluck('kode_sandi')
+            ->map(fn ($value): string => (string) $value)
+            ->all();
+        $parties = DB::table('tb_ref_pelaksana')
+            ->orderBy('kode_pihak')
+            ->pluck('kode_pihak')
+            ->map(fn ($value): string => (string) $value)
+            ->all();
+        $categoryExample = $categories[0] ?? 'KATEGORI-CONTOH';
+        $partyExample = $parties[0] ?? '';
+
+        $content = $xlsxExport->makeTemplate(
             [
                 'Kode Kategori',
                 'Kode Pihak',
@@ -213,7 +252,17 @@ class BiayaPendidikanController extends Controller
                 'Total Biaya',
                 'Tgl Mulai (YYYY-MM-DD)',
             ],
-        ], 'Template Biaya Pendidikan');
+            'Template Biaya Pendidikan',
+            [[$categoryExample, $partyExample, 'Contoh kegiatan pengembangan SDM', '2 hari', 'Pihak penyelenggara contoh', 3, 15000000, '2026-02-10']],
+            [
+                'kode_kategori' => ['title' => 'Kode kategori', 'values' => $categories],
+                'kode_pihak' => ['title' => 'Kode pihak (opsional)', 'values' => $parties],
+            ],
+            [
+                ['column' => 'A', 'list' => 'kode_kategori'],
+                ['column' => 'B', 'list' => 'kode_pihak'],
+            ],
+        );
 
         return response()->streamDownload(static function () use ($content): void {
             echo $content;
@@ -229,15 +278,20 @@ class BiayaPendidikanController extends Controller
         $page = max($request->integer('page', 1), 1);
         $perPage = 3;
 
+        $hasLinkedParticipants = DB::table('tb_diklat')->where('diklat_id', $record->biaya_id)->exists();
+
         $query = DB::table('tb_diklat as d')
             ->leftJoin('tb_pegawai as p', 'p.id_peg', '=', 'd.id_peg')
-            ->where('d.diklat', $record->pengembangan_sdm)
-            ->where('d.penyelenggara', $record->pihak_pelaksana)
-            ->where('d.date_reg', $record->tgl_pengembangan_sdm);
+            ->when($hasLinkedParticipants, fn ($builder) => $builder->where('d.diklat_id', $record->biaya_id))
+            ->when(! $hasLinkedParticipants, fn ($builder) => $builder
+                ->where('d.diklat', $record->pengembangan_sdm)
+                ->where('d.penyelenggara', $record->pihak_pelaksana)
+                ->where('d.date_reg', $record->tgl_pengembangan_sdm));
 
         $total = (clone $query)->count();
         $participants = $query
-            ->select('p.nama', 'p.id_peg', 'd.biaya')
+            ->select('p.nama', 'p.id_peg')
+            ->selectRaw('COALESCE(d.biaya_per_peserta, d.biaya, 0) as biaya')
             ->offset(($page - 1) * $perPage)
             ->limit($perPage)
             ->get()
@@ -253,7 +307,7 @@ class BiayaPendidikanController extends Controller
             'data' => $participants,
             'summary' => [
                 'total_orang' => $total,
-                'total_biaya' => (int) ((clone $query)->sum('d.biaya')),
+                'total_biaya' => (int) ((clone $query)->sum(DB::raw('COALESCE(d.biaya_per_peserta, d.biaya, 0)'))),
             ],
             'pagination' => [
                 'current_page' => $page,
@@ -394,6 +448,7 @@ class BiayaPendidikanController extends Controller
         $date = $this->parseImportDate(trim((string) ($row[7] ?? '')));
         $title = trim((string) ($row[2] ?? ''));
         $party = trim((string) ($row[4] ?? ''));
+        $errors = $this->importRowErrors($row);
         $duplicate = $title !== '' && $date !== '' && TbBiayaPendidikan::query()
             ->where('pengembangan_sdm', $title)
             ->where('pihak_pelaksana', $party)
@@ -401,7 +456,7 @@ class BiayaPendidikanController extends Controller
             ->exists();
 
         return [
-            'status' => $duplicate ? 'Update data' : 'Data baru',
+            'status' => $errors !== [] ? 'Perlu diperiksa' : ($duplicate ? 'Update data' : 'Data baru'),
             'kode_kategori' => trim((string) ($row[0] ?? '')),
             'kode_pihak' => trim((string) ($row[1] ?? '')),
             'judul' => $title,
@@ -410,7 +465,73 @@ class BiayaPendidikanController extends Controller
             'jumlah_sdm' => trim((string) ($row[5] ?? '')),
             'total_biaya' => (int) preg_replace('/[^0-9]/', '', (string) ($row[6] ?? '0')),
             'tanggal' => $date,
+            'errors' => $errors,
         ];
+    }
+
+    private function validateImportHeader(array $header): void
+    {
+        $normalized = array_map(fn ($value): string => strtoupper((string) preg_replace('/[^A-Z0-9]+/i', '_', trim((string) $value))), $header);
+        $expected = [
+            ['KODE_KATEGORI', 'KODE_KATEGORI_LIHAT_SHEET_2'],
+            ['KODE_PIHAK', 'KODE_PIHAK_LIHAT_SHEET_3'],
+            ['JUDUL_PENGEMBANGAN_SDM', 'JUDUL'],
+            ['WAKTU_PELAKSANAAN', 'WAKTU'],
+            ['NAMA_PIHAK', 'NAMA_PIHAK_TEKS_MANUAL', 'PIHAK'],
+            ['JUMLAH_SDM', 'JUMLAH_SDM_ANGKA', 'JUMLAH'],
+            ['TOTAL_BIAYA', 'TOTAL_BIAYA_ANGKA', 'BIAYA'],
+            ['TGL_MULAI_YYYY_MM_DD', 'TANGGAL'],
+        ];
+
+        foreach ($expected as $index => $allowed) {
+            if (! isset($normalized[$index]) || ! in_array($normalized[$index], $allowed, true)) {
+                throw ValidationException::withMessages([
+                    'file_excel' => 'Header XLSX tidak sesuai pada kolom '.($index + 1).'. Unduh dan gunakan template resmi.',
+                ]);
+            }
+        }
+    }
+
+    private function importRowErrors(array $row): array
+    {
+        $errors = [];
+        $category = trim((string) ($row[0] ?? ''));
+        $partyCode = trim((string) ($row[1] ?? ''));
+        $title = trim((string) ($row[2] ?? ''));
+        $duration = trim((string) ($row[3] ?? ''));
+        $partyName = trim((string) ($row[4] ?? ''));
+        $participants = trim((string) ($row[5] ?? ''));
+        $cost = trim((string) ($row[6] ?? ''));
+        $date = trim((string) ($row[7] ?? ''));
+
+        if ($category === '' || $this->lookupCode('tb_ref_pengembangan', 'kode_sandi', 'kategori', $category) === null) {
+            $errors[] = 'kode kategori tidak ditemukan.';
+        }
+        if ($partyCode !== '' && $this->lookupCode('tb_ref_pelaksana', 'kode_pihak', 'nama_pihak', $partyCode) === null) {
+            $errors[] = 'kode pihak tidak ditemukan.';
+        }
+        if ($title === '') {
+            $errors[] = 'judul kegiatan wajib diisi.';
+        } elseif (mb_strlen($title) > 255) {
+            $errors[] = 'judul kegiatan maksimal 255 karakter.';
+        }
+        if (mb_strlen($duration) > 100) {
+            $errors[] = 'waktu pelaksanaan maksimal 100 karakter.';
+        }
+        if (mb_strlen($partyName) > 255) {
+            $errors[] = 'nama pihak maksimal 255 karakter.';
+        }
+        if ($participants === '' || ! preg_match('/^\d+$/', $participants) || (int) $participants < 1) {
+            $errors[] = 'jumlah SDM harus berupa bilangan minimal 1.';
+        }
+        if ($cost !== '' && ! preg_match('/^(?:rp\s*)?[0-9][0-9.,\s]*$/i', $cost)) {
+            $errors[] = 'total biaya harus berupa angka.';
+        }
+        if ($date === '' || $this->parseImportDate($date) === '') {
+            $errors[] = 'tanggal mulai tidak valid.';
+        }
+
+        return $errors;
     }
 
     private function saveImportRow(array $row, string $actor, array &$summary): void
@@ -525,6 +646,8 @@ class BiayaPendidikanController extends Controller
             'tanggal_raw' => $date?->format('Y-m-d'),
             'jumlah_sdm' => (int) ($item->jumlah_sdm ?? 0),
             'total_biaya' => (int) ($item->total_biaya ?? 0),
+            'peserta_terdaftar' => (int) ($item->peserta_terdaftar ?? 0),
+            'realisasi_biaya' => (int) ($item->realisasi_biaya ?? 0),
         ];
     }
 

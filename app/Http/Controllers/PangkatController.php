@@ -46,10 +46,7 @@ class PangkatController extends Controller
                 $like = "%{$search}%";
                 $builder->where(function (QueryBuilder $scope) use ($like): void {
                     $scope->where('pegawai.nama', 'like', $like)
-                        ->orWhere('pangkat.id_peg', 'like', $like)
-                        ->orWhere('pangkat.pangkat', 'like', $like)
-                        ->orWhere('pangkat.gol', 'like', $like)
-                        ->orWhere('pangkat.no_sk', 'like', $like);
+                        ->orWhere('pangkat.id_peg', 'like', $like);
                 });
             });
 

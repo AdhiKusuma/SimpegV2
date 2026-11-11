@@ -128,7 +128,8 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
                     <SelectCombobox id="training-cost-year" name="tahun" label="Periode" value={filters.tahun} options={years} emptyLabel="Semua tahun" emptyValue="Semua" />
                     <div className="flex flex-wrap gap-2">
                         <button type="submit" className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
-                        <a href={`/laporan/rekap-diklat/export?${exportQuery.toString()}`} className="inline-flex min-h-11 items-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">Unduh XLSX</a>
+                        <a href={`/laporan/rekap-diklat/export?${exportQuery.toString()}`} className="inline-flex min-h-11 items-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">Export XLSX</a>
+                        <a href={`/laporan/rekap-diklat/export?type=pdf&${exportQuery.toString()}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Cetak / Simpan PDF</a>
                     </div>
                 </form>
             </section>

@@ -15,6 +15,7 @@ class TbBiayaPendidikan extends Model
     protected $casts = [
         'jumlah_sdm' => 'integer',
         'total_biaya' => 'integer',
+        'durasi_hari' => 'integer',
         'tgl_pengembangan_sdm' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\DataDiriDocument;
 use App\Models\Legacy\TbEditPending;
 use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbNotifikasi;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbUser;
 use App\Models\PayrollChangeRequest;
+use App\Models\PayrollImport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -56,6 +58,73 @@ class NotificationService
             ->update(['status_baca' => 'read']);
     }
 
+    public function markReadForUser(int|string $notificationId, string $userId): bool
+    {
+        if ($userId === '' || ! Schema::hasTable('tb_notifikasi')) {
+            return false;
+        }
+
+        return DB::table('tb_notifikasi')
+            ->where('id_notif', $notificationId)
+            ->where('id_user', $userId)
+            ->where('status_baca', 'unread')
+            ->update(['status_baca' => 'read']) > 0;
+    }
+
+    public function deleteReadForUser(string $userId, int $batchSize = 500): int
+    {
+        if ($userId === '' || ! Schema::hasTable('tb_notifikasi')) {
+            return 0;
+        }
+
+        return $this->deleteInBatches(
+            fn () => DB::table('tb_notifikasi')
+                ->where('id_user', $userId)
+                ->where('status_baca', 'read'),
+            $batchSize,
+        );
+    }
+
+    public function pruneRead(int $days = 90, int $batchSize = 500): int
+    {
+        if (! Schema::hasTable('tb_notifikasi')) {
+            return 0;
+        }
+
+        $cutoff = now()->subDays(max($days, 1));
+
+        return $this->deleteInBatches(
+            fn () => DB::table('tb_notifikasi')
+                ->where('status_baca', 'read')
+                ->where('waktu_notif', '<', $cutoff),
+            $batchSize,
+        );
+    }
+
+    private function deleteInBatches(callable $queryFactory, int $batchSize): int
+    {
+        $batchSize = max($batchSize, 1);
+        $deleted = 0;
+
+        do {
+            $ids = $queryFactory()
+                ->orderBy('id_notif')
+                ->limit($batchSize)
+                ->pluck('id_notif')
+                ->all();
+
+            if ($ids === []) {
+                break;
+            }
+
+            $deleted += DB::table('tb_notifikasi')
+                ->whereIn('id_notif', $ids)
+                ->delete();
+        } while (count($ids) === $batchSize);
+
+        return $deleted;
+    }
+
     public function present(TbNotifikasi $notification): array
     {
         return [
@@ -65,6 +134,7 @@ class NotificationService
             'waktu' => $notification->waktu_notif?->format('d-m-Y H:i'),
             'status_baca' => $notification->status_baca,
             'action_url' => $this->actionUrl($notification->link_aksi),
+            'read_url' => route('notifications.open', ['notification' => $notification->id_notif]),
         ];
     }
 
@@ -175,6 +245,210 @@ class NotificationService
         ]);
     }
 
+    /**
+     * Notify each account linked to an employee in a published payroll batch.
+     * The current import is the publication boundary: pending approvals never
+     * create payroll_entries and therefore cannot notify this method.
+     */
+    public function payrollRecipients(PayrollImport $payrollImport): array
+    {
+        if (! $payrollImport->is_current || ! Schema::hasTable('tb_notifikasi')) {
+            return [];
+        }
+
+        $employeeIds = DB::table('payroll_entries')
+            ->where('payroll_import_id', $payrollImport->id)
+            ->pluck('employee_id')
+            ->map(fn ($id): string => (string) $id)
+            ->unique()
+            ->values();
+        if ($employeeIds->isEmpty()) {
+            return [];
+        }
+
+        return TbUser::query()
+            ->whereIn('id_pegawai', $employeeIds->all())
+            ->whereNotNull('id_user')
+            ->pluck('id_user')
+            ->map(fn ($id): string => (string) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Compare payroll employees with local accounts and, for published batches,
+     * with the actual payroll notification log.
+     */
+    public function payrollRecipientStatus(PayrollImport $payrollImport, bool $checkDelivery = true): array
+    {
+        if (! Schema::hasTable('payroll_entries')) {
+            return [
+                'payroll_count' => 0,
+                'account_count' => 0,
+                'notified_count' => 0,
+                'missing_count' => 0,
+                'missing_recipients' => [],
+            ];
+        }
+
+        $employees = DB::table('payroll_entries as e')
+            ->leftJoin('tb_pegawai as p', 'p.id_peg', '=', 'e.employee_id')
+            ->leftJoin('tb_user as u', 'u.id_pegawai', '=', 'e.employee_id')
+            ->where('e.payroll_import_id', $payrollImport->id)
+            ->select([
+                'e.employee_id',
+                DB::raw('MAX(p.nama) as employee_name'),
+                DB::raw('MAX(u.id_user) as user_id'),
+            ])
+            ->groupBy('e.employee_id')
+            ->orderBy('employee_name')
+            ->get();
+
+        $notifiedUserIds = [];
+        if ($checkDelivery && Schema::hasTable('tb_notifikasi')) {
+            $link = route('files.index', ['tahun' => $payrollImport->tahun, 'bulan' => $payrollImport->bulan]);
+            $notifiedUserIds = DB::table('tb_notifikasi')
+                ->where('judul', 'Slip gaji tersedia')
+                ->where('link_aksi', $link)
+                ->pluck('id_user')
+                ->map(fn ($id): string => (string) $id)
+                ->unique()
+                ->flip()
+                ->all();
+        }
+
+        $accountCount = $employees->filter(fn (object $employee): bool => trim((string) ($employee->user_id ?? '')) !== '')->count();
+        $missing = $employees
+            ->filter(function (object $employee) use ($checkDelivery, $notifiedUserIds): bool {
+                $userId = trim((string) ($employee->user_id ?? ''));
+                if ($userId === '') {
+                    return true;
+                }
+
+                return $checkDelivery && ! isset($notifiedUserIds[$userId]);
+            })
+            ->map(function (object $employee) use ($checkDelivery): array {
+                $hasAccount = trim((string) ($employee->user_id ?? '')) !== '';
+
+                return [
+                    'employee_id' => (string) $employee->employee_id,
+                    'employee_name' => trim((string) ($employee->employee_name ?? '')) ?: 'Nama pegawai tidak ditemukan',
+                    'reason' => $hasAccount && $checkDelivery
+                        ? 'Notifikasi belum tercatat pada batch ini.'
+                        : 'Akun lokal belum terhubung. Pegawai perlu login SSO satu kali.',
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'payroll_count' => $employees->count(),
+            'account_count' => $accountCount,
+            'notified_count' => $checkDelivery ? $employees->count() - count($missing) : 0,
+            'missing_count' => count($missing),
+            'missing_recipients' => $missing,
+        ];
+    }
+
+    public function notifyPublishedPayroll(PayrollImport $payrollImport): int
+    {
+        if (! $payrollImport->is_current || ! Schema::hasTable('tb_notifikasi')) {
+            return 0;
+        }
+
+        $recipients = collect($this->payrollRecipients($payrollImport));
+        if ($recipients->isEmpty()) {
+            return 0;
+        }
+
+        $link = route('files.index', ['tahun' => $payrollImport->tahun, 'bulan' => $payrollImport->bulan]);
+        $alreadyNotified = DB::table('tb_notifikasi')
+            ->whereIn('id_user', $recipients->all())
+            ->where('judul', 'Slip gaji tersedia')
+            ->where('link_aksi', $link)
+            ->pluck('id_user')
+            ->map(fn ($id): string => (string) $id)
+            ->unique()
+            ->all();
+        $alreadyNotified = array_fill_keys($alreadyNotified, true);
+        $period = sprintf('%02d-%04d', $payrollImport->bulan, $payrollImport->tahun);
+        $now = now();
+
+        $rows = $recipients
+            ->reject(fn (string $recipient): bool => isset($alreadyNotified[$recipient]))
+            ->map(fn (string $recipient): array => [
+                'id_user' => $recipient,
+                'judul' => 'Slip gaji tersedia',
+                'pesan' => "Slip gaji periode {$period} sudah tersedia di FILES.",
+                'link_aksi' => $link,
+                'status_baca' => 'unread',
+                'waktu_notif' => $now,
+            ])
+            ->values()
+            ->all();
+
+        if ($rows !== []) {
+            DB::table('tb_notifikasi')->insert($rows);
+        }
+
+        return count($rows);
+    }
+
+    public function deletePublishedPayrollNotifications(PayrollImport $payrollImport): int
+    {
+        if (! Schema::hasTable('tb_notifikasi')) {
+            return 0;
+        }
+
+        $link = route('files.index', ['tahun' => $payrollImport->tahun, 'bulan' => $payrollImport->bulan]);
+
+        return DB::table('tb_notifikasi')
+            ->where('judul', 'Slip gaji tersedia')
+            ->where('link_aksi', $link)
+            ->delete();
+    }
+
+    public function notifyDataDiriChanged(DataDiriDocument $document, string $action, string $actorId = ''): void
+    {
+        if (! Schema::hasTable('tb_notifikasi') || ! Schema::hasTable('tb_user')) {
+            return;
+        }
+
+        $recipients = TbUser::query()
+            ->where('id_pegawai', $document->pegawai_id)
+            ->whereNotNull('id_user')
+            ->pluck('id_user')
+            ->map(fn ($id): string => (string) $id)
+            ->filter(fn (string $id): bool => $id !== '' && $id !== $actorId)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($recipients === []) {
+            return;
+        }
+
+        $isDeleted = $action === 'deleted';
+        $label = $document->typeLabel();
+        $rows = array_map(
+            fn (string $recipient): array => [
+                'id_user' => $recipient,
+                'judul' => $isDeleted ? 'Dokumen data diri dihapus' : 'Dokumen data diri diperbarui',
+                'pesan' => $isDeleted
+                    ? "Dokumen {$label} Anda telah dihapus oleh admin."
+                    : "Dokumen {$label} Anda telah diperbarui oleh admin.",
+                'link_aksi' => '/profile/data-diri',
+                'status_baca' => 'unread',
+                'waktu_notif' => now(),
+            ],
+            $recipients,
+        );
+
+        DB::table('tb_notifikasi')->insert($rows);
+    }
+
     private function approverIds(TbEditPending $pending): array
     {
         $office = TbJabatan::query()
@@ -264,7 +538,7 @@ class NotificationService
         )));
     }
 
-    private function actionUrl(?string $legacyLink): ?string
+    public function actionUrl(?string $legacyLink): ?string
     {
         if (! $legacyLink) {
             return null;
@@ -282,6 +556,23 @@ class NotificationService
             return route('notifications.index');
         }
 
-        return str_starts_with($legacyLink, '/') ? $legacyLink : null;
+        if (str_starts_with($legacyLink, '/')) {
+            return $legacyLink;
+        }
+
+        // Notifikasi lama dapat menyimpan URL absolut dari route().
+        // Normalisasi ke path lokal agar redirect tetap aman dan konsisten.
+        $path = (string) ($parts['path'] ?? '');
+        if ($path === '') {
+            return null;
+        }
+
+        $configuredHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+        $notificationHost = $parts['host'] ?? null;
+        if ($notificationHost !== null && $configuredHost !== null && strcasecmp($notificationHost, (string) $configuredHost) !== 0) {
+            return null;
+        }
+
+        return $path.($parts['query'] ?? '' ? '?'.$parts['query'] : '').($parts['fragment'] ?? '' ? '#'.$parts['fragment'] : '');
     }
 }

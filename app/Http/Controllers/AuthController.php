@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbJabatan;
+use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbUser;
 use App\Services\Sso\SsoClient;
 use App\Services\Sso\SsoException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -52,13 +54,11 @@ class AuthController extends Controller
 
             $ssoToken = $sso['token'];
             $ssoProfile = $sso['profile'];
-            $user = TbUser::query()
-                ->where('id_pegawai', $ssoProfile['employee_id'])
-                ->first();
+            $user = $this->resolveSsoUser($ssoProfile);
 
             if (! $user) {
                 return back()->withErrors([
-                    'id_user' => 'Akun SSO belum terdaftar di SIMPEG lokal. Hubungi Admin.',
+                    'id_user' => 'Pegawai SSO belum terdaftar sebagai pegawai aktif di SIMPEG lokal. Hubungi Admin.',
                 ])->onlyInput('id_user');
             }
         } else {
@@ -140,6 +140,56 @@ class AuthController extends Controller
             false,
             config('session.same_site', 'lax'),
         ));
+    }
+
+    /**
+     * SSO is the source of truth for credentials. SIMPEG only keeps a local
+     * shadow account for role, profile, payroll, and notification relations.
+     */
+    private function resolveSsoUser(array $profile): ?TbUser
+    {
+        $employeeId = trim((string) ($profile['employee_id'] ?? ''));
+        if ($employeeId === '') {
+            return null;
+        }
+
+        $existing = TbUser::query()->where('id_pegawai', $employeeId)->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $employee = TbPegawai::query()->where('id_peg', $employeeId)->first();
+        if (! $employee || ! in_array(strtoupper((string) $employee->status_aktif), ['1', 'Y'], true)) {
+            return null;
+        }
+
+        $userId = $this->nextSsoUserId($employeeId);
+        $name = trim((string) ($profile['full_name'] ?? '')) ?: trim((string) $employee->nama);
+
+        return TbUser::query()->create([
+            'id_user' => $userId,
+            'nama_user' => Str::limit($name, 64, ''),
+            'password' => Hash::make(Str::random(64)),
+            'hak_akses' => 'User',
+            'status_aktif' => 'Y',
+            'id_pegawai' => $employeeId,
+            'created_by' => 'SSO',
+            'updated_by' => 'SSO',
+        ]);
+    }
+
+    private function nextSsoUserId(string $employeeId): string
+    {
+        $candidate = Str::limit($employeeId, 10, '');
+        if (! TbUser::query()->where('id_user', $candidate)->exists()) {
+            return $candidate;
+        }
+
+        do {
+            $candidate = 'S'.strtoupper(Str::random(9));
+        } while (TbUser::query()->where('id_user', $candidate)->exists());
+
+        return $candidate;
     }
 
     private function passwordMatches(?string $storedPassword, string $plainPassword): bool

@@ -163,7 +163,7 @@ export default function CreateMaster({ employees = [], scopeLabel, willRequireAp
 
             <form onSubmit={submit} className="space-y-5">
                 <section className="simpeg-card rounded-2xl border p-4 shadow-sm sm:p-6">
-                    <SectionHeading icon={Banknote} title="Identitas pegawai" description="Pilih pegawai aktif. Data kepegawaian di bawah terisi dari database." />
+                    <SectionHeading icon={Banknote} title="Identitas pegawai" description="Pilih pegawai aktif. Informasi kepegawaian di bawah terisi otomatis." />
                     <div className="grid gap-4 sm:grid-cols-2">
                         <EmployeeCombobox
                             id="employee_id"
@@ -179,7 +179,7 @@ export default function CreateMaster({ employees = [], scopeLabel, willRequireAp
                         </div>
                     </div>
                     {employee && <div className="mt-5 border-t pt-4">
-                        <p className="simpeg-muted mb-3 text-xs font-bold uppercase tracking-wide">Data pegawai dari database</p>
+                        <p className="simpeg-muted mb-3 text-xs font-bold uppercase tracking-wide">Informasi pegawai</p>
                         <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             <ReadOnlyItem label="ID pegawai" value={employee.id_peg} />
                             <ReadOnlyItem label="Nama pegawai" value={employee.nama} />

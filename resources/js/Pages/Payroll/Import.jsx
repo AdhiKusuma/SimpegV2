@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { AlertTriangle, ArrowLeft, FileSpreadsheet, LockKeyhole, Upload } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CalendarClock, FileSpreadsheet, LockKeyhole, Upload } from 'lucide-react';
 import { useEffect } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import SelectCombobox from '../../Components/SelectCombobox';
@@ -13,12 +13,20 @@ export default function Import({ preview, filters, willRequireApproval = false, 
 
     function submitPreview(event) {
         event.preventDefault();
-        upload.post('/payroll/import/preview', { forceFormData: true, preserveScroll: true });
+        upload.post('/payroll/import/preview', { forceFormData: true, preserveState: true, preserveScroll: true });
     }
 
     function submitImport(event) {
         event.preventDefault();
-        confirm.post('/payroll/import', { preserveScroll: true });
+        const file = upload.data.file_xlsx;
+        if (!file || (typeof File !== 'undefined' && !(file instanceof File))) {
+            confirm.setError('file_xlsx', 'Pilih kembali file XLSX yang sama sebelum menyimpan data payroll.');
+
+            return;
+        }
+
+        confirm.transform((data) => ({ ...data, file_xlsx: file }));
+        confirm.post('/payroll/import', { forceFormData: true, preserveScroll: true });
     }
 
     const hasErrors = Boolean(preview?.error_count);
@@ -30,7 +38,7 @@ export default function Import({ preview, filters, willRequireApproval = false, 
                 <Link href="/payroll" className="simpeg-muted mb-4 inline-flex items-center gap-2 text-sm font-semibold hover:underline"><ArrowLeft aria-hidden="true" className="h-4 w-4" /> Kembali ke payroll</Link>
                 <p className="simpeg-muted mb-2 text-sm font-semibold uppercase tracking-[0.18em]">Penggajian</p>
                 <h1 className="simpeg-text text-3xl font-extrabold tracking-tight">Import data payroll</h1>
-                <p className="simpeg-muted mt-2">Pilih periode, unggah workbook, lalu periksa validasi sebelum menyimpan data.</p>
+                <p className="simpeg-muted mt-2">Pilih periode, unggah file, lalu periksa hasil pemeriksaan sebelum menyimpan data.</p>
             </div>
 
             {flash.error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">{flash.error}</div>}
@@ -39,7 +47,7 @@ export default function Import({ preview, filters, willRequireApproval = false, 
                 <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                         <span className="simpeg-card-soft inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"><FileSpreadsheet aria-hidden="true" className="h-5 w-5" /></span>
-                        <div><h2 className="simpeg-text font-semibold">Workbook payroll</h2><p className="simpeg-muted mt-1 text-sm">Nama sheet bebas. ID Pegawai menjadi kunci pencocokan dengan master. Kode kantor, jabatan, unit/divisi, dan status pegawai boleh dikosongkan; jika diisi hanya dicocokkan dengan data master. Kolom payroll dan nominal tetap divalidasi. Nominal Golongan Pegawai ditambahkan ke Gaji Pokok, dan nilai kosong dihitung Rp0.</p>
+                        <div><h2 className="simpeg-text font-semibold">File payroll</h2><p className="simpeg-muted mt-1 text-sm">Nama lembar kerja boleh disesuaikan. ID Pegawai digunakan untuk mencocokkan data. Kode kantor, jabatan, unit/divisi, dan status pegawai boleh dikosongkan; jika diisi akan dicocokkan dengan data pegawai. Kolom payroll dan nominal tetap diperiksa. Nominal Golongan Pegawai ditambahkan ke Gaji Pokok, dan nilai kosong dihitung Rp0.</p>
                             <p className="simpeg-muted mt-2 text-xs">{willRequireApproval ? 'Setelah valid, import diajukan ke supervisor kantor terkait. Data baru aktif setelah disetujui.' : 'Setelah valid, data payroll dan Master Gaji langsung diperbarui.'}</p>
                         </div>
                     </div>
@@ -65,10 +73,14 @@ export default function Import({ preview, filters, willRequireApproval = false, 
                         />
                         {upload.errors.bulan && <p role="alert" className="mt-1 text-xs text-red-600">{upload.errors.bulan}</p>}
                     </div>
+                    <div className="simpeg-card-soft flex items-start gap-3 rounded-xl border p-3 md:col-span-2">
+                        <CalendarClock aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
+                        <div><p className="simpeg-text text-sm font-semibold">Pengiriman otomatis sesuai tanggal gajian</p><p className="simpeg-muted mt-1 text-xs">Tanggal gajian akan diperiksa terlebih dahulu. Setelah payroll disimpan, slip akan dikirim otomatis pada tanggal tersebut pukul 08.00 WIB. Jadwal dapat diubah dari menu Publikasi &amp; Pengiriman Slip.</p></div>
+                    </div>
                     <div className="md:col-span-2">
                         <label htmlFor="payroll-file" className="simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide">File XLSX</label>
                         <input id="payroll-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required onChange={(event) => upload.setData('file_xlsx', event.target.files?.[0] || null)} className="simpeg-input block min-h-12 w-full rounded-xl border p-2 text-sm file:mr-3 file:min-h-9 file:rounded-lg file:border-0 file:px-3 file:font-semibold" />
-                        <p className="simpeg-muted mt-2 text-xs">Maksimal 20 MB. Data rekening dan komponen gaji hanya diproses di backend.</p>
+                        <p className="simpeg-muted mt-2 text-xs">Maksimal 20 MB. Data rekening dan komponen gaji diproses secara aman.</p>
                         {upload.errors.file_xlsx && <p role="alert" className="mt-1 text-xs text-red-600">{upload.errors.file_xlsx}</p>}
                     </div>
                     <div className="md:col-span-2">
@@ -91,18 +103,22 @@ export default function Import({ preview, filters, willRequireApproval = false, 
                 <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
                     <div className="simpeg-card-soft rounded-xl border p-4"><p className="simpeg-muted text-xs">Baris pegawai</p><p className="simpeg-text mt-1 text-2xl font-bold tabular-nums">{Number(preview.row_count).toLocaleString('id-ID')}</p></div>
                     <div className="simpeg-card-soft rounded-xl border p-4"><p className="simpeg-muted text-xs">Kantor terdeteksi</p><p className="simpeg-text mt-1 text-2xl font-bold tabular-nums">{Number(preview.office_count).toLocaleString('id-ID')}</p></div>
+                    <div className="simpeg-card-soft rounded-xl border p-4"><p className="simpeg-muted text-xs">Pengiriman slip</p><p className="simpeg-text mt-1 font-semibold">{preview.publication_mode === 'scheduled' ? `Terjadwal${preview.scheduled_at ? ` · ${preview.scheduled_at.replace('T', ' ')}` : ''}` : 'Setelah payroll aktif'}</p></div>
                 </div>
                 {hasErrors ? <div className="border-t p-4 sm:p-5">
-                    <p className="mb-3 font-semibold text-red-700">Ditemukan {preview.error_count} masalah. Perbaiki workbook sebelum mengimpor.</p>
+                    <p className="mb-3 font-semibold text-red-700">Ditemukan {preview.error_count} masalah. Periksa dan perbaiki file sebelum mengimpor.</p>
                     <ul className="max-h-72 space-y-2 overflow-y-auto rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                         {preview.errors.map((error, index) => <li key={`${error.row ?? 'header'}-${index}`}><span className="font-semibold">{error.row ? `Baris ${error.row}: ` : ''}</span>{error.messages.join('; ')}</li>)}
                     </ul>
+                </div> : preview.duplicate_current || preview.duplicate_pending ? <div className="border-t border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 sm:p-5">
+                    {preview.duplicate_current ? 'File ini sama dengan data payroll aktif untuk periode tersebut. Data baru tidak dibuat.' : 'File ini sama dengan pengajuan payroll yang masih menunggu persetujuan. Pengajuan baru tidak dibuat.'}
                 </div> : <div className="flex flex-col gap-3 border-t p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                    <p className="simpeg-muted flex items-center gap-2 text-sm"><LockKeyhole aria-hidden="true" className="h-4 w-4 shrink-0" />Preview hanya menunjukkan jumlah baris; nilai gaji dan rekening tidak dikirim ke browser.</p>
+                    <p className="simpeg-muted flex items-center gap-2 text-sm"><LockKeyhole aria-hidden="true" className="h-4 w-4 shrink-0" />Pratinjau hanya menampilkan jumlah baris. Nilai gaji dan rekening tetap terlindungi dan diproses setelah Anda mengonfirmasi.</p>
                     <form onSubmit={submitImport}>
                         <input type="hidden" value={confirm.data.preview_token} readOnly />
                         {confirm.errors.preview_token && <p role="alert" className="mb-2 text-xs text-red-600">{confirm.errors.preview_token}</p>}
-                        <button type="submit" disabled={confirm.processing || !preview.token} className="simpeg-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 text-sm font-bold disabled:opacity-60 sm:w-auto">{confirm.processing ? (willRequireApproval ? 'Mengajukan…' : 'Menyimpan…') : (willRequireApproval ? 'Ajukan import untuk approval' : 'Simpan data payroll')}</button>
+                        {confirm.errors.file_xlsx && <p role="alert" className="mb-2 text-xs text-red-600">{confirm.errors.file_xlsx}</p>}
+                        <button type="submit" disabled={confirm.processing || !preview.token || !upload.data.file_xlsx} className="simpeg-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 text-sm font-bold disabled:opacity-60 sm:w-auto">{confirm.processing ? (willRequireApproval ? 'Mengajukan…' : 'Menyimpan…') : (willRequireApproval ? 'Ajukan import untuk approval' : 'Simpan data payroll')}</button>
                     </form>
                 </div>}
             </section>}

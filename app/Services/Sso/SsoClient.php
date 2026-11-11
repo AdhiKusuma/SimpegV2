@@ -59,12 +59,17 @@ class SsoClient
 
     private function request(): PendingRequest
     {
+        $caBundle = trim((string) config('services.sso.ca_bundle', ''));
+        if ($caBundle !== '' && ! str_starts_with($caBundle, '/')) {
+            $caBundle = base_path($caBundle);
+        }
+
         return Http::acceptJson()
             ->asJson()
             ->connectTimeout(max(1, (int) config('services.sso.connect_timeout', 5)))
             ->timeout(max(1, (int) config('services.sso.timeout', 10)))
             ->withOptions([
-                'verify' => (bool) config('services.sso.verify', true),
+                'verify' => $caBundle !== '' ? $caBundle : (bool) config('services.sso.verify', true),
             ])
             ->baseUrl(rtrim((string) config('services.sso.base_url'), '/'));
     }

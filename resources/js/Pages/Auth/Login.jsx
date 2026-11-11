@@ -1,11 +1,11 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Clock3, ExternalLink, Eye, EyeOff, Headset, ShieldCheck, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { BackgroundGrid } from '../../components/ui/background-grid';
-import { Button } from '../../components/ui/button';
-import { Label } from '../../components/ui/label';
-import { Form } from '../../components/ui/form';
-import { Input } from '../../components/ui/input';
+import { BackgroundGrid } from '../../Components/ui/background-grid';
+import { Button } from '../../Components/ui/button';
+import { Label } from '../../Components/ui/label';
+import { Form } from '../../Components/ui/form';
+import { Input } from '../../Components/ui/input';
 import ThemeToggle from '../../Components/ThemeToggle';
 
 const slides = [

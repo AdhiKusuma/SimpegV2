@@ -38,7 +38,7 @@ export default function EselonIndex({ items, record, canManage }) {
                 <Link href="/jabatan" className="text-sm font-bold text-blue-600 hover:text-blue-700">← Kembali ke Data Jabatan</Link>
                 <p className="mb-2 mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Master Referensi</p>
                 <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Master data eselon</h1>
-                <p className="mt-2 max-w-2xl text-slate-500">Referensi eselon sistem tetap menggunakan tabel <span className="font-mono text-xs">tb_masteresl</span>.</p>
+                <p className="mt-2 max-w-2xl text-slate-500">Kelola referensi eselon pegawai.</p>
             </div>
 
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}

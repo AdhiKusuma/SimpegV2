@@ -10,13 +10,13 @@ import {
     ShieldAlert,
     UsersRound,
 } from 'lucide-react';
-import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../Components/ui/badge';
+import { Button } from '../Components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../Components/ui/card';
 import { Bar, BarChart, CartesianGrid, Cell, XAxis } from 'recharts';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../components/ui/chart';
-import { Input } from '../components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../Components/ui/chart';
+import { Input } from '../Components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../Components/ui/table';
 
 const chartColors = [
     'var(--simpeg-chart-1)',

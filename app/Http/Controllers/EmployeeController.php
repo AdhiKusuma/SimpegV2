@@ -7,12 +7,14 @@ use App\Models\Legacy\TbCuti;
 use App\Models\Legacy\TbDp3;
 use App\Models\Legacy\TbKantor;
 use App\Models\Legacy\TbLatJabatan;
+use App\Models\Legacy\TbMasterJabatan;
 use App\Models\Legacy\TbMutasi;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbPenghargaan;
 use App\Models\Legacy\TbPenugasan;
 use App\Models\Legacy\TbSeminar;
 use App\Models\Legacy\TbUser;
+use App\Services\XlsxExportService;
 use App\Support\SimpegFieldRules;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,6 +29,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Shuchkin\SimpleXLSX;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeeController extends Controller
 {
@@ -78,7 +81,7 @@ class EmployeeController extends Controller
         }
 
         if ($office) {
-            $officeCodes = $this->officeCodesForFilter($selectedOffice);
+            $officeCodes = $this->officeCodesForFilter($selectedOffice, $division);
 
             if ($officeCodes === []) {
                 $query->whereRaw('1 = 0');
@@ -90,11 +93,14 @@ class EmployeeController extends Controller
         $filterOptionsQuery = clone $query;
 
         if ($division !== '' && $division !== self::ALL_DIVISIONS) {
-            $this->applyDivisionFilter($query, $division);
+            $this->applyDivisionFilter($query, $division, $this->masterScopesForOffice($selectedOffice));
         }
 
         if ($position) {
-            $query->where('j.jabatan', $position);
+            $query->where(function (Builder $builder) use ($position): void {
+                $builder->whereRaw('TRIM(mj.nama_jabatan) = ?', [$position])
+                    ->orWhereRaw('TRIM(j.jabatan) = ?', [$position]);
+            });
         }
 
         $yearsQuery = clone $query;
@@ -115,11 +121,7 @@ class EmployeeController extends Controller
             $query->where(function (Builder $builder) use ($search): void {
                 $like = "%{$search}%";
                 $builder->where('p.id_peg', 'like', $like)
-                    ->orWhere('p.nik', 'like', $like)
-                    ->orWhere('p.nama', 'like', $like)
-                    ->orWhere('j.jabatan', 'like', $like)
-                    ->orWhere('k.nama_kantor', 'like', $like)
-                    ->orWhere('mj.nama_unit_kerja', 'like', $like);
+                    ->orWhere('p.nama', 'like', $like);
             });
         }
 
@@ -137,6 +139,7 @@ class EmployeeController extends Controller
                 'j.jabatan',
                 'j.unit_kerja',
                 'k.nama_kantor',
+                'mj.nama_jabatan as master_jabatan',
                 'mj.nama_unit_kerja as divisi',
                 'mut.jns_mutasi',
                 'mut.tgl_mutasi',
@@ -148,7 +151,15 @@ class EmployeeController extends Controller
             ->through(fn (TbPegawai $employee): array => $this->presentEmployee($employee));
 
         $offices = TbKantor::query()
-            ->whereIn('level', ['KP', 'KANWIL', 'KC'])
+            ->whereNotNull('nama_kantor')
+            ->whereRaw("TRIM(nama_kantor) <> ''")
+            ->where(function (Builder $builder): void {
+                $builder->whereIn('level', ['KP', 'KANWIL', 'KC'])
+                    ->orWhere(function (Builder $regional): void {
+                        $regional->whereNull('level')
+                            ->whereRaw("UPPER(TRIM(nama_kantor)) LIKE 'KANTOR WILAYAH%'");
+                    });
+            })
             ->when($unit, fn (Builder $builder) => $builder->where('kode_kantor_detail', $unit))
             ->orderBy('kode_kantor_detail')
             ->get(['kode_kantor_detail', 'nama_kantor', 'level', 'kode_cabang']);
@@ -202,7 +213,7 @@ class EmployeeController extends Controller
             return response()->json(['divisions' => [], 'positions' => []]);
         }
 
-        $officeCodes = $this->officeCodesForFilter($selectedOffice);
+        $officeCodes = $this->officeCodesForFilter($selectedOffice, $division);
 
         if ($officeCodes === []) {
             return response()->json(['divisions' => [], 'positions' => []]);
@@ -353,14 +364,35 @@ class EmployeeController extends Controller
         return Inertia::render('Employees/Import');
     }
 
-    public function downloadTemplate(Request $request): BinaryFileResponse
+    public function downloadTemplate(Request $request, XlsxExportService $xlsxExport): StreamedResponse
     {
         $this->ensureAdmin($request);
-        $path = public_path('templates/Template_Import_Pegawai_V2.xlsx');
 
-        abort_unless(is_file($path), 404, 'Template import pegawai tidak ditemukan.');
+        $content = $xlsxExport->makeTemplate(
+            self::IMPORT_HEADERS,
+            'Template Import Pegawai',
+            [['CONTOH-001', '1234567890123456', 'Contoh Nama Pegawai', 'Semarang', '20-11-1990', 'Islam', 'Laki-laki', 'O', 'Belum Menikah', 'Tetap', 'Jl. Contoh No. 1', '081234567890', 'contoh@example.com', 'contoh.jpg', '20-11-2025', '-', '123456789012', '123456789012']],
+            [
+                'agama' => ['title' => 'Agama', 'values' => ['Islam', 'Protestan', 'Katolik', 'Hindu', 'Budha', 'KongHuCu']],
+                'jenis_kelamin' => ['title' => 'Jenis kelamin', 'values' => ['Laki-laki', 'Perempuan']],
+                'gol_darah' => ['title' => 'Golongan darah', 'values' => ['-', 'A', 'B', 'AB', 'O']],
+                'status_nikah' => ['title' => 'Status pernikahan', 'values' => ['Menikah', 'Belum Menikah', 'Janda', 'Duda']],
+                'status_kepegawaian' => ['title' => 'Status kepegawaian', 'values' => ['Tetap', 'Kontrak', 'Outsource']],
+            ],
+            [
+                ['column' => 'F', 'list' => 'agama'],
+                ['column' => 'G', 'list' => 'jenis_kelamin'],
+                ['column' => 'H', 'list' => 'gol_darah'],
+                ['column' => 'I', 'list' => 'status_nikah'],
+                ['column' => 'J', 'list' => 'status_kepegawaian'],
+            ],
+        );
 
-        return response()->download($path, 'Template_Import_Pegawai_V2.xlsx');
+        return response()->streamDownload(static function () use ($content): void {
+            echo $content;
+        }, 'Template_Import_Pegawai_V2.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function previewImport(Request $request): JsonResponse
@@ -593,115 +625,59 @@ class EmployeeController extends Controller
 
     private function employeeFilterOptions(Builder $query, string $division = '', ?TbKantor $selectedOffice = null): array
     {
-        // The legacy schema stores two different concepts in two different
-        // places:
-        // - j.unit_kerja: the physical office/unit code (Kc./KanKas/etc.)
-        // - mj.nama_unit_kerja: the organisational division/category
-        // A branch must expose its own physical units, while the central
-        // office exposes the organisational divisions. The generic value
-        // "Kantor Cabang" is not a division and must never be the only
-        // option shown for a branch.
-        $isBranchOffice = $this->isBranchOffice($selectedOffice);
-        // Some installations do not have complete/consistent metadata in
-        // tb_kantor. For a selected branch, the employee rows are the source
-        // of truth: only unit codes actually used by employees in that
-        // branch may appear in the dependent dropdown.
-        $employeeUnitCodes = (clone $query)
-            ->whereNotNull('j.unit_kerja')
-            ->where('j.unit_kerja', '<>', '')
-            ->select('j.unit_kerja')
-            ->distinct()
-            ->pluck('j.unit_kerja')
-            ->map(fn ($code): string => trim((string) $code))
-            ->filter()
-            ->values();
+        $masterScopes = $this->masterScopesForOffice($selectedOffice);
+        $masterQuery = TbMasterJabatan::query()
+            ->whereNotNull('nama_unit_kerja')
+            ->whereRaw("TRIM(nama_unit_kerja) <> ''")
+            ->when($masterScopes !== [], fn (Builder $builder) => $builder->whereIn('lingkup', $masterScopes));
+        $scopeDescription = $masterScopes === [] ? 'Dari master jabatan' : 'Lingkup: '.implode(', ', $masterScopes);
 
-        // Include every physical unit registered under the selected branch,
-        // not only units that happen to have an employee in the current tab.
-        // This keeps the dependent dropdown complete and prevents the generic
-        // branch label from being used as a substitute for the real units.
-        $physicalUnitCodes = $isBranchOffice && $selectedOffice
-            ? $employeeUnitCodes
-                ->merge(
-                    TbKantor::query()
-                        ->whereRaw('TRIM(kode_cabang) = ?', [trim((string) $selectedOffice->kode_cabang)])
-                        ->pluck('kode_kantor_detail')
-                        ->map(fn ($code): string => trim((string) $code)),
-                )
-                ->map(fn ($code): string => trim((string) $code))
-                ->filter()
-                ->unique()
-                ->values()
-            : $employeeUnitCodes;
-
-        $unitDirectory = $physicalUnitCodes->isNotEmpty()
-            ? TbKantor::query()
-                ->whereIn('kode_kantor_detail', $physicalUnitCodes->all())
+        $physicalUnits = collect();
+        if ($this->isBranchOffice($selectedOffice)) {
+            $physicalUnitCodes = $this->physicalUnitCodesForOffice($selectedOffice);
+            $physicalUnits = TbKantor::query()
+                ->whereIn('kode_kantor_detail', $physicalUnitCodes)
+                ->orderBy('kode_kantor_detail')
                 ->get(['kode_kantor_detail', 'nama_kantor', 'level'])
-                ->keyBy(fn (TbKantor $office): string => trim((string) $office->kode_kantor_detail))
-            : collect();
+                ->map(function (TbKantor $office): array {
+                    $code = trim((string) $office->kode_kantor_detail);
+                    $label = trim((string) $office->nama_kantor);
+                    $level = mb_strtoupper(trim((string) $office->level));
 
-        $physicalUnits = $isBranchOffice
-            ? $physicalUnitCodes
-                ->map(function (string $code) use ($unitDirectory, $selectedOffice): array {
-                    /** @var TbKantor|null $office */
-                    $office = $unitDirectory->get($code);
-                    $label = trim((string) ($office?->nama_kantor ?: ''));
-
-                    // Never let a generic office category become a unit
-                    // option. If the office master is incomplete, keep the
-                    // real unit code visible instead of falling back to
-                    // labels such as "Kantor Cabang".
-                    if ($label === '' || $this->isGenericDivisionLabel($label, $selectedOffice, collect())) {
-                        $label = $code === trim((string) $selectedOffice?->kode_kantor_detail)
-                            && trim((string) $selectedOffice?->nama_kantor) !== ''
-                            && ! $this->isGenericDivisionLabel((string) $selectedOffice->nama_kantor, null, collect())
-                            ? trim((string) $selectedOffice->nama_kantor)
-                            : 'Unit kerja '.$code;
-                    }
-
-                    if ($office && strtoupper(trim((string) $office->level)) === 'KC') {
+                    if ($level === 'KC' && ! str_contains(mb_strtolower($label), 'induk')) {
                         $label .= ' (Induk)';
                     }
 
                     return [
                         'value' => 'unit:'.$code,
-                        'label' => $label,
-                        'description' => 'Unit fisik',
+                        'label' => $label !== '' ? $label : 'Unit kerja '.$code,
+                        'description' => $level === 'KC'
+                            ? 'Unit fisik (Kantor Cabang)'
+                            : 'Unit fisik (Kantor Kas)',
                         'kind' => 'physical',
                     ];
                 })
-                ->unique('value')
-                ->values()
-            : collect();
-
-        $physicalNames = $physicalUnits
-            ->pluck('label')
-            ->map(fn ($name): string => mb_strtolower(trim((string) preg_replace('/\s*\(induk\)$/i', '', (string) $name))))
-            ->values();
-
-        // For a branch, tb_master_jabatan often contains the generic
-        // category "Kantor Cabang" for every position. It is not a real
-        // unit/division and must never be used as the dependent option.
-        // Branch options therefore come exclusively from the physical units
-        // already present in tb_jabatan for that selected branch.
-        $masterDivisions = $isBranchOffice
-            ? collect()
-            : (clone $query)
-                ->whereNotNull('mj.nama_unit_kerja')
-                ->where('mj.nama_unit_kerja', '<>', '')
-                ->selectRaw('mj.nama_unit_kerja as value, mj.nama_unit_kerja as label')
-                ->distinct()
-                ->orderBy('mj.nama_unit_kerja')
-                ->get()
-                ->filter(fn ($unit): bool => ! $this->isGenericDivisionLabel((string) $unit->label, $selectedOffice, $physicalNames))
-                ->map(fn ($unit): array => [
-                    'value' => 'division:'.trim((string) $unit->value),
-                    'label' => trim((string) $unit->label),
-                    'description' => 'Bagian / divisi',
-                    'kind' => 'division',
-                ])
+                ->filter(fn (array $option): bool => $option['value'] !== 'unit:')
                 ->values();
+        }
+
+        $masterDivisions = (clone $masterQuery)
+            ->select(['nama_unit_kerja', 'lingkup'])
+            ->orderBy('nama_unit_kerja')
+            ->get()
+            ->map(function (TbMasterJabatan $master) use ($scopeDescription): array {
+                $label = trim((string) $master->nama_unit_kerja);
+
+                return [
+                    'value' => 'division:'.$label,
+                    'label' => $label,
+                    'description' => 'Bagian / Divisi · '.$scopeDescription,
+                    'kind' => 'division',
+                ];
+            })
+            ->filter(fn (array $option): bool => $option['label'] !== '')
+            ->unique('value')
+            ->values();
 
         $divisions = $physicalUnits
             ->concat($masterDivisions)
@@ -709,52 +685,78 @@ class EmployeeController extends Controller
             ->values();
 
         $positions = collect();
-
         if ($division !== '') {
-            $positions = (clone $query)
-                ->when(
-                    $division !== self::ALL_DIVISIONS,
-                    fn (Builder $builder) => $this->applyDivisionFilter($builder, $division),
-                )
-                ->whereNotNull('j.jabatan')
-                ->where('j.jabatan', '<>', '')
-                ->select('j.jabatan')
-                ->distinct()
-                ->orderBy('j.jabatan')
-                ->pluck('j.jabatan')
-                ->map(fn ($name): array => ['value' => (string) $name, 'label' => (string) $name])
+            $selectedDivision = match (true) {
+                str_starts_with($division, 'division:') => substr($division, strlen('division:')),
+                str_starts_with($division, 'unit:') => '',
+                $division === self::ALL_DIVISIONS => '',
+                default => $division,
+            };
+
+            $positions = (clone $masterQuery)
+                ->when($selectedDivision !== '', fn (Builder $builder) => $builder->whereRaw('TRIM(nama_unit_kerja) = ?', [$selectedDivision]))
+                ->whereNotNull('nama_jabatan')
+                ->whereRaw("TRIM(nama_jabatan) <> ''")
+                ->select(['nama_jabatan', 'lingkup'])
+                ->orderBy('nama_jabatan')
+                ->get()
+                ->map(function (TbMasterJabatan $master) use ($scopeDescription): array {
+                    $label = trim((string) $master->nama_jabatan);
+
+                    return [
+                        'value' => $label,
+                        'label' => $label,
+                        'description' => $scopeDescription,
+                    ];
+                })
+                ->filter(fn (array $option): bool => $option['label'] !== '')
+                ->unique('value')
                 ->values();
         }
 
         return ['divisions' => $divisions, 'positions' => $positions];
     }
 
-    private function isGenericDivisionLabel(string $label, ?TbKantor $selectedOffice, $physicalNames): bool
+    private function masterScopesForOffice(?TbKantor $office): array
     {
-        $normalised = mb_strtolower(trim((string) preg_replace('/\s+/', ' ', $label)));
-
-        if ($normalised === '') {
-            return true;
+        if (! $office) {
+            return [];
         }
 
-        $genericLabels = [
-            'kantor pusat',
-            'kantor cabang',
-            'kantor wilayah',
-            'kanwil',
-            'kantor kas',
-            'kankas',
-        ];
+        $level = mb_strtoupper(trim((string) $office->level));
+        $name = mb_strtoupper(trim((string) $office->nama_kantor));
 
-        if (in_array($normalised, $genericLabels, true)) {
-            return true;
+        if ($level === 'KP' || str_contains($name, 'PUSAT')) {
+            return ['KP'];
         }
 
-        if ($selectedOffice && $normalised === mb_strtolower(trim((string) $selectedOffice->nama_kantor))) {
-            return true;
+        if (in_array($level, ['KC', 'KK'], true) || str_contains($level, 'CABANG') || str_contains($level, 'KAS')) {
+            return ['KC'];
         }
 
-        return $physicalNames->contains($normalised);
+        if (in_array($level, ['KANWIL', 'KW', 'WILAYAH'], true) || str_contains($level, 'WILAYAH') || str_contains($name, 'WILAYAH') || str_contains($name, 'KANWIL')) {
+            return ['KANWIL'];
+        }
+
+        return $level !== '' ? [$level] : ['__unmapped__'];
+    }
+
+    private function officeCodesForFilter(?TbKantor $selectedOffice, string $division = ''): array
+    {
+        if (! $selectedOffice) {
+            return [];
+        }
+
+        if (str_starts_with($division, 'unit:')) {
+            $unit = trim(substr($division, strlen('unit:')));
+            $allowedUnits = $this->physicalUnitCodesForOffice($selectedOffice);
+
+            return in_array($unit, $allowedUnits, true) ? [$unit] : [];
+        }
+
+        // A selected office must match exactly. A branch's physical units
+        // are widened only after the user explicitly selects a unit option.
+        return [trim((string) $selectedOffice->kode_kantor_detail)];
     }
 
     private function isBranchOffice(?TbKantor $office): bool
@@ -766,10 +768,6 @@ class EmployeeController extends Controller
         $level = mb_strtoupper(trim((string) $office->level));
         $name = mb_strtoupper(trim((string) $office->nama_kantor));
         $branchCode = trim((string) $office->kode_cabang);
-        $detailCode = trim((string) $office->kode_kantor_detail);
-        $normalisedBranchCode = ctype_digit($branchCode)
-            ? str_pad($branchCode, 3, '0', STR_PAD_LEFT)
-            : $branchCode;
 
         return in_array($level, ['KC', 'KK', 'KANTOR CABANG', 'KANTOR KAS'], true)
             || str_contains($level, 'CABANG')
@@ -778,58 +776,80 @@ class EmployeeController extends Controller
             || preg_match('/(^|\s)KC(?:\.|\s|$)/', $name) === 1
             || str_contains($name, 'KANKAS')
             || str_contains($name, 'KAN KAS')
-            || ($normalisedBranchCode !== '' && $normalisedBranchCode !== '000');
+            || ($branchCode !== '' && $branchCode !== '000');
     }
 
-    private function officeCodesForFilter(?TbKantor $selectedOffice): array
+    private function physicalUnitCodesForOffice(?TbKantor $selectedOffice): array
     {
         if (! $selectedOffice) {
             return [];
         }
 
-        $codes = [(string) $selectedOffice->kode_kantor_detail];
-
-        if ($this->isBranchOffice($selectedOffice)) {
-            $branchCode = trim((string) $selectedOffice->kode_cabang);
-            $branchPrefix = substr(trim((string) $selectedOffice->kode_kantor_detail), 0, 3);
-            $codes = TbKantor::query()
-                ->where(function (Builder $builder) use ($branchCode, $branchPrefix): void {
-                    if ($branchPrefix !== '') {
-                        $builder->whereRaw('TRIM(kode_kantor_detail) LIKE ?', [$branchPrefix.'%']);
-                    }
-
-                    if ($branchCode !== '') {
-                        $method = $branchPrefix !== '' ? 'orWhere' : 'where';
-                        $builder->{$method.'Raw'}('TRIM(kode_cabang) = ?', [$branchCode]);
-                    }
-                })
-                ->pluck('kode_kantor_detail')
-                ->map(fn ($code): string => trim((string) $code))
-                ->filter()
-                ->values()
-                ->all();
+        $selectedCode = trim((string) $selectedOffice->kode_kantor_detail);
+        if (! $this->isBranchOffice($selectedOffice)) {
+            return $selectedCode === '' ? [] : [$selectedCode];
         }
 
-        return $this->expandLegacyOfficeCodes($codes);
+        $branchCode = trim((string) $selectedOffice->kode_cabang);
+        $branchPrefix = substr($selectedCode, 0, 3);
+        if ($branchCode === '' && $branchPrefix === '') {
+            return $selectedCode === '' ? [] : [$selectedCode];
+        }
+
+        $codes = TbKantor::query()
+            ->where(function (Builder $builder) use ($branchCode, $branchPrefix): void {
+                if ($branchCode !== '') {
+                    $builder->whereRaw('TRIM(kode_cabang) = ?', [$branchCode]);
+                }
+
+                if ($branchPrefix !== '') {
+                    $method = $branchCode !== '' ? 'orWhereRaw' : 'whereRaw';
+                    $builder->{$method}('TRIM(kode_kantor_detail) LIKE ?', [$branchPrefix.'%']);
+                }
+            })
+            ->whereNotNull('kode_kantor_detail')
+            ->whereRaw("TRIM(kode_kantor_detail) <> ''")
+            ->orderBy('kode_kantor_detail')
+            ->pluck('kode_kantor_detail')
+            ->map(fn ($code): string => trim((string) $code))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($selectedCode !== '') {
+            $codes->push($selectedCode);
+        }
+
+        return $codes->unique()->values()->all();
     }
 
-    private function applyDivisionFilter(Builder $query, string $division): Builder
+    private function applyDivisionFilter(Builder $query, string $division, array $masterScopes = []): Builder
     {
         if (str_starts_with($division, 'unit:')) {
-            return $query->whereIn('j.unit_kerja', $this->expandLegacyOfficeCodes([
-                substr($division, strlen('unit:')),
-            ]));
+            return $query->where('j.unit_kerja', trim(substr($division, strlen('unit:'))));
         }
 
         if (str_starts_with($division, 'division:')) {
-            return $query->where('mj.nama_unit_kerja', substr($division, strlen('division:')));
+            $query->whereRaw('TRIM(mj.nama_unit_kerja) = ?', [substr($division, strlen('division:'))]);
+
+            if ($masterScopes !== []) {
+                $query->whereIn('mj.lingkup', $masterScopes);
+            }
+
+            return $query;
         }
 
         if (TbKantor::query()->where('kode_kantor_detail', $division)->exists()) {
             return $query->whereIn('j.unit_kerja', $this->expandLegacyOfficeCodes([$division]));
         }
 
-        return $query->where('mj.nama_unit_kerja', $division);
+        $query->whereRaw('TRIM(mj.nama_unit_kerja) = ?', [$division]);
+
+        if ($masterScopes !== []) {
+            $query->whereIn('mj.lingkup', $masterScopes);
+        }
+
+        return $query;
     }
 
     private function expandLegacyOfficeCodes(array $codes): array
@@ -900,7 +920,7 @@ class EmployeeController extends Controller
             'id_peg' => $employee->id_peg,
             'nama' => $employee->nama,
             'ttl' => trim(implode(', ', array_filter([$employee->tempat_lhr, $this->formatDate($employee->tgl_lhr)]))),
-            'jabatan' => $employee->jabatan,
+            'jabatan' => $employee->master_jabatan ?: $employee->jabatan,
             'kantor' => $employee->nama_kantor,
             'divisi' => $employee->divisi,
             'tmt_kerja' => $this->formatDate($employee->tmt_kerja),

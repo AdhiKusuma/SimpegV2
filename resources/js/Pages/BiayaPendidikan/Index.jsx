@@ -18,12 +18,18 @@ function formatRupiah(value) {
 }
 
 export default function BiayaPendidikanIndex({ items, years, filters, canManage }) {
-    const { flash } = usePage().props;
+    const { flash, errors } = usePage().props;
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [detail, setDetail] = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState('');
     const deleteForm = useForm({ reason: '' });
+    const withFilters = (url) => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
+        const query = params.toString();
+        return query ? `${url}?${query}` : url;
+    };
 
     useEffect(() => {
         if (!detail) return undefined;
@@ -76,17 +82,17 @@ export default function BiayaPendidikanIndex({ items, years, filters, canManage 
                 <div>
                     <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Pengembangan Pegawai</p>
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar kegiatan diklat</h1>
-                    <p className="mt-2 max-w-2xl text-slate-500">Kelola kegiatan pengembangan SDM dan pantau anggaran yang tercatat pada tabel sistem.</p>
+                    <p className="mt-2 max-w-2xl text-slate-500">Kelola kegiatan pengembangan SDM dan pantau anggarannya.</p>
                 </div>
-                {canManage && (
-                    <div className="flex flex-wrap gap-2">
-                        <Link href="/biaya-pendidikan/import" className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Import data</Link>
-                        <Link href="/biaya-pendidikan/create" className="inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Tambah kegiatan</Link>
-                    </div>
-                )}
+                <div className="flex flex-wrap gap-2">
+                    <a href={withFilters('/biaya-pendidikan/export')} className="inline-flex min-h-11 items-center rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">Export XLSX</a>
+                    {canManage && <Link href="/biaya-pendidikan/import" className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Import data</Link>}
+                    {canManage && <Link href="/biaya-pendidikan/create" className="inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Tambah kegiatan</Link>}
+                </div>
             </div>
 
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}
+            {errors?.delete && <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{errors.delete}</div>}
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <form onSubmit={submitFilters} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[150px_190px_1fr_auto] lg:items-end">
@@ -112,7 +118,7 @@ export default function BiayaPendidikanIndex({ items, years, filters, canManage 
                                     <td className="px-5 py-4"><span className="block font-bold text-slate-800">{item.pengembangan_sdm}</span><span className="mt-1 block text-xs text-slate-500">{item.kategori}</span></td>
                                     <td className="px-5 py-4 text-sm text-slate-600"><span className="block">{item.pihak_pelaksana}</span><span className="mt-1 block text-xs text-slate-400">{item.jenis_pihak}</span></td>
                                     <td className="px-5 py-4 text-sm text-slate-600"><span className="block">{item.tanggal}</span><span className="mt-1 block text-xs text-slate-400">Durasi: {item.waktu_pelaksanaan}</span></td>
-                                    <td className="px-5 py-4 text-right text-sm text-slate-600"><span className="block font-bold text-emerald-700">{formatRupiah(item.total_biaya)}</span><span className="mt-1 block text-xs text-slate-400">Target: {item.jumlah_sdm} orang</span></td>
+                                    <td className="px-5 py-4 text-right text-sm text-slate-600"><span className="block font-bold text-emerald-700">{formatRupiah(item.total_biaya)}</span><span className="mt-1 block text-xs text-slate-400">Target: {item.jumlah_sdm} orang (terdaftar: {item.peserta_terdaftar || 0})</span>{Number(item.realisasi_biaya || 0) >= Number(item.total_biaya || 0) && Number(item.total_biaya || 0) > 0 && <span className="mt-1 block text-xs font-bold text-red-600">Anggaran tercapai</span>}</td>
                                     <td className="whitespace-nowrap px-5 py-4 text-right">
                                         <button type="button" onClick={() => loadParticipants(item)} className="mr-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Peserta</button>
                                         {canManage && <><Link href={`/biaya-pendidikan/${item.biaya_id}/edit`} className="mr-2 rounded-lg border border-blue-200 px-3 py-2 text-sm font-bold text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Edit</Link><button type="button" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} className="rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600/20">Hapus</button></>}

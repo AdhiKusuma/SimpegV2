@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireLegacySession;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -33,6 +34,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('notifications:prune --execute --days=90 --batch=500')
+            ->dailyAt('02:30')
+            ->withoutOverlapping(10);
+        $schedule->command('payroll:dispatch-publications --limit=100')
+            ->everyMinute()
+            ->withoutOverlapping(10);
     })
     ->create();
 

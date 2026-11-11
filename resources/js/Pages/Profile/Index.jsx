@@ -168,7 +168,7 @@ function HistoryTab({ history }) {
     );
 }
 
-export default function Profile({ employee, family, familyRequests = [], canRequestFamily, canManageFamily, history }) {
+export default function Profile({ employee, family, familyRequests = [], canRequestFamily, canManageFamily, history, flash = {} }) {
     const [activeTab, setActiveTab] = useState('biodata');
 
     return (
@@ -182,6 +182,8 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                 </div>
                 <span className="simpeg-profile-intro-mark" aria-hidden="true">SIMPEG</span>
             </div>
+
+            {flash.error && <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm font-medium text-amber-800" role="alert">{flash.error}</div>}
 
             {!employee ? <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm font-medium text-amber-800" role="alert">Data pegawai untuk akun ini belum ditemukan.</div> : <div className="simpeg-profile-page">
                 <section className="simpeg-profile-hero" aria-labelledby="profile-identity-title">

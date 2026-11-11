@@ -8,11 +8,14 @@ use App\Http\Controllers\BahasaController;
 use App\Http\Controllers\BiayaPendidikanController;
 use App\Http\Controllers\CutiController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DataDiriController;
+use App\Http\Controllers\DataImportExportController;
 use App\Http\Controllers\DiklatController;
 use App\Http\Controllers\Dp3Controller;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EselonController;
 use App\Http\Controllers\FamilyController;
+use App\Http\Controllers\FilesController;
 use App\Http\Controllers\GolonganController;
 use App\Http\Controllers\JabatanController;
 use App\Http\Controllers\LatihanJabatanController;
@@ -22,6 +25,7 @@ use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\PangkatController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PayrollMasterController;
+use App\Http\Controllers\PayrollPublicationController;
 use App\Http\Controllers\PelanggaranController;
 use App\Http\Controllers\PendidikanController;
 use App\Http\Controllers\PengangkatanController;
@@ -44,7 +48,9 @@ Route::post('/login', [AuthController::class, 'store'])
 Route::get('/config/aplikasi/logo/{filename}', [ApplicationConfigController::class, 'logo'])
     ->name('config.application.logo');
 
-Route::middleware('legacy.auth')->group(function (): void {
+$familyTypePattern = 'children|spouses|parents|anak|orang-tua|suami-istri';
+
+Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): void {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -56,6 +62,7 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::get('/payroll/edit', [PayrollMasterController::class, 'index'])->name('payroll.master.index');
     Route::get('/payroll/edit/create', [PayrollMasterController::class, 'create'])->name('payroll.master.create');
     Route::post('/payroll/edit', [PayrollMasterController::class, 'store'])->name('payroll.master.store');
+    Route::post('/payroll/edit/transfer', [PayrollMasterController::class, 'transfer'])->name('payroll.master.transfer');
     Route::get('/payroll/master/export', [PayrollMasterController::class, 'export'])->name('payroll.master.export');
     Route::get('/payroll/edit/{employeeId}', [PayrollMasterController::class, 'edit'])->name('payroll.master.employee');
     Route::put('/payroll/edit/{employeeId}', [PayrollMasterController::class, 'update'])->name('payroll.master.update');
@@ -70,8 +77,43 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::post('/payroll/import/preview', [PayrollController::class, 'previewImport'])->name('payroll.import.preview');
     Route::post('/payroll/import', [PayrollController::class, 'import'])->name('payroll.import.store');
     Route::delete('/payroll/history', [PayrollController::class, 'clearDevelopmentHistory'])->name('payroll.history.clear');
+    Route::get('/payroll/publications', [PayrollPublicationController::class, 'index'])->name('payroll.publications.index');
+    Route::post('/payroll/publications/{publication}/schedule', [PayrollPublicationController::class, 'schedule'])->whereNumber('publication')->name('payroll.publications.schedule');
+    Route::post('/payroll/publications/{publication}/send', [PayrollPublicationController::class, 'send'])->whereNumber('publication')->name('payroll.publications.send');
+    Route::post('/payroll/publications/{publication}/cancel', [PayrollPublicationController::class, 'cancel'])->whereNumber('publication')->name('payroll.publications.cancel');
+    Route::delete('/payroll/publications/{publication}', [PayrollPublicationController::class, 'destroy'])->whereNumber('publication')->name('payroll.publications.destroy');
+    Route::delete('/payroll/publications/import/{payrollImport}', [PayrollPublicationController::class, 'destroyImport'])->whereNumber('payrollImport')->name('payroll.publications.destroy-import');
+
+    Route::get('/files', [FilesController::class, 'index'])->name('files.index');
+    Route::get('/files/data-diri', [DataDiriController::class, 'index'])->name('files.data-diri.index');
+    Route::post('/files/data-diri/{employeeId}', [DataDiriController::class, 'store'])
+        ->where('employeeId', '[A-Za-z0-9-]+')
+        ->name('files.data-diri.store');
+    Route::get('/files/data-diri/{employeeId}/document/{document}/preview', [DataDiriController::class, 'preview'])
+        ->where('employeeId', '[A-Za-z0-9-]+')
+        ->whereNumber('document')
+        ->name('files.data-diri.preview');
+    Route::get('/files/data-diri/{employeeId}/document/{document}/download', [DataDiriController::class, 'download'])
+        ->where('employeeId', '[A-Za-z0-9-]+')
+        ->whereNumber('document')
+        ->name('files.data-diri.download');
+    Route::delete('/files/data-diri/{employeeId}/document/{document}', [DataDiriController::class, 'destroy'])
+        ->where('employeeId', '[A-Za-z0-9-]+')
+        ->whereNumber('document')
+        ->name('files.data-diri.destroy');
+    Route::get('/files/{payrollImport}/slip/{employeeId}', [FilesController::class, 'show'])
+        ->whereNumber('payrollImport')
+        ->where('employeeId', '[A-Za-z0-9-]+')
+        ->name('files.show');
+    Route::get('/files/{payrollImport}/slip/{employeeId}/download', [FilesController::class, 'download'])
+        ->whereNumber('payrollImport')
+        ->where('employeeId', '[A-Za-z0-9-]+')
+        ->name('files.download');
 
     Route::get('/pegawai', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::get('/pegawai/export', [DataImportExportController::class, 'exportEmployees'])->name('employees.export');
+    Route::get('/pegawai/export/detail', [DataImportExportController::class, 'exportEmployeesDetail'])->name('employees.export.detail');
+    Route::get('/pegawai/export/pdf', [DataImportExportController::class, 'exportEmployeesPdf'])->name('employees.export.pdf');
     Route::get('/pegawai/filter-options', [EmployeeController::class, 'filterOptions'])->name('employees.filter-options');
     Route::get('/pegawai/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/pegawai', [EmployeeController::class, 'store'])->name('employees.store');
@@ -85,6 +127,11 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::get('/pegawai/{id}', [EmployeeController::class, 'show'])->name('employees.show');
 
     Route::get('/pendidikan', [PendidikanController::class, 'index'])->name('pendidikan.index');
+    Route::get('/pendidikan/export', [DataImportExportController::class, 'exportEducation'])->name('pendidikan.export');
+    Route::get('/pendidikan/import', [DataImportExportController::class, 'form'])->defaults('resource', 'education')->name('pendidikan.import');
+    Route::get('/pendidikan/import/template', [DataImportExportController::class, 'template'])->defaults('resource', 'education')->name('pendidikan.import.template');
+    Route::post('/pendidikan/import/preview', [DataImportExportController::class, 'preview'])->defaults('resource', 'education')->name('pendidikan.import.preview');
+    Route::post('/pendidikan/import', [DataImportExportController::class, 'store'])->defaults('resource', 'education')->name('pendidikan.import.store');
     Route::get('/pendidikan/create', [PendidikanController::class, 'create'])->name('pendidikan.create');
     Route::post('/pendidikan', [PendidikanController::class, 'store'])->name('pendidikan.store');
     Route::get('/pendidikan/{id}/edit', [PendidikanController::class, 'edit'])->whereNumber('id')->name('pendidikan.edit');
@@ -121,6 +168,7 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::get('/pengangkatan/{id}/edit', [PengangkatanController::class, 'edit'])->whereNumber('id')->name('pengangkatan.edit');
     Route::put('/pengangkatan/{id}', [PengangkatanController::class, 'update'])->whereNumber('id')->name('pengangkatan.update');
     Route::post('/pengangkatan/{id}', [PengangkatanController::class, 'update'])->whereNumber('id')->name('pengangkatan.update.post');
+    Route::delete('/pengangkatan/{id}', [PengangkatanController::class, 'destroy'])->whereNumber('id')->name('pengangkatan.destroy');
     Route::get('/pengangkatan/{id}/document', [PengangkatanController::class, 'document'])->whereNumber('id')->name('pengangkatan.document');
 
     Route::get('/penghargaan', [PenghargaanController::class, 'index'])->name('penghargaan.index');
@@ -181,6 +229,11 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::delete('/latihan-jabatan/{id}', [LatihanJabatanController::class, 'destroy'])->name('latihan-jabatan.destroy');
 
     Route::get('/sertifikasi', [SertifikasiController::class, 'index'])->name('sertifikasi.index');
+    Route::get('/sertifikasi/export', [DataImportExportController::class, 'exportCertification'])->name('sertifikasi.export');
+    Route::get('/sertifikasi/import', [DataImportExportController::class, 'form'])->defaults('resource', 'certification')->name('sertifikasi.import');
+    Route::get('/sertifikasi/import/template', [DataImportExportController::class, 'template'])->defaults('resource', 'certification')->name('sertifikasi.import.template');
+    Route::post('/sertifikasi/import/preview', [DataImportExportController::class, 'preview'])->defaults('resource', 'certification')->name('sertifikasi.import.preview');
+    Route::post('/sertifikasi/import', [DataImportExportController::class, 'store'])->defaults('resource', 'certification')->name('sertifikasi.import.store');
     Route::get('/sertifikasi/create', [SertifikasiController::class, 'create'])->name('sertifikasi.create');
     Route::post('/sertifikasi', [SertifikasiController::class, 'store'])->name('sertifikasi.store');
     Route::get('/sertifikasi/{id}/edit', [SertifikasiController::class, 'edit'])->whereNumber('id')->name('sertifikasi.edit');
@@ -189,6 +242,7 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::delete('/sertifikasi/{id}', [SertifikasiController::class, 'destroy'])->whereNumber('id')->name('sertifikasi.destroy');
 
     Route::get('/biaya-pendidikan', [BiayaPendidikanController::class, 'index'])->name('biaya-pendidikan.index');
+    Route::get('/biaya-pendidikan/export', [DataImportExportController::class, 'exportBiaya'])->name('biaya-pendidikan.export');
     Route::get('/biaya-pendidikan/template', [BiayaPendidikanController::class, 'downloadTemplate'])->name('biaya-pendidikan.template');
     Route::get('/biaya-pendidikan/import', [BiayaPendidikanController::class, 'importForm'])->name('biaya-pendidikan.import');
     Route::post('/biaya-pendidikan/import/preview', [BiayaPendidikanController::class, 'previewImport'])->name('biaya-pendidikan.import.preview');
@@ -217,6 +271,7 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::delete('/config/kuota-jabatan/{id}', [QuotaJabatanController::class, 'destroy'])->whereNumber('id')->name('config.quota.destroy');
 
     Route::get('/jabatan', [JabatanController::class, 'index'])->name('jabatan.index');
+    Route::get('/jabatan/export', [DataImportExportController::class, 'exportPositions'])->name('jabatan.export');
     Route::get('/jabatan/create', [JabatanController::class, 'create'])->name('jabatan.create');
     Route::post('/jabatan', [JabatanController::class, 'store'])->name('jabatan.store');
     Route::get('/jabatan/import', [JabatanController::class, 'importForm'])->name('jabatan.import');
@@ -243,12 +298,17 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::get('/laporan/keadaan/export', [ReportController::class, 'exportCondition'])->name('reports.condition.export');
     Route::get('/laporan/keadaan', [ReportController::class, 'condition'])->name('reports.condition');
 
-    Route::get('/keluarga/{type}', [FamilyController::class, 'index'])->name('family.index');
-    Route::get('/keluarga/{type}/create', [FamilyController::class, 'create'])->name('family.create');
-    Route::post('/keluarga/{type}', [FamilyController::class, 'store'])->name('family.store');
-    Route::get('/keluarga/{type}/{id}/edit', [FamilyController::class, 'edit'])->name('family.edit');
-    Route::put('/keluarga/{type}/{id}', [FamilyController::class, 'update'])->name('family.update');
-    Route::delete('/keluarga/{type}/{id}', [FamilyController::class, 'destroy'])->name('family.destroy');
+    Route::get('/keluarga/{type}', [FamilyController::class, 'index'])->where('type', $familyTypePattern)->name('family.index');
+    Route::get('/keluarga/{type}/export', [DataImportExportController::class, 'exportFamily'])->where('type', $familyTypePattern)->name('family.export');
+    Route::get('/keluarga/{type}/import', [DataImportExportController::class, 'form'])->where('type', $familyTypePattern)->defaults('resource', 'family')->name('family.import');
+    Route::get('/keluarga/{type}/import/template', [DataImportExportController::class, 'template'])->where('type', $familyTypePattern)->defaults('resource', 'family')->name('family.import.template');
+    Route::post('/keluarga/{type}/import/preview', [DataImportExportController::class, 'preview'])->where('type', $familyTypePattern)->defaults('resource', 'family')->name('family.import.preview');
+    Route::post('/keluarga/{type}/import', [DataImportExportController::class, 'store'])->where('type', $familyTypePattern)->defaults('resource', 'family')->name('family.import.store');
+    Route::get('/keluarga/{type}/create', [FamilyController::class, 'create'])->where('type', $familyTypePattern)->name('family.create');
+    Route::post('/keluarga/{type}', [FamilyController::class, 'store'])->where('type', $familyTypePattern)->name('family.store');
+    Route::get('/keluarga/{type}/{id}/edit', [FamilyController::class, 'edit'])->where('type', $familyTypePattern)->name('family.edit');
+    Route::put('/keluarga/{type}/{id}', [FamilyController::class, 'update'])->where('type', $familyTypePattern)->name('family.update');
+    Route::delete('/keluarga/{type}/{id}', [FamilyController::class, 'destroy'])->where('type', $familyTypePattern)->name('family.destroy');
 
     Route::get('/mutasi/export', [MutationController::class, 'export'])->name('mutasi.export');
     Route::get('/mutasi', [MutationController::class, 'index'])->name('mutasi.index');
@@ -260,6 +320,10 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::delete('/mutasi/{id}', [MutationController::class, 'destroy'])->whereNumber('id')->name('mutasi.destroy');
     Route::get('/mutasi/{id}/document', [MutationController::class, 'document'])->whereNumber('id')->name('mutasi.document');
     Route::get('/pelanggaran/export', [PelanggaranController::class, 'export'])->name('pelanggaran.export');
+    Route::get('/pelanggaran/import', [PelanggaranController::class, 'importForm'])->name('pelanggaran.import');
+    Route::get('/pelanggaran/import/template', [PelanggaranController::class, 'importTemplate'])->name('pelanggaran.import.template');
+    Route::post('/pelanggaran/import/preview', [PelanggaranController::class, 'previewImport'])->name('pelanggaran.import.preview');
+    Route::post('/pelanggaran/import', [PelanggaranController::class, 'storeImport'])->name('pelanggaran.import.store');
     Route::get('/pelanggaran', [PelanggaranController::class, 'index'])->name('pelanggaran.index');
     Route::get('/pelanggaran/create', [PelanggaranController::class, 'create'])->name('pelanggaran.create');
     Route::post('/pelanggaran', [PelanggaranController::class, 'store'])->name('pelanggaran.store');
@@ -269,6 +333,7 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::delete('/pelanggaran/{id}', [PelanggaranController::class, 'destroy'])->whereNumber('id')->name('pelanggaran.destroy');
     Route::get('/pelanggaran/{id}/document', [PelanggaranController::class, 'document'])->whereNumber('id')->name('pelanggaran.document');
     Route::get('/diklat', [DiklatController::class, 'index'])->name('diklat.index');
+    Route::get('/diklat/export', [DataImportExportController::class, 'exportDiklat'])->name('diklat.export');
     Route::get('/diklat/import', [DiklatController::class, 'importForm'])->name('diklat.import');
     Route::get('/diklat/import/template', [DiklatController::class, 'downloadTemplate'])->name('diklat.import.template');
     Route::post('/diklat/import', [DiklatController::class, 'importXlsx'])->name('diklat.import.store');
@@ -280,8 +345,19 @@ Route::middleware('legacy.auth')->group(function (): void {
     Route::delete('/diklat/{id}', [DiklatController::class, 'destroy'])->whereNumber('id')->name('diklat.destroy');
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::get('/profile/data-diri', [DataDiriController::class, 'mine'])->name('profile.data-diri');
+    Route::get('/profile/slip-gaji', [FilesController::class, 'mine'])->name('profile.payslip');
+    Route::get('/profile/slip-gaji/{payrollImport}/slip/{employeeId}', [FilesController::class, 'mineShow'])
+        ->whereNumber('payrollImport')
+        ->where('employeeId', '[A-Za-z0-9-]+')
+        ->name('profile.payslip.show');
 
     Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifikasi/{notification}/open', [NotificationController::class, 'open'])
+        ->whereNumber('notification')
+        ->name('notifications.open');
+    Route::post('/notifikasi/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
+    Route::delete('/notifikasi/read', [NotificationController::class, 'destroyRead'])->name('notifications.read.destroy');
 
     Route::get('/otorisasi', [AuthorizationController::class, 'index'])->name('authorizations.index');
     Route::get('/otorisasi/{id}/detail', [AuthorizationController::class, 'show'])->whereNumber('id')->name('authorizations.show');

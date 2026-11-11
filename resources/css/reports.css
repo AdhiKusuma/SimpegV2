@@ -47,24 +47,29 @@
 
 .simpeg-condition-filter__actions > .simpeg-condition-filter__action {
     min-width: 0;
-    flex: 1 1 0;
+    width: 100%;
 }
 
 @media (min-width: 640px) and (max-width: 1279px) {
     .simpeg-condition-filter .simpeg-condition-filter__actions {
         grid-column: 1 / -1;
-        justify-self: end;
-        width: min(100%, 18rem);
+        width: 100%;
     }
 }
 
 @media (min-width: 1280px) {
     .simpeg-condition-filter .simpeg-condition-filter__form {
-        grid-template-columns: minmax(0, 1fr) 15rem 18rem;
+        grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
     }
 
     .simpeg-condition-filter .simpeg-condition-filter__actions {
-        width: 18rem;
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-self: stretch;
+    }
+
+    .simpeg-condition-filter .simpeg-condition-filter__actions > .simpeg-condition-filter__action {
+        min-width: 0;
     }
 }
 

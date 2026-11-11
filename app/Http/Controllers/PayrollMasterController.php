@@ -9,10 +9,12 @@ use App\Models\PayrollChangeRequestEntry;
 use App\Models\PayrollImport;
 use App\Services\NotificationService;
 use App\Services\PayrollEntryValidationService;
+use App\Services\PayrollPublicationService;
 use App\Services\PayrollWorkbookService;
 use App\Services\RbacService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -71,6 +73,12 @@ class PayrollMasterController extends Controller
             'canDelete' => $rbac->can($request, 'payroll.master.delete'),
             'deleteRequiresApproval' => $this->willRequireApproval($request, $rbac),
             'canImport' => $rbac->can($request, 'payroll.import'),
+            'canTransfer' => $rbac->can($request, 'payroll.import'),
+            'transferDefaults' => [
+                'tahun' => (int) now()->year,
+                'bulan' => (int) now()->month,
+                'tgl_gajian' => now()->format('Y-m-d'),
+            ],
             'scopeLabel' => $scope['label'],
             'flash' => ['success' => $request->session()->get('success'), 'error' => $request->session()->get('error')],
         ]);
@@ -171,7 +179,7 @@ class PayrollMasterController extends Controller
         ]);
     }
 
-    public function store(Request $request, RbacService $rbac, PayrollEntryValidationService $entryValidator, NotificationService $notifications): RedirectResponse
+    public function store(Request $request, RbacService $rbac, PayrollEntryValidationService $entryValidator, NotificationService $notifications, PayrollPublicationService $publications): RedirectResponse
     {
         abort_unless($rbac->can($request, 'payroll.master.edit'), 403);
         $rules = [
@@ -277,6 +285,16 @@ class PayrollMasterController extends Controller
             return to_route('payroll.index', ['tahun' => $changeRequest->tahun, 'bulan' => $changeRequest->bulan])->with('success', 'Data Master Gaji diajukan. Data payroll akan masuk ke rekap setelah disetujui supervisor kantor terkait.');
         }
 
+        $publishedImport = PayrollImport::query()
+            ->where('tahun', $changeRequest->tahun)
+            ->where('bulan', $changeRequest->bulan)
+            ->where('is_current', true)
+            ->orderByDesc('id')
+            ->first();
+        if ($publishedImport !== null) {
+            $publications->createForImport($publishedImport, 'scheduled', null, (string) $request->session()->get('id_user'));
+        }
+
         return to_route('payroll.index', ['tahun' => $changeRequest->tahun, 'bulan' => $changeRequest->bulan])->with('success', 'Data Master Gaji berhasil dibuat dan ditambahkan ke payroll periode ini.');
     }
 
@@ -322,6 +340,270 @@ class PayrollMasterController extends Controller
         ])->deleteFileAfterSend(true);
     }
 
+    /**
+     * Membuat batch payroll dari Master Gaji tanpa membutuhkan file XLSX.
+     * Jalur ini sengaja menggunakan validator, approval, snapshot, dan publikasi
+     * yang sama dengan import XLSX agar flow lama tetap berjalan.
+     */
+    public function transfer(Request $request, RbacService $rbac, PayrollEntryValidationService $entryValidator, NotificationService $notifications, PayrollPublicationService $publications): RedirectResponse
+    {
+        abort_unless($rbac->can($request, 'payroll.import'), 403);
+
+        $validated = $request->validate([
+            'tahun' => ['required', 'integer', 'between:2000,2100'],
+            'bulan' => ['required', 'integer', 'between:1,12'],
+            'tgl_gajian' => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        $payDate = Carbon::createFromFormat('Y-m-d', (string) $validated['tgl_gajian'], 'Asia/Jakarta');
+        if ((int) $payDate->year !== (int) $validated['tahun'] || (int) $payDate->month !== (int) $validated['bulan']) {
+            throw ValidationException::withMessages([
+                'tgl_gajian' => 'Tanggal gajian harus berada pada tahun dan bulan yang dipilih.',
+            ]);
+        }
+
+        $year = (int) $validated['tahun'];
+        $month = (int) $validated['bulan'];
+        $payDate = $payDate->format('Y-m-d');
+        $scheduledAt = Carbon::createFromFormat('Y-m-d', $payDate, 'Asia/Jakarta')
+            ->setTime(8, 0)
+            ->setTimezone(config('app.timezone'))
+            ->toDateTimeString();
+        $scope = $this->officeScope($request);
+        $actorId = (string) $request->session()->get('id_user');
+        $requiresApproval = $this->willRequireApproval($request, $rbac);
+        $sourceFilename = sprintf('Transfer Master Gaji %02d-%04d', $month, $year);
+
+        $result = DB::transaction(function () use ($scope, $entryValidator, $year, $month, $payDate, $scheduledAt, $actorId, $requiresApproval, $sourceFilename): array {
+            $query = DB::table('payroll_salary_masters as m')
+                ->select('m.*')
+                ->orderBy('m.employee_id')
+                ->lockForUpdate();
+            $this->applyOfficeScope($query, $scope, 'm.office_code');
+            $masters = $query->get();
+
+            if ($masters->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'transfer' => 'Belum ada Master Gaji yang dapat ditransfer pada cakupan kantor akun ini.',
+                ]);
+            }
+
+            $rows = $masters->values()->map(function (object $master, int $index) use ($payDate): array {
+                $row = [
+                    'row_number' => $index + 1,
+                    'office_code' => (string) $master->office_code,
+                    'employee_id' => (string) $master->employee_id,
+                    'bank_office_code' => (string) ($master->bank_office_code ?? ''),
+                    'no_rekening' => (string) ($master->no_rekening ?? ''),
+                    'nama_nasabah' => (string) ($master->nama_nasabah ?? ''),
+                    'tgl_gajian' => $payDate,
+                    'rekening_tabungan' => (string) ($master->rekening_tabungan ?? ''),
+                    'no_hp_keris' => (string) ($master->no_hp_keris ?? ''),
+                ];
+
+                foreach (self::INPUT_AMOUNT_FIELDS as $field) {
+                    $row[$field] = (string) ($master->{$field} ?? '');
+                }
+
+                foreach (['jumlah_gaji', 'jumlah_potongan', 'gaji_bersih', 'total'] as $field) {
+                    $row[$field] = (string) ($master->{$field} ?? '');
+                }
+
+                return $row;
+            })->all();
+            $validatedRows = $entryValidator->validateRows($rows, $scope, $year, $month);
+            if ($validatedRows['errors'] !== [] || count($validatedRows['entries']) !== count($rows)) {
+                throw ValidationException::withMessages([
+                    'transfer' => $this->formatTransferValidationErrors($validatedRows['errors']),
+                ]);
+            }
+
+            $entries = $validatedRows['entries'];
+            $sourceHash = hash('sha256', json_encode([
+                'tahun' => $year,
+                'bulan' => $month,
+                'tgl_gajian' => $payDate,
+                'entries' => $entries,
+            ], JSON_THROW_ON_ERROR));
+
+            $duplicateCurrent = PayrollImport::query()
+                ->where('tahun', $year)
+                ->where('bulan', $month)
+                ->where('is_current', true)
+                ->where('source_sha256', $sourceHash)
+                ->exists();
+            $duplicatePending = PayrollChangeRequest::query()
+                ->where('change_type', 'import')
+                ->where('tahun', $year)
+                ->where('bulan', $month)
+                ->where('source_sha256', $sourceHash)
+                ->where('status', 'pending')
+                ->exists();
+            if ($duplicateCurrent || $duplicatePending) {
+                return [
+                    'duplicate' => $duplicateCurrent
+                        ? 'Master Gaji sudah sama dengan batch payroll aktif pada periode ini. Batch baru tidak dibuat.'
+                        : 'Transfer Master Gaji yang sama masih menunggu approval. Batch baru tidak dibuat.',
+                    'change' => null,
+                    'import' => null,
+                ];
+            }
+
+            $officeCodes = array_values(array_unique(array_map(fn (array $entry): string => (string) $entry['office_code'], $entries)));
+            if ($requiresApproval) {
+                $change = PayrollChangeRequest::query()->create([
+                    'change_type' => 'import',
+                    'tahun' => $year,
+                    'bulan' => $month,
+                    'source_filename' => $sourceFilename,
+                    'source_sha256' => $sourceHash,
+                    'requested_by' => $actorId,
+                    'office_codes' => $officeCodes,
+                    'summary_data' => [
+                        'employee_count' => count($entries),
+                        'office_count' => count($officeCodes),
+                        'publication_mode' => 'scheduled',
+                        'scheduled_at' => $scheduledAt,
+                        'source_type' => 'master_gaji',
+                    ],
+                    'status' => 'pending',
+                    'submitted_at' => now(),
+                ]);
+
+                $mastersByEmployee = $masters->keyBy(fn (object $master): string => (string) $master->employee_id);
+                $now = now();
+                $requestEntries = array_map(function (array $entry) use ($change, $mastersByEmployee, $now): array {
+                    $master = $mastersByEmployee->get((string) $entry['employee_id']);
+                    $oldData = $master
+                        ? array_intersect_key((array) $master, array_flip(['office_code', 'bank_office_code', 'no_rekening', 'nama_nasabah', 'tgl_gajian', ...self::DETAIL_FIELDS, ...self::AMOUNT_FIELDS]))
+                        : null;
+                    $newData = $entry;
+                    unset($newData['employee_id'], $newData['office_code'], $newData['source_row_number']);
+
+                    return [
+                        'payroll_change_request_id' => $change->id,
+                        'employee_id' => (string) $entry['employee_id'],
+                        'office_code' => (string) $entry['office_code'],
+                        'source_row_number' => (int) $entry['source_row_number'],
+                        'old_data' => $oldData === null ? null : json_encode($oldData, JSON_THROW_ON_ERROR),
+                        'new_data' => json_encode($newData, JSON_THROW_ON_ERROR),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }, $entries);
+                foreach (array_chunk($requestEntries, 500) as $chunk) {
+                    DB::table('payroll_change_request_entries')->insert($chunk);
+                }
+
+                return ['duplicate' => null, 'change' => $change, 'import' => null];
+            }
+
+            $import = $this->createTransferPayrollSnapshot($entries, $year, $month, $sourceFilename, $sourceHash, $actorId);
+
+            return ['duplicate' => null, 'change' => null, 'import' => $import];
+        });
+
+        if ($result['duplicate'] !== null) {
+            return to_route('payroll.master.index')->with('success', $result['duplicate']);
+        }
+
+        if ($result['change'] instanceof PayrollChangeRequest) {
+            $notifications->notifyPayrollRequestCreated($result['change']);
+
+            return to_route('payroll.master.index')->with('success', 'Transfer Master Gaji diajukan untuk approval. Payroll akan dibuat dan dijadwalkan setelah disetujui.');
+        }
+
+        /** @var PayrollImport $import */
+        $import = $result['import'];
+        $publications->createForImport($import, 'scheduled', $scheduledAt, $actorId);
+
+        return to_route('payroll.master.index')->with('success', 'Master Gaji berhasil ditransfer ke payroll dan dijadwalkan sesuai tanggal gajian.');
+    }
+
+    private function createTransferPayrollSnapshot(array $entries, int $year, int $month, string $sourceFilename, string $sourceHash, string $actorId): PayrollImport
+    {
+        $now = now();
+        PayrollImport::query()
+            ->where('tahun', $year)
+            ->where('bulan', $month)
+            ->where('is_current', true)
+            ->lockForUpdate()
+            ->update(['is_current' => false, 'updated_at' => $now]);
+
+        $import = PayrollImport::query()->create([
+            'tahun' => $year,
+            'bulan' => $month,
+            'source_filename' => $sourceFilename,
+            'source_sha256' => $sourceHash,
+            'source_row_count' => count($entries),
+            'source_summary_count' => count(array_unique(array_column($entries, 'office_code'))),
+            'is_current' => true,
+            'imported_by' => $actorId,
+        ]);
+
+        foreach (array_chunk($entries, 500) as $chunk) {
+            DB::table('payroll_entries')->insert(array_map(fn (array $entry): array => [
+                ...$entry,
+                'payroll_import_id' => $import->id,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ], $chunk));
+        }
+
+        $amountSql = implode(', ', array_map(fn (string $field): string => 'SUM('.$field.') as '.$field, self::AMOUNT_FIELDS));
+        $aggregates = DB::table('payroll_entries')
+            ->where('payroll_import_id', $import->id)
+            ->selectRaw('office_code, COUNT(*) as employee_count, '.$amountSql)
+            ->groupBy('office_code')
+            ->get();
+        $officeNames = TbKantor::query()
+            ->whereIn('kode_kantor_detail', $aggregates->pluck('office_code'))
+            ->pluck('nama_kantor', 'kode_kantor_detail');
+        $summaries = $aggregates->map(function (object $row) use ($officeNames, $import, $now): array {
+            $summary = [
+                'payroll_import_id' => $import->id,
+                'office_code' => (string) $row->office_code,
+                'source_label' => $officeNames[$row->office_code] ?? null,
+                'employee_count' => (int) $row->employee_count,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+            foreach (self::AMOUNT_FIELDS as $field) {
+                $summary[$field] = (string) $row->{$field};
+            }
+
+            return $summary;
+        })->all();
+        foreach (array_chunk($summaries, 500) as $chunk) {
+            DB::table('payroll_office_summaries')->insert($chunk);
+        }
+
+        DB::table('payroll_salary_masters')
+            ->whereIn('employee_id', array_values(array_unique(array_map(fn (array $entry): string => (string) $entry['employee_id'], $entries))))
+            ->update(['source_import_id' => $import->id]);
+
+        return $import;
+    }
+
+    private function formatTransferValidationErrors(array $errors): string
+    {
+        $messages = collect($errors)
+            ->flatMap(fn (array $error): array => array_map(
+                fn (string $message): string => isset($error['row']) ? 'Baris '.$error['row'].': '.$message : $message,
+                $error['messages'] ?? [],
+            ))
+            ->unique()
+            ->values();
+        $total = $messages->count();
+        $summary = $messages->take(8)->implode(' ');
+
+        if ($summary === '') {
+            return 'Data Master Gaji tidak lolos validasi payroll.';
+        }
+
+        return $total > 8 ? $summary.' Dan '.($total - 8).' masalah lainnya.' : $summary;
+    }
+
     public function edit(Request $request, string $employeeId, RbacService $rbac, PayrollEntryValidationService $entryValidator): Response
     {
         abort_unless($rbac->can($request, 'payroll.master.edit'), 403);
@@ -359,7 +641,7 @@ class PayrollMasterController extends Controller
         ]);
     }
 
-    public function update(Request $request, string $employeeId, RbacService $rbac, NotificationService $notifications, PayrollEntryValidationService $entryValidator): RedirectResponse
+    public function update(Request $request, string $employeeId, RbacService $rbac, NotificationService $notifications, PayrollEntryValidationService $entryValidator, PayrollPublicationService $publications): RedirectResponse
     {
         abort_unless($rbac->can($request, 'payroll.master.edit'), 403);
         $scope = $this->officeScope($request);
@@ -477,6 +759,16 @@ class PayrollMasterController extends Controller
         $message = $payrollSnapshotUpdated
             ? 'Master Gaji dan rekap payroll periode aktif berhasil diperbarui. Versi payroll sebelumnya tetap tersimpan.'
             : 'Master Gaji berhasil diperbarui. Belum ada rincian payroll aktif untuk pegawai ini yang perlu diperbarui.';
+
+        if ($payrollSnapshotUpdated) {
+            $originImport = PayrollImport::query()->find((int) ($master->source_import_id ?? 0));
+            $publishedImport = $originImport
+                ? PayrollImport::query()->where('tahun', $originImport->tahun)->where('bulan', $originImport->bulan)->where('is_current', true)->orderByDesc('id')->first()
+                : null;
+            if ($publishedImport !== null) {
+                $publications->createForImport($publishedImport, 'scheduled', null, (string) $request->session()->get('id_user'));
+            }
+        }
 
         return to_route('payroll.master.index')->with('success', $message);
     }
@@ -625,7 +917,7 @@ class PayrollMasterController extends Controller
         ]);
     }
 
-    public function decide(Request $request, int $id, RbacService $rbac, NotificationService $notifications, PayrollEntryValidationService $entryValidator): RedirectResponse
+    public function decide(Request $request, int $id, RbacService $rbac, NotificationService $notifications, PayrollEntryValidationService $entryValidator, PayrollPublicationService $publications): RedirectResponse
     {
         abort_unless($rbac->can($request, 'payroll.approval.manage'), 403);
         $validated = $request->validate([
@@ -667,6 +959,23 @@ class PayrollMasterController extends Controller
         });
 
         $notifications->notifyPayrollRequestResult($change);
+        if ($change->status === 'approved' && $change->change_type !== 'manual_delete' && $change->tahun && $change->bulan) {
+            $publishedImport = PayrollImport::query()
+                ->where('tahun', $change->tahun)
+                ->where('bulan', $change->bulan)
+                ->where('is_current', true)
+                ->orderByDesc('id')
+                ->first();
+            if ($publishedImport !== null) {
+                $summary = $change->summary_data ?? [];
+                $publications->createForImport(
+                    $publishedImport,
+                    'scheduled',
+                    $summary['scheduled_at'] ?? null,
+                    (string) $change->decided_by,
+                );
+            }
+        }
         $message = $change->status === 'approved'
             ? ($change->change_type === 'manual_delete'
                 ? 'Pengajuan penghapusan Master Gaji disetujui. Riwayat payroll tetap tersimpan.'

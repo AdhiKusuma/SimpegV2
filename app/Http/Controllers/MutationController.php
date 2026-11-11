@@ -132,11 +132,7 @@ class MutationController extends Controller
                 $like = "%{$search}%";
                 $builder->where(function (Builder $scope) use ($like): void {
                     $scope->where('p.nama', 'like', $like)
-                        ->orWhere('p.nik', 'like', $like)
-                        ->orWhere('m.id_peg', 'like', $like)
-                        ->orWhere('m.no_mutasi', 'like', $like)
-                        ->orWhere('m.jns_mutasi', 'like', $like)
-                        ->orWhere('m.jabatan', 'like', $like);
+                        ->orWhere('m.id_peg', 'like', $like);
                 });
             });
     }

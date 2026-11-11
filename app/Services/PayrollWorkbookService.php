@@ -46,10 +46,11 @@ class PayrollWorkbookService
 
         try {
             if ($archive->open($temporaryFile) !== true) {
-                throw new RuntimeException('Workbook payroll tidak dapat dibuka untuk unduhan template.');
+                throw new RuntimeException('Workbook payroll tidak dapat dibuka untuk mengunduh template.');
             }
 
-            $this->retainOnlyWorksheet($archive, 'Template Import');
+            $retainedParts = $this->retainOnlyWorksheet($archive, 'Template Import', true);
+            $this->addPayrollImportExampleWorksheet($archive, $retainedParts);
             if (! $archive->close()) {
                 throw new RuntimeException('Template import payroll tidak dapat disimpan.');
             }
@@ -312,7 +313,7 @@ class PayrollWorkbookService
         throw new RuntimeException('Lokasi sheet '.$sheetName.' tidak ditemukan pada template payroll.');
     }
 
-    private function retainOnlyWorksheet(ZipArchive $archive, string $sheetName): void
+    private function retainOnlyWorksheet(ZipArchive $archive, string $sheetName, bool $includeWorksheetXml = false): array
     {
         $workbookXml = $archive->getFromName('xl/workbook.xml');
         $relationshipsXml = $archive->getFromName('xl/_rels/workbook.xml.rels');
@@ -380,6 +381,13 @@ class PayrollWorkbookService
         if ($selectedPath === null) {
             throw new RuntimeException('Lokasi sheet '.$sheetName.' tidak ditemukan pada template payroll.');
         }
+        $selectedWorksheetXml = null;
+        if ($includeWorksheetXml) {
+            $selectedWorksheetXml = $archive->getFromName($selectedPath);
+            if ($selectedWorksheetXml === false) {
+                throw new RuntimeException('Isi sheet '.$sheetName.' tidak ditemukan pada template payroll.');
+            }
+        }
 
         foreach ($allSheets as $sheet) {
             if ($sheet instanceof DOMElement && $sheet !== $selectedSheet) {
@@ -427,6 +435,172 @@ class PayrollWorkbookService
             || ! $archive->addFromString('xl/_rels/workbook.xml.rels', $updatedRelationships, ZipArchive::FL_OVERWRITE)
             || ! $archive->addFromString('[Content_Types].xml', $updatedContentTypes, ZipArchive::FL_OVERWRITE)) {
             throw new RuntimeException('Struktur tab workbook payroll tidak dapat diperbarui.');
+        }
+
+        return [
+            'worksheet' => $selectedWorksheetXml,
+            'workbook' => $updatedWorkbook,
+            'relationships' => $updatedRelationships,
+            'content_types' => $updatedContentTypes,
+        ];
+    }
+
+    /**
+     * Menambahkan sheet contoh tanpa mengubah sheet yang dipakai untuk import.
+     * Sheet ini sengaja dibuat terpisah agar contoh tidak ikut tersimpan sebagai
+     * data payroll ketika pengguna mengisi sheet "Template Import".
+     */
+    private function addPayrollImportExampleWorksheet(ZipArchive $archive, array $retainedParts): void
+    {
+        $worksheetXml = $retainedParts['worksheet'] ?? false;
+        $workbookXml = $retainedParts['workbook'] ?? false;
+        $relationshipsXml = $retainedParts['relationships'] ?? false;
+        $contentTypesXml = $retainedParts['content_types'] ?? false;
+        if (! is_string($worksheetXml) || ! is_string($workbookXml) || ! is_string($relationshipsXml) || ! is_string($contentTypesXml)) {
+            throw new RuntimeException('Metadata template contoh payroll tidak lengkap.');
+        }
+
+        $worksheet = $this->loadXml($worksheetXml);
+        $worksheetXPath = new DOMXPath($worksheet);
+        $worksheetXPath->registerNamespace('m', self::WORKSHEET_NAMESPACE);
+        $sheetData = $worksheetXPath->query('/m:worksheet/m:sheetData')->item(0);
+        if (! $sheetData instanceof DOMElement) {
+            throw new RuntimeException('Struktur sheet contoh payroll tidak valid.');
+        }
+
+        $styleRow = null;
+        foreach ($worksheetXPath->query('./m:row', $sheetData) as $row) {
+            if (! $row instanceof DOMElement) {
+                continue;
+            }
+
+            $rowNumber = (int) $row->getAttribute('r');
+            if ($rowNumber === 3) {
+                $styleRow = $row;
+            }
+            if ($rowNumber >= 3) {
+                $sheetData->removeChild($row);
+            }
+        }
+
+        $exampleRow = $this->cloneStyledRow($styleRow, 3, $sheetData, $worksheetXPath);
+        $numberValues = [
+            'A' => '1',
+            'L' => '0',
+            'M' => '0',
+            'N' => '5000000',
+            'O' => '0',
+            'P' => '0',
+            'Q' => '500000',
+            'R' => '250000',
+            'S' => '0',
+            'T' => '0',
+            'U' => '0',
+            'V' => '0',
+            'W' => '0',
+            'X' => '0',
+            'Y' => '0',
+            'Z' => '5750000',
+            'AA' => '150000',
+            'AB' => '100000',
+            'AC' => '0',
+            'AD' => '0',
+            'AE' => '250000',
+            'AF' => '500000',
+            'AG' => '5250000',
+        ];
+        foreach ($numberValues as $column => $value) {
+            $this->setNumber(
+                $this->cell($exampleRow, $column.'3', $worksheetXPath, $sheetData),
+                $value,
+            );
+        }
+
+        $textValues = [
+            'B' => '000000',
+            'C' => 'CONTOH-001',
+            'D' => '001',
+            'E' => '1234567890',
+            'F' => 'Contoh Pegawai',
+            'G' => 'Staf Administrasi',
+            'H' => 'Kantor Pusat',
+            'I' => 'Aktif',
+            'J' => 'III/a',
+            'K' => '1 tahun 2 bulan',
+            'AH' => '1234567890',
+            'AI' => '081234567890',
+            'AJ' => '07-11-2026',
+        ];
+        foreach ($textValues as $column => $value) {
+            $this->setText(
+                $this->cell($exampleRow, $column.'3', $worksheetXPath, $sheetData),
+                $value,
+            );
+        }
+
+        $this->setDimension($worksheet, 'A1:AJ3');
+        $updatedWorksheet = $worksheet->saveXML();
+        if ($updatedWorksheet === false || ! $archive->addFromString('xl/worksheets/sheet2.xml', $updatedWorksheet, ZipArchive::FL_OVERWRITE)) {
+            throw new RuntimeException('Sheet contoh pengisian payroll tidak dapat dibuat.');
+        }
+
+        $workbook = $this->loadXml($workbookXml);
+        $relationships = $this->loadXml($relationshipsXml);
+        $contentTypes = $this->loadXml($contentTypesXml);
+
+        $relationshipXPath = new DOMXPath($relationships);
+        $relationshipXPath->registerNamespace('p', self::PACKAGE_RELATIONSHIP_NAMESPACE);
+        $usedRelationshipIds = [];
+        foreach ($relationshipXPath->query('/p:Relationships/p:Relationship') as $relationship) {
+            if ($relationship instanceof DOMElement) {
+                $usedRelationshipIds[] = $relationship->getAttribute('Id');
+            }
+        }
+        $relationshipNumber = 1;
+        do {
+            $relationshipId = 'rId'.$relationshipNumber++;
+        } while (in_array($relationshipId, $usedRelationshipIds, true));
+
+        $relationship = $relationships->createElementNS(self::PACKAGE_RELATIONSHIP_NAMESPACE, 'Relationship');
+        $relationship->setAttribute('Id', $relationshipId);
+        $relationship->setAttribute('Type', self::RELATIONSHIP_NAMESPACE.'/worksheet');
+        $relationship->setAttribute('Target', 'worksheets/sheet2.xml');
+        $relationships->documentElement?->appendChild($relationship);
+
+        $workbookXPath = new DOMXPath($workbook);
+        $workbookXPath->registerNamespace('m', self::WORKSHEET_NAMESPACE);
+        $sheets = $workbookXPath->query('/m:workbook/m:sheets')->item(0);
+        if (! $sheets instanceof DOMElement) {
+            throw new RuntimeException('Daftar sheet template payroll tidak valid.');
+        }
+
+        $sheetId = 0;
+        foreach ($workbookXPath->query('/m:workbook/m:sheets/m:sheet') as $sheet) {
+            if ($sheet instanceof DOMElement) {
+                $sheetId = max($sheetId, (int) $sheet->getAttribute('sheetId'));
+            }
+        }
+        $exampleSheet = $workbook->createElementNS(self::WORKSHEET_NAMESPACE, 'sheet');
+        $exampleSheet->setAttribute('name', 'Contoh Pengisian');
+        $exampleSheet->setAttribute('sheetId', (string) ($sheetId + 1));
+        $exampleSheet->setAttributeNS(self::RELATIONSHIP_NAMESPACE, 'r:id', $relationshipId);
+        $sheets->appendChild($exampleSheet);
+
+        $contentTypesXPath = new DOMXPath($contentTypes);
+        $contentTypesXPath->registerNamespace('ct', 'http://schemas.openxmlformats.org/package/2006/content-types');
+        $override = $contentTypes->createElementNS('http://schemas.openxmlformats.org/package/2006/content-types', 'Override');
+        $override->setAttribute('PartName', '/xl/worksheets/sheet2.xml');
+        $override->setAttribute('ContentType', 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml');
+        $contentTypes->documentElement?->appendChild($override);
+
+        $updatedWorkbook = $workbook->saveXML();
+        $updatedRelationships = $relationships->saveXML();
+        $updatedContentTypes = $contentTypes->saveXML();
+        if ($updatedWorkbook === false || $updatedRelationships === false || $updatedContentTypes === false
+            || ! $archive->addFromString('xl/workbook.xml', $updatedWorkbook, ZipArchive::FL_OVERWRITE)
+            || ! $archive->addFromString('xl/_rels/workbook.xml.rels', $updatedRelationships, ZipArchive::FL_OVERWRITE)
+            || ! $archive->addFromString('[Content_Types].xml', $updatedContentTypes, ZipArchive::FL_OVERWRITE)) {
+            throw new RuntimeException('Metadata sheet contoh payroll tidak dapat diperbarui.');
         }
     }
 

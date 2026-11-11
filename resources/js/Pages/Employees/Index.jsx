@@ -16,6 +16,12 @@ export default function EmployeesIndex({ employees, offices, divisions, position
     const [positionOptions, setPositionOptions] = useState(positions || []);
     const [loadingOptions, setLoadingOptions] = useState(false);
     const optionRequest = useRef(null);
+    const withFilters = (url) => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
+        const query = params.toString();
+        return query ? `${url}?${query}` : url;
+    };
 
     async function changeOffice(nextOffice) {
         setOfficeValue(nextOffice);
@@ -82,6 +88,18 @@ export default function EmployeesIndex({ employees, offices, divisions, position
             if (!response.ok) throw new Error('Position options request failed');
             const options = await response.json();
             setPositionOptions(options.positions || []);
+
+            // Selecting a unit/division should immediately narrow the table
+            // to that scope. The existing Apply button remains available for
+            // the optional position/year filters.
+            router.get('/pegawai', {
+                tab: filters.tab,
+                search: filters.search || '',
+                kantor: officeValue,
+                divisi: nextDivision,
+                jabatan: '',
+                year: filters.year || '',
+            }, { preserveState: true, preserveScroll: true, replace: true });
         } catch (error) {
             if (error.name !== 'AbortError') setPositionOptions([]);
         } finally {
@@ -104,20 +122,20 @@ export default function EmployeesIndex({ employees, offices, divisions, position
             <Head title="Data Pegawai" />
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
                 <div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Data Pegawai</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Kelola data pegawai</h1><p className="mt-2 text-slate-500">Kelola data pegawai, jabatan, status aktif, dan histori purna.</p></div>
-                {canManage && <div className="flex flex-wrap gap-2"><Link href="/pegawai/create" className="inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Tambah pegawai</Link><Link href="/pegawai/import" className="inline-flex min-h-11 items-center rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">Import XLSX</Link></div>}
+                <div className="flex flex-wrap gap-2"><a href={withFilters('/pegawai/export')} className="inline-flex min-h-11 items-center rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">Export XLSX</a><a href={withFilters('/pegawai/export/detail')} className="inline-flex min-h-11 items-center rounded-xl border border-violet-200 px-4 py-2 text-sm font-bold text-violet-700 transition hover:bg-violet-50">Export detail XLSX</a><a href={withFilters('/pegawai/export/pdf')} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-50">Cetak / Simpan PDF</a>{canManage && <><Link href="/pegawai/create" className="inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Tambah pegawai</Link><Link href="/pegawai/import" className="inline-flex min-h-11 items-center rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">Import XLSX</Link></>}</div>
             </div>
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}
 
-            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section className="relative overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <nav className="flex flex-wrap gap-2 border-b border-slate-100 p-4" aria-label="Filter status pegawai">
                     {[['active', 'Aktif'], ['nonjob', 'Belum Ada Jabatan'], ['purna', 'Purna']].map(([value, label]) => <Link key={value} href={`/pegawai?tab=${value}`} className={`rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-600/30 ${filters.tab === value ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{label}</Link>)}
                 </nav>
-                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel employees-index-filter-form grid gap-4 border-b border-slate-100 p-4">
-                    <div className="simpeg-mobile-filter-search"><label htmlFor="search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari nama / NIK</label><input id="search" name="search" defaultValue={filters.search} placeholder="Cari nama, NIK, atau ID pegawai" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
+                <form onSubmit={submit} className="relative z-20 simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel employees-index-filter-form grid gap-4 border-b border-slate-100 p-4">
+                    <div className="simpeg-mobile-filter-search"><label htmlFor="search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari nama / ID pegawai</label><input id="search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
                     <MobileFilterGroup id="employees-mobile-filters" activeCount={Number(Boolean(officeValue)) + Number(Boolean(divisionValue)) + Number(Boolean(positionValue)) + Number(Boolean(filters.year))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
                         <div className="employees-index-filter-grid">
-                            <SearchableCombobox id="kantor" name="kantor" label="Kantor / Area" value={officeValue} onChange={changeOffice} options={offices} optionValue={(office) => office.kode_kantor_detail} optionLabel={(office) => office.nama_kantor || office.kode_kantor_detail} placeholder="Cari kantor atau area" />
-                            <SearchableCombobox id="employee-division" name="divisi" label="Divisi / Unit Kerja" value={divisionValue} onChange={changeDivision} options={divisionChoices} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : loadingOptions && divisionChoices.length === 0 ? 'Memuat unit kerja…' : 'Pilih unit/divisi'} disabled={!officeValue || (loadingOptions && divisionChoices.length === 0)} description={officeValue && divisionOptions.length === 0 && !loadingOptions ? 'Belum ada unit/divisi khusus untuk kantor ini; pilih Semua Unit/Divisi untuk melihat seluruh jabatan.' : undefined} />
+                            <SearchableCombobox id="kantor" name="kantor" label="Kantor / Area" value={officeValue} onChange={changeOffice} options={offices} optionValue={(office) => office.kode_kantor_detail} optionLabel={(office) => office.nama_kantor || office.kode_kantor_detail} optionDescription={(office) => office.level || (/wilayah/i.test(office.nama_kantor || '') ? 'KANWIL' : '')} placeholder="Cari kantor atau area" maxOptions={offices.length} />
+                            <SearchableCombobox id="employee-division" name="divisi" label="Divisi / Unit Kerja" value={divisionValue} onChange={changeDivision} options={divisionChoices} optionDescription={(option) => option.description || ''} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : loadingOptions && divisionChoices.length === 0 ? 'Memuat unit kerja…' : 'Pilih unit/divisi'} disabled={!officeValue || (loadingOptions && divisionChoices.length === 0)} description={officeValue && divisionOptions.length === 0 && !loadingOptions ? 'Belum ada unit/divisi yang terdata untuk kantor ini.' : undefined} />
                             <SearchableCombobox id="employee-position" name="jabatan" label="Jabatan" value={positionValue} onChange={setPositionValue} options={positionOptions} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : !divisionValue ? 'Pilih unit dulu' : loadingOptions ? 'Memuat jabatan…' : 'Cari jabatan'} disabled={!officeValue || !divisionValue || loadingOptions} />
                             <SelectCombobox id="employee-start-year" name="year" label="Tahun mulai kerja" value={filters.year} options={years} emptyLabel="Semua tahun" />
                             <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>

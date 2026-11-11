@@ -14,7 +14,7 @@ export default function OfficeIndex({ offices, filters }) {
             <div className="mb-6">
                 <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Referensi Organisasi</p>
                 <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Data kantor</h1>
-                <p className="mt-2 text-slate-500">Daftar kantor induk dengan jumlah pegawai dari tabel sistem yang sama.</p>
+                <p className="mt-2 text-slate-500">Daftar kantor induk dan jumlah pegawai di dalamnya.</p>
             </div>
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

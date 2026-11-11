@@ -11,11 +11,14 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Shuchkin\SimpleXLSX;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\TestCase;
 use ZipArchive;
 
 class PayrollWorkflowTest extends TestCase
 {
+    private string $lastPayrollFixtureContents = '';
+
     private const ENTRY_FIELDS = [
         'gaji_pokok', 'tunj_suami_istri', 'tunj_anak', 'tunj_jabatan', 'tunj_ops', 'tunj_pajak',
         'tunj_kinerja', 'tunj_fungsional', 'tunj_masa_kerja', 'honor_kontrak', 'thl', 'uang_makan_kontrak',
@@ -62,7 +65,13 @@ class PayrollWorkflowTest extends TestCase
         $this->assertInstanceOf(BinaryFileResponse::class, $template->baseResponse);
         $templatePath = $template->baseResponse->getFile()->getPathname();
         try {
-            $this->assertSame(['Template Import'], $this->workbookSheetNames($templatePath));
+            $this->assertSame(['Template Import', 'Contoh Pengisian'], $this->workbookSheetNames($templatePath, 2));
+            $templateWorkbook = SimpleXLSX::parse($templatePath);
+            $this->assertNotFalse($templateWorkbook, 'Template import payroll harus dapat dibaca.');
+            $exampleSheetIndex = array_search('Contoh Pengisian', $templateWorkbook->sheetNames(), true);
+            $this->assertNotFalse($exampleSheetIndex);
+            $exampleRows = $templateWorkbook->rows($exampleSheetIndex);
+            $this->assertSame('CONTOH-001', (string) ($exampleRows[2][2] ?? ''));
         } finally {
             @unlink($templatePath);
         }
@@ -75,6 +84,7 @@ class PayrollWorkflowTest extends TestCase
 
         $import = $this->withSession($session)->post('/payroll/import', [
             'preview_token' => $preview['token'],
+            'file_xlsx' => $this->payrollConfirmationFile(),
         ]);
         $import->assertRedirect();
         $import->assertSessionHasNoErrors();
@@ -99,10 +109,11 @@ class PayrollWorkflowTest extends TestCase
             'total' => '1200000.00',
         ]);
 
-        $secondPreview = $this->previewPayroll($session);
+        $secondPreview = $this->previewPayroll($session, 1300000);
         $this->assertTrue($secondPreview['replaces_current']);
         $this->withSession($session)->post('/payroll/import', [
             'preview_token' => $secondPreview['token'],
+            'file_xlsx' => $this->payrollConfirmationFile(),
         ])->assertRedirect();
 
         $this->assertSame(2, DB::table('payroll_imports')->where('tahun', 2026)->where('bulan', 10)->count());
@@ -141,6 +152,208 @@ class PayrollWorkflowTest extends TestCase
         $this->assertSame(1, $page->json('props.summaryRows.0.employee_count'));
         $this->assertSame('SIMPEG TEST', $page->json('props.entries.data.0.employee_name'));
         $this->assertSame('SIMPEG ADMIN', $page->json('props.payrollImport.imported_by_name'));
+    }
+
+    public function test_employee_files_are_limited_to_own_current_payroll_entry(): void
+    {
+        $this->seedPayrollDirectory();
+        DB::table('tb_user')->insert([
+            'id_user' => 'test-user',
+            'nama_user' => 'SIMPEG TEST',
+            'id_pegawai' => 'TEST-0001',
+            'hak_akses' => 'user',
+            'status_aktif' => '1',
+        ]);
+        $importId = DB::table('payroll_imports')->insertGetId([
+            'tahun' => 2026,
+            'bulan' => 10,
+            'source_filename' => 'payroll.xlsx',
+            'source_sha256' => hash('sha256', 'files-test'),
+            'source_row_count' => 1,
+            'source_summary_count' => 1,
+            'is_current' => true,
+            'imported_by' => 'test-admin',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('payroll_entries')->insert([
+            'payroll_import_id' => $importId,
+            'office_code' => '000000',
+            'employee_id' => 'TEST-0001',
+            'source_row_number' => 1,
+            'tgl_gajian' => '2026-10-15',
+            'nama_nasabah' => 'SIMPEG TEST',
+            'gaji_bersih' => 1500000,
+            'jumlah_gaji' => 1500000,
+            'total' => 1500000,
+        ]);
+
+        $headers = [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => hash('xxh128', config('app.asset_url')),
+        ];
+        $page = $this->withSession([
+            'id_user' => 'test-user',
+            'id_pegawai' => 'TEST-0001',
+            'hak_akses' => 'user',
+        ])->withHeaders($headers)->get('/files');
+        $page->assertOk();
+        $this->assertSame(1, $page->json('props.slips.total'));
+        $this->assertSame('TEST-0001', $page->json('props.slips.data.0.employee_id'));
+
+        $page = $this->withSession([
+            'id_user' => 'test-user',
+            'id_pegawai' => 'TEST-0001',
+            'hak_akses' => 'user',
+        ])->withHeaders($headers)->get("/files/{$importId}/slip/OTHER-0001");
+        $page->assertForbidden();
+
+        $this->flushHeaders();
+        $download = $this->withSession([
+            'id_user' => 'test-user',
+            'id_pegawai' => 'TEST-0001',
+            'hak_akses' => 'user',
+        ])->get("/files/{$importId}/slip/TEST-0001/download");
+        $download->assertOk();
+        $this->assertSame('application/pdf', $download->headers->get('content-type'));
+        $this->assertInstanceOf(StreamedResponse::class, $download->baseResponse);
+    }
+
+    public function test_admin_can_filter_files_by_employee_name_or_id(): void
+    {
+        $this->seedPayrollDirectory();
+        $importId = DB::table('payroll_imports')->insertGetId([
+            'tahun' => 2026,
+            'bulan' => 10,
+            'source_filename' => 'payroll.xlsx',
+            'source_sha256' => hash('sha256', 'files-search-test'),
+            'source_row_count' => 1,
+            'source_summary_count' => 1,
+            'is_current' => true,
+            'imported_by' => 'test-admin',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('payroll_entries')->insert([
+            'payroll_import_id' => $importId,
+            'office_code' => '000000',
+            'employee_id' => 'TEST-0001',
+            'source_row_number' => 1,
+            'tgl_gajian' => '2026-10-15',
+            'nama_nasabah' => 'SIMPEG TEST',
+            'gaji_bersih' => 1500000,
+            'jumlah_gaji' => 1500000,
+            'total' => 1500000,
+        ]);
+
+        $headers = [
+            'X-Inertia' => 'true',
+            'X-Inertia-Version' => hash('xxh128', config('app.asset_url')),
+        ];
+
+        $byName = $this->withSession($this->adminSession())
+            ->withHeaders($headers)
+            ->get('/files?employee_id=SIMPEG%20TEST');
+        $byName->assertOk();
+        $this->assertSame(1, $byName->json('props.slips.total'));
+        $this->assertSame('TEST-0001', $byName->json('props.slips.data.0.employee_id'));
+
+        $byId = $this->withSession($this->adminSession())
+            ->withHeaders($headers)
+            ->get('/files?employee_id=TEST-0001');
+        $byId->assertOk();
+        $this->assertSame(1, $byId->json('props.slips.total'));
+
+        DB::table('tb_user')->where('id_user', 'test-admin')->update(['id_pegawai' => 'TEST-0001']);
+        $ownProfile = $this->withSession([
+            'id_user' => 'test-admin',
+            'id_pegawai' => 'TEST-0001',
+            'hak_akses' => 'admin',
+        ])->withHeaders($headers)->get('/profile/slip-gaji?tahun=2026');
+        $ownProfile->assertOk();
+        $this->assertSame('Slip Gaji Saya', $ownProfile->json('props.pageTitle'));
+        $this->assertFalse($ownProfile->json('props.isAdministrative'));
+        $this->assertSame(1, $ownProfile->json('props.slips.total'));
+
+        $ownDetail = $this->withSession([
+            'id_user' => 'test-admin',
+            'id_pegawai' => 'TEST-0001',
+            'hak_akses' => 'admin',
+        ])->withHeaders($headers)->get("/profile/slip-gaji/{$importId}/slip/TEST-0001");
+        $ownDetail->assertOk();
+
+        $this->withSession([
+            'id_user' => 'test-admin',
+            'id_pegawai' => 'TEST-0001',
+            'hak_akses' => 'admin',
+        ])->get("/profile/slip-gaji/{$importId}/slip/OTHER-0001")->assertForbidden();
+    }
+
+    public function test_identical_current_payroll_import_does_not_create_a_duplicate_batch(): void
+    {
+        Storage::fake('local');
+        $this->seedPayrollDirectory();
+        $session = $this->adminSession();
+        $fixture = $this->payrollFixture();
+
+        $previewResponse = $this->withSession($session)
+            ->withHeader('X-Inertia', 'true')
+            ->post('/payroll/import/preview', [
+                'tahun' => 2026,
+                'bulan' => 10,
+                'file_xlsx' => $fixture,
+            ]);
+        $previewResponse->assertOk();
+        $preview = $previewResponse->json('props.preview');
+        $this->withSession($session)->post('/payroll/import', [
+            'preview_token' => $preview['token'],
+            'file_xlsx' => $this->payrollConfirmationFile(),
+        ])->assertRedirect();
+
+        $duplicatePreviewResponse = $this->withSession($session)
+            ->withHeader('X-Inertia', 'true')
+            ->post('/payroll/import/preview', [
+                'tahun' => 2026,
+                'bulan' => 10,
+                'file_xlsx' => $this->payrollConfirmationFile(),
+            ]);
+        $duplicatePreviewResponse->assertOk();
+        $duplicatePreview = $duplicatePreviewResponse->json('props.preview');
+        $this->assertTrue($duplicatePreview['duplicate_current']);
+        $this->assertFalse($duplicatePreview['duplicate_pending']);
+        $this->assertArrayNotHasKey('token', $duplicatePreview);
+        $this->assertSame(1, DB::table('payroll_imports')->where('tahun', 2026)->where('bulan', 10)->count());
+        $this->assertSame([], Storage::disk('local')->allFiles('payroll-previews'));
+    }
+
+    public function test_prune_revisions_keeps_current_and_latest_non_current_batch(): void
+    {
+        $this->seedPayrollDirectory();
+        $ids = [];
+        foreach ([false, false, true] as $isCurrent) {
+            $ids[] = DB::table('payroll_imports')->insertGetId([
+                'tahun' => 2026,
+                'bulan' => 10,
+                'source_filename' => 'payroll-'.$isCurrent.'-'.count($ids).'.xlsx',
+                'source_sha256' => hash('sha256', (string) count($ids)),
+                'source_row_count' => 1,
+                'source_summary_count' => 1,
+                'is_current' => $isCurrent,
+                'imported_by' => 'test-admin',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $this->artisan('payroll:prune-revisions')
+            ->assertExitCode(0)
+            ->expectsOutputToContain('Dry-run');
+        $this->assertSame(3, DB::table('payroll_imports')->count());
+
+        $this->artisan('payroll:prune-revisions', ['--execute' => true])->assertExitCode(0);
+        $this->assertDatabaseMissing('payroll_imports', ['id' => $ids[0]]);
+        $this->assertDatabaseHas('payroll_imports', ['id' => $ids[1], 'is_current' => 0]);
+        $this->assertDatabaseHas('payroll_imports', ['id' => $ids[2], 'is_current' => 1]);
     }
 
     public function test_admin_can_create_master_payroll_manually_and_export_it(): void
@@ -240,6 +453,57 @@ class PayrollWorkflowTest extends TestCase
         $response->assertSessionHasErrors('payroll');
         $this->assertSame(0, DB::table('payroll_salary_masters')->count());
         $this->assertSame(0, DB::table('payroll_change_requests')->count());
+    }
+
+    public function test_admin_can_transfer_master_payroll_to_a_scheduled_batch(): void
+    {
+        $this->seedPayrollDirectory();
+        DB::table('payroll_salary_masters')->insert([
+            'employee_id' => 'TEST-0001',
+            'office_code' => '000000',
+            'bank_office_code' => '001',
+            'no_rekening' => '00123456789',
+            'nama_nasabah' => 'SIMPEG TEST',
+            'tgl_gajian' => '2026-09-15',
+            'gaji_pokok' => '1200000.00',
+            'tunj_ops' => '100000.00',
+            'tunj_kinerja' => '50000.00',
+            'bpjs_kesehatan' => '10000.00',
+            'bpjs_tenaga_kerja' => '15000.00',
+            'jumlah_gaji' => '1350000.00',
+            'jumlah_potongan' => '25000.00',
+            'gaji_bersih' => '1325000.00',
+            'total' => '1325000.00',
+            'created_by' => 'test-admin',
+            'updated_by' => 'test-admin',
+        ]);
+
+        $response = $this->withSession($this->adminSession())->post('/payroll/edit/transfer', [
+            'tahun' => 2026,
+            'bulan' => 10,
+            'tgl_gajian' => '2026-10-15',
+        ]);
+
+        $response->assertRedirect('/payroll/edit');
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('payroll_imports', [
+            'tahun' => 2026,
+            'bulan' => 10,
+            'source_filename' => 'Transfer Master Gaji 10-2026',
+            'source_row_count' => 1,
+            'is_current' => 1,
+            'imported_by' => 'test-admin',
+        ]);
+        $this->assertDatabaseHas('payroll_entries', [
+            'employee_id' => 'TEST-0001',
+            'tgl_gajian' => '2026-10-15',
+            'gaji_pokok' => '1200000.00',
+            'total' => '1325000.00',
+        ]);
+        $this->assertDatabaseHas('payroll_salary_masters', [
+            'employee_id' => 'TEST-0001',
+            'source_import_id' => DB::table('payroll_imports')->where('source_filename', 'Transfer Master Gaji 10-2026')->value('id'),
+        ]);
     }
 
     public function test_admin_can_delete_master_with_confirmation_and_preserves_payroll_history(): void
@@ -576,14 +840,14 @@ class PayrollWorkflowTest extends TestCase
         $response->assertSessionHas('error', 'Halaman preview hanya tersedia setelah file XLSX dipilih. Hak akses Anda hanya mencakup melihat data payroll.');
     }
 
-    private function previewPayroll(array $session): array
+    private function previewPayroll(array $session, int $baseSalary = 1200000): array
     {
         $response = $this->withSession($session)
             ->withHeader('X-Inertia', 'true')
             ->post('/payroll/import/preview', [
                 'tahun' => 2026,
                 'bulan' => 10,
-                'file_xlsx' => $this->payrollFixture(),
+                'file_xlsx' => $this->payrollFixtureWithBankOfficeCode('001', $baseSalary),
             ]);
 
         $response->assertOk();
@@ -596,7 +860,7 @@ class PayrollWorkflowTest extends TestCase
         return $this->payrollFixtureWithBankOfficeCode('001');
     }
 
-    private function payrollFixtureWithBankOfficeCode(string $bankOfficeCode): UploadedFile
+    private function payrollFixtureWithBankOfficeCode(string $bankOfficeCode, int $baseSalary = 1200000): UploadedFile
     {
         $temporaryPath = tempnam(sys_get_temp_dir(), 'payroll-test-');
         $this->assertIsString($temporaryPath);
@@ -613,7 +877,7 @@ class PayrollWorkflowTest extends TestCase
         $xpath->registerNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
 
         $earnings = [
-            'gaji_pokok' => 1200000,
+            'gaji_pokok' => $baseSalary,
             'tunj_suami_istri' => 0,
             'tunj_anak' => 0,
             'tunj_jabatan' => 0,
@@ -681,11 +945,19 @@ class PayrollWorkflowTest extends TestCase
         $contents = file_get_contents($temporaryPath);
         @unlink($temporaryPath);
         $this->assertIsString($contents);
+        $this->lastPayrollFixtureContents = $contents;
 
         return UploadedFile::fake()->createWithContent('payroll_synthetic.xlsx', $contents);
     }
 
-    private function workbookSheetNames(string $path): array
+    private function payrollConfirmationFile(): UploadedFile
+    {
+        $this->assertNotSame('', $this->lastPayrollFixtureContents);
+
+        return UploadedFile::fake()->createWithContent('payroll_synthetic.xlsx', $this->lastPayrollFixtureContents);
+    }
+
+    private function workbookSheetNames(string $path, int $expectedWorksheetRelationshipCount = 1): array
     {
         $archive = new ZipArchive;
         $this->assertSame(true, $archive->open($path) === true, 'File harus berupa arsip XLSX yang valid.');
@@ -710,7 +982,7 @@ class PayrollWorkflowTest extends TestCase
                     $worksheetRelationshipCount++;
                 }
             }
-            $this->assertSame(1, $worksheetRelationshipCount, 'Workbook tidak boleh memiliki relasi ke tab yang disembunyikan.');
+            $this->assertSame($expectedWorksheetRelationshipCount, $worksheetRelationshipCount, 'Workbook memiliki jumlah relasi tab yang tidak sesuai.');
 
             return $names;
         } finally {

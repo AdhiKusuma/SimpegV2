@@ -36,12 +36,13 @@ return [
     ],
 
     'sso' => [
-        'enabled' => env('SSO_ENABLED', false),
+        'enabled' => filter_var(env('SSO_ENABLED', false), FILTER_VALIDATE_BOOL),
         'base_url' => env('SSO_BASE_URL', 'http://localhost/rest_api_sso'),
         'app' => env('SSO_APP', 'simpeg'),
         'timeout' => (int) env('SSO_TIMEOUT', 10),
         'connect_timeout' => (int) env('SSO_CONNECT_TIMEOUT', 5),
-        'verify' => env('SSO_VERIFY', true),
+        'verify' => filter_var(env('SSO_VERIFY', true), FILTER_VALIDATE_BOOL),
+        'ca_bundle' => env('SSO_CA_BUNDLE', base_path('resources/certificates/lets-encrypt-yr1.pem')),
     ],
 
 ];

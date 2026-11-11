@@ -9,7 +9,9 @@ import {
     ChevronRight,
     ClipboardCheck,
     ClipboardList,
+    CalendarClock,
     FileBarChart2,
+    FileText,
     GraduationCap,
     LayoutDashboard,
     LogOut,
@@ -35,7 +37,7 @@ import { Input } from '../Components/ui/input';
 import LiveDateTime from './LiveDateTime';
 import ThemeToggle from './ThemeToggle';
 
-const navItem = (href, label, icon) => ({ href, label, icon, permission: permissionForHref(href) });
+const navItem = (href, label, icon, options = {}) => ({ href, label, icon, permission: permissionForHref(href), ...options });
 
 function permissionForHref(href) {
     if (href === '/dashboard') return 'dashboard.view';
@@ -57,6 +59,11 @@ function permissionForHref(href) {
     if (href === '/payroll') return 'payroll.view';
     if (href === '/payroll/edit') return 'payroll.view';
     if (href === '/payroll/approvals') return 'payroll.approval.manage';
+    if (href === '/payroll/publications') return 'payroll.view';
+    if (href === '/files') return 'profile.view';
+    if (href === '/files/data-diri') return 'profile.view';
+    if (href === '/profile/data-diri') return 'profile.view';
+    if (href === '/profile/slip-gaji') return 'profile.view';
     if (href === '/users') return 'users.view';
     if (href === '/users/access') return 'users.manage';
     if (href === '/config/aplikasi') return 'config.manage';
@@ -69,9 +76,15 @@ function permissionForHref(href) {
     return undefined;
 }
 
-function filterNavigation(items, permissions) {
+function filterNavigation(items, permissions, role = '') {
+    const normalizedRole = String(role || '').toLowerCase();
+
     return items.reduce((filtered, item) => {
-        const children = item.items ? filterNavigation(item.items, permissions) : null;
+        if (item.roles && !item.roles.map((allowedRole) => String(allowedRole).toLowerCase()).includes(normalizedRole)) {
+            return filtered;
+        }
+
+        const children = item.items ? filterNavigation(item.items, permissions, normalizedRole) : null;
         if (item.items && children.length === 0) {
             return filtered;
         }
@@ -109,9 +122,9 @@ const navigationCatalog = [
                 label: 'Keluarga',
                 icon: UsersRound,
                 items: [
-                    navItem('/keluarga/spouses', 'Suami Istri', UsersRound),
-                    navItem('/keluarga/children', 'Anak', UsersRound),
-                    navItem('/keluarga/parents', 'Orang Tua', UsersRound),
+                    navItem('/keluarga/suami-istri', 'Suami Istri', UsersRound),
+                    navItem('/keluarga/anak', 'Anak', UsersRound),
+                    navItem('/keluarga/orang-tua', 'Orang Tua', UsersRound),
                 ],
             },
             navItem('/jabatan', 'Jabatan', BriefcaseBusiness),
@@ -140,6 +153,15 @@ const navigationCatalog = [
             navItem('/payroll', 'Payroll', Banknote),
             navItem('/payroll/edit', 'Edit Payroll', Banknote),
             navItem('/payroll/approvals', 'Approval Payroll', ClipboardCheck),
+            navItem('/payroll/publications', 'Publikasi & Pengiriman Slip', CalendarClock),
+        ],
+    },
+    {
+        label: 'FILES',
+        icon: FileText,
+        items: [
+            navItem('/files', 'Slip Gaji', FileText, { matchDescendants: true, excludeDescendants: ['/files/data-diri'] }),
+            navItem('/files/data-diri', 'Data Diri', FileText, { matchDescendants: true }),
         ],
     },
     navItem('/otorisasi', 'Approval Pengajuan', ClipboardCheck),
@@ -154,19 +176,30 @@ const navigationCatalog = [
     },
     navItem('/config/aplikasi', 'Pengaturan Aplikasi', Settings2),
     navItem('/config/kuota-jabatan', 'Kuota Jabatan', SlidersHorizontal),
-    navItem('/profile', 'Profil Saya', UserRound),
+    {
+        label: 'Profil Saya',
+        icon: UserRound,
+        items: [
+            navItem('/profile', 'Biodata Saya', UserRound),
+            navItem('/profile/data-diri', 'Data Diri Saya', FileText, { matchDescendants: true, roles: ['admin', 'superadmin', 'kepala'] }),
+            navItem('/profile/slip-gaji', 'Slip Gaji Saya', FileText, { matchDescendants: true, roles: ['admin', 'superadmin', 'kepala'] }),
+        ],
+    },
 ];
 
-function routeIsActive(url, href) {
+function routeIsActive(url, href, allowDescendantMatch = false, excludeDescendants = []) {
     const path = (url || '').split('?')[0];
 
-    return path === href || path.startsWith(`${href}/`);
+    if (path === href) return true;
+    if (!allowDescendantMatch || !path.startsWith(`${href}/`)) return false;
+
+    return !excludeDescendants.some((excludedPath) => path === excludedPath || path.startsWith(`${excludedPath}/`));
 }
 
-function navigationItemIsActive(item, url) {
+function navigationItemIsActive(item, url, allowDescendantMatch = false) {
     return item.items
-        ? item.items.some((child) => navigationItemIsActive(child, url))
-        : routeIsActive(url, item.href);
+        ? item.items.some((child) => navigationItemIsActive(child, url, true))
+        : routeIsActive(url, item.href, allowDescendantMatch || item.matchDescendants === true, item.excludeDescendants || []);
 }
 
 function NavigationEntry({ item, url, onNavigate, onExpandSidebar, depth = 0, sidebarCollapsed = false }) {
@@ -263,12 +296,13 @@ export default function LegacyPageShell({ title, children }) {
     const permissions = user.permissions || [];
     const canSearchEmployees = permissions.includes('employees.view');
     const canViewNotifications = permissions.includes('notifications.view');
+    const canViewOwnPayslip = permissions.includes('profile.view') && Boolean(user.id_pegawai) && user.hak_akses !== 'user';
     const unreadCount = Number(notificationSummary?.unread_count || 0);
     const latestNotifications = Array.isArray(notificationSummary?.latest) ? notificationSummary.latest : [];
     const homeHref = permissions.includes('dashboard.view')
         ? '/dashboard'
         : '/profile';
-    const navigation = filterNavigation(navigationCatalog, permissions);
+    const navigation = filterNavigation(navigationCatalog, permissions, user.hak_akses);
     const displayName = user.nama_user || 'Pengguna SIMPEG';
     const roleLabel = user.hak_akses || 'Pengguna';
     const appName = appConfig?.name || 'SIMPEG';
@@ -345,6 +379,19 @@ export default function LegacyPageShell({ title, children }) {
         return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
     }, [notificationsOpen]);
 
+    function toggleNotifications() {
+        const nextOpen = !notificationsOpen;
+        setNotificationsOpen(nextOpen);
+
+        if (nextOpen && unreadCount > 0) {
+            router.post('/notifikasi/read', {}, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }
+    }
+
     function submitGlobalSearch(event) {
         event.preventDefault();
         if (!canSearchEmployees) {
@@ -380,9 +427,9 @@ export default function LegacyPageShell({ title, children }) {
                     </button>
                 </div>
 
-                <div className="mt-8 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+                <div className="simpeg-sidebar-nav-scroll mt-8 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
                     <p className="simpeg-sidebar-section-label simpeg-muted mb-3 px-3 text-xs font-medium">Menu utama</p>
-                    <nav className="flex flex-col gap-1.5" aria-label="Navigasi utama">
+                    <nav className="simpeg-sidebar-nav flex flex-col gap-1.5" aria-label="Navigasi utama">
                         {navigation.map((item) => <NavigationEntry key={item.href || item.label} item={item} url={url} onNavigate={handleNavigation} onExpandSidebar={expandSidebar} sidebarCollapsed={sidebarIsCollapsed} />)}
                     </nav>
                 </div>
@@ -427,7 +474,7 @@ export default function LegacyPageShell({ title, children }) {
 
                             {canSearchEmployees && <button type="button" className="simpeg-search-trigger min-w-0 max-w-xl flex-1" onClick={() => setSearchOpen(true)} aria-label="Buka pencarian pegawai">
                                 <Search className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                                <span className="min-w-0 flex-1 truncate text-left">{globalSearch || 'Cari pegawai / NIK'}</span>
+                                <span className="min-w-0 flex-1 truncate text-left">{globalSearch || 'Cari nama / ID pegawai'}</span>
                             </button>}
 
                             <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
@@ -437,7 +484,7 @@ export default function LegacyPageShell({ title, children }) {
                                 <button
                                     type="button"
                                     className="simpeg-utility relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--simpeg-primary-border)]"
-                                    onClick={() => setNotificationsOpen((open) => !open)}
+                                    onClick={toggleNotifications}
                                     aria-label={unreadCount > 0 ? `Notifikasi, ${unreadCount} belum dibaca` : 'Notifikasi'}
                                     aria-expanded={notificationsOpen}
                                     aria-haspopup="dialog"
@@ -458,7 +505,9 @@ export default function LegacyPageShell({ title, children }) {
                                     {latestNotifications.length > 0 ? <div className="max-h-80 overflow-y-auto p-2">
                                         {latestNotifications.map((notification) => <Link
                                             key={notification.id_notif}
-                                            href={notification.action_url || '/notifikasi'}
+                                            href={notification.read_url || '/notifikasi'}
+                                            method={notification.read_url ? "post" : "get"}
+                                            as="a"
                                             onClick={() => setNotificationsOpen(false)}
                                             className="simpeg-notification-item block rounded-xl px-3 py-3 transition focus:outline-none focus:ring-2 focus:ring-[var(--simpeg-primary-border)]"
                                         >
@@ -504,6 +553,12 @@ export default function LegacyPageShell({ title, children }) {
                                                 {profileLabel}
                                             </Link>
                                         </DropdownMenuItem>
+                                        {canViewOwnPayslip && <DropdownMenuItem asChild>
+                                            <Link href="/profile/slip-gaji">
+                                                <FileText className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                                                Slip Gaji Saya
+                                            </Link>
+                                        </DropdownMenuItem>}
                                         <DropdownMenuItem asChild className="simpeg-account-menu-logout text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40">
                                             <Link href="/logout" method="post" as="button">
                                                 <LogOut className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
@@ -523,17 +578,17 @@ export default function LegacyPageShell({ title, children }) {
             </div>
             {canSearchEmployees && searchOpen && <div className="simpeg-search-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setSearchOpen(false); }}>
                 <div className="simpeg-search-dialog" role="dialog" aria-modal="true" aria-labelledby="global-search-title">
-                    <p id="global-search-title" className="sr-only">Cari pegawai atau NIK</p>
+                    <p id="global-search-title" className="sr-only">Cari nama atau ID pegawai</p>
                     <form onSubmit={submitGlobalSearch}>
                         <div className="simpeg-search-dialog-input">
                             <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                            <label className="sr-only" htmlFor="global-employee-search">Cari pegawai atau NIK</label>
-                            <Input unstyled autoFocus id="global-employee-search" type="search" value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Cari pegawai atau NIK" aria-label="Cari pegawai atau NIK" className="simpeg-text min-w-0 flex-1 bg-transparent px-2 text-base outline-none placeholder:text-[var(--simpeg-subtle)]" />
+                            <label className="sr-only" htmlFor="global-employee-search">Cari nama atau ID pegawai</label>
+                            <Input unstyled autoFocus id="global-employee-search" type="search" value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Cari nama atau ID pegawai" aria-label="Cari nama atau ID pegawai" className="simpeg-text min-w-0 flex-1 bg-transparent px-2 text-base outline-none placeholder:text-[var(--simpeg-subtle)]" />
                             <button type="button" className="simpeg-search-close" onClick={() => setSearchOpen(false)} aria-label="Tutup pencarian"><kbd>Esc</kbd></button>
                         </div>
                     </form>
                     <div className="simpeg-search-dialog-footer">
-                        <span>Masukkan nama, ID pegawai, atau NIK.</span>
+                        <span>Masukkan nama atau ID pegawai.</span>
                         <span className="hidden sm:inline">Enter untuk mencari · Esc untuk menutup</span>
                     </div>
                 </div>

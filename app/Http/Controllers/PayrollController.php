@@ -10,13 +10,15 @@ use App\Models\PayrollOfficeSummary;
 use App\Models\PayrollSalaryMaster;
 use App\Services\NotificationService;
 use App\Services\PayrollEntryValidationService;
+use App\Services\PayrollPublicationService;
 use App\Services\PayrollWorkbookService;
 use App\Services\RbacService;
+use Carbon\Carbon;
 use DateTimeImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -249,7 +251,7 @@ class PayrollController extends Controller
 
         return Inertia::render('Payroll/Import', [
             'preview' => null,
-            'filters' => ['tahun' => now()->year, 'bulan' => now()->month],
+            'filters' => ['tahun' => now()->year, 'bulan' => now()->month, 'publication_mode' => 'scheduled', 'scheduled_at' => ''],
             'willRequireApproval' => $this->willRequireApproval($request, $rbac),
             'flash' => ['error' => $request->session()->get('error')],
         ]);
@@ -347,13 +349,35 @@ class PayrollController extends Controller
             'bulan' => ['required', 'integer', 'between:1,12'],
             'file_xlsx' => ['required', 'file', 'mimes:xlsx', 'max:20480'],
         ]);
+        $publicationMode = 'scheduled';
 
         $file = $request->file('file_xlsx');
         $parsed = $this->parseWorkbook($file->getRealPath(), $request, $entryValidator);
+        $publicationSchedule = $this->publicationScheduleFromEntries($parsed['entries']);
+        if ($publicationSchedule['error'] !== null) {
+            $parsed['errors'][] = ['row' => null, 'messages' => [$publicationSchedule['error']]];
+        }
+        $scheduledAt = $publicationSchedule['scheduled_at'];
+        $sourceSha256 = (string) hash_file('sha256', $file->getRealPath());
+        $duplicateCurrent = PayrollImport::query()
+            ->where('tahun', $validated['tahun'])
+            ->where('bulan', $validated['bulan'])
+            ->where('is_current', true)
+            ->where('source_sha256', $sourceSha256)
+            ->exists();
+        $duplicatePending = Schema::hasTable('payroll_change_requests') && PayrollChangeRequest::query()
+            ->where('change_type', 'import')
+            ->where('tahun', $validated['tahun'])
+            ->where('bulan', $validated['bulan'])
+            ->where('source_sha256', $sourceSha256)
+            ->where('status', 'pending')
+            ->exists();
         $preview = [
             'tahun' => (int) $validated['tahun'],
             'bulan' => (int) $validated['bulan'],
             'source_filename' => basename($file->getClientOriginalName()),
+            'duplicate_current' => $duplicateCurrent,
+            'duplicate_pending' => $duplicatePending,
             'row_count' => count($parsed['entries']),
             'office_count' => count($parsed['summaries']),
             'errors' => array_slice($parsed['errors'], 0, 20),
@@ -363,6 +387,8 @@ class PayrollController extends Controller
                 ->where('tahun', $validated['tahun'])
                 ->where('bulan', $validated['bulan'])
                 ->exists(),
+            'publication_mode' => $publicationMode,
+            'scheduled_at' => $scheduledAt?->timezone('Asia/Jakarta')->format('Y-m-d\TH:i'),
         ];
 
         if ($preview['row_count'] === 0 && $preview['errors'] === []) {
@@ -370,23 +396,22 @@ class PayrollController extends Controller
             $preview['error_count'] = 1;
         }
 
-        if ($preview['error_count'] === 0) {
+        if ($preview['error_count'] === 0 && ! $duplicateCurrent && ! $duplicatePending) {
             $this->cleanExpiredPreviews($request);
             $token = (string) Str::uuid();
-            $storedPath = $file->storeAs('payroll-previews', $token.'.xlsx', 'local');
             $previews = $request->session()->get('payroll_previews', []);
             $previews[$token] = [
-                'path' => $storedPath,
-                'sha256' => hash_file('sha256', $file->getRealPath()),
+                'sha256' => $sourceSha256,
                 'filename' => basename($file->getClientOriginalName()),
                 'year' => (int) $validated['tahun'],
                 'month' => (int) $validated['bulan'],
+                'publication_mode' => $publicationMode,
+                'scheduled_at' => $scheduledAt?->toDateTimeString(),
                 'user_id' => (string) $request->session()->get('id_user'),
                 'expires_at' => now()->addMinutes(20)->timestamp,
             ];
             while (count($previews) > 3) {
                 $oldToken = array_key_first($previews);
-                Storage::disk('local')->delete($previews[$oldToken]['path'] ?? '');
                 unset($previews[$oldToken]);
             }
             $request->session()->put('payroll_previews', $previews);
@@ -395,16 +420,24 @@ class PayrollController extends Controller
 
         return Inertia::render('Payroll/Import', [
             'preview' => $preview,
-            'filters' => ['tahun' => (int) $validated['tahun'], 'bulan' => (int) $validated['bulan']],
+            'filters' => [
+                'tahun' => (int) $validated['tahun'],
+                'bulan' => (int) $validated['bulan'],
+                'publication_mode' => $publicationMode,
+                'scheduled_at' => $scheduledAt?->timezone('Asia/Jakarta')->format('Y-m-d\TH:i'),
+            ],
             'willRequireApproval' => $this->willRequireApproval($request, $rbac),
             'flash' => ['error' => $request->session()->get('error')],
         ]);
     }
 
-    public function import(Request $request, RbacService $rbac, NotificationService $notifications, PayrollEntryValidationService $entryValidator): RedirectResponse
+    public function import(Request $request, RbacService $rbac, NotificationService $notifications, PayrollPublicationService $publications, PayrollEntryValidationService $entryValidator): RedirectResponse
     {
         $this->authorizePayrollImport($request, $rbac);
-        $validated = $request->validate(['preview_token' => ['required', 'uuid']]);
+        $validated = $request->validate([
+            'preview_token' => ['required', 'uuid'],
+            'file_xlsx' => ['required', 'file', 'mimes:xlsx', 'max:20480'],
+        ]);
         $previews = $request->session()->get('payroll_previews', []);
         $preview = $previews[$validated['preview_token']] ?? null;
         abort_unless(
@@ -415,9 +448,8 @@ class PayrollController extends Controller
             'Preview import tidak berlaku. Unggah kembali file payroll untuk melanjutkan.',
         );
 
-        $path = (string) ($preview['path'] ?? '');
-        abort_unless($path !== '' && Storage::disk('local')->exists($path), 422, 'File preview tidak ditemukan. Silakan unggah ulang.');
-        $fullPath = Storage::disk('local')->path($path);
+        $file = $request->file('file_xlsx');
+        $fullPath = $file->getRealPath();
         abort_unless(hash_file('sha256', $fullPath) === ($preview['sha256'] ?? ''), 422, 'File preview berubah. Silakan unggah ulang file payroll.');
 
         $parsed = $this->parseWorkbook(
@@ -427,10 +459,41 @@ class PayrollController extends Controller
             (int) $preview['year'],
             (int) $preview['month'],
         );
+        $publicationSchedule = $this->publicationScheduleFromEntries($parsed['entries']);
+        if ($publicationSchedule['error'] !== null) {
+            throw ValidationException::withMessages(['preview_token' => $publicationSchedule['error']]);
+        }
         if ($parsed['errors'] !== [] || $parsed['entries'] === []) {
             throw ValidationException::withMessages([
                 'preview_token' => 'Validasi file berubah sejak preview. Unggah ulang dan periksa baris yang bermasalah.',
             ]);
+        }
+        $preview['publication_mode'] = 'scheduled';
+        $preview['scheduled_at'] = $publicationSchedule['scheduled_at']?->toDateTimeString();
+
+        $duplicateCurrent = PayrollImport::query()
+            ->where('tahun', $preview['year'])
+            ->where('bulan', $preview['month'])
+            ->where('is_current', true)
+            ->where('source_sha256', $preview['sha256'])
+            ->exists();
+        $duplicatePending = Schema::hasTable('payroll_change_requests') && PayrollChangeRequest::query()
+            ->where('change_type', 'import')
+            ->where('tahun', $preview['year'])
+            ->where('bulan', $preview['month'])
+            ->where('source_sha256', $preview['sha256'])
+            ->where('status', 'pending')
+            ->exists();
+        if ($duplicateCurrent || $duplicatePending) {
+            unset($previews[$validated['preview_token']]);
+            $request->session()->put('payroll_previews', $previews);
+
+            $message = $duplicateCurrent
+                ? 'File payroll identik dengan batch aktif. Batch baru tidak dibuat.'
+                : 'File payroll identik dengan pengajuan yang masih menunggu approval.';
+
+            return to_route('payroll.index', ['tahun' => $preview['year'], 'bulan' => $preview['month']])
+                ->with('success', $message);
         }
 
         $userId = (string) $request->session()->get('id_user');
@@ -447,7 +510,12 @@ class PayrollController extends Controller
                     'source_sha256' => $preview['sha256'],
                     'requested_by' => $userId,
                     'office_codes' => $officeCodes,
-                    'summary_data' => ['employee_count' => count($parsed['entries']), 'office_count' => count($officeCodes)],
+                    'summary_data' => [
+                        'employee_count' => count($parsed['entries']),
+                        'office_count' => count($officeCodes),
+                        'publication_mode' => 'scheduled',
+                        'scheduled_at' => $preview['scheduled_at'] ?? null,
+                    ],
                     'status' => 'pending',
                     'submitted_at' => now(),
                 ]);
@@ -483,7 +551,6 @@ class PayrollController extends Controller
             });
 
             $notifications->notifyPayrollRequestCreated($changeRequest);
-            Storage::disk('local')->delete($path);
             unset($previews[$validated['preview_token']]);
             $request->session()->put('payroll_previews', $previews);
 
@@ -492,7 +559,7 @@ class PayrollController extends Controller
         }
 
         $now = now();
-        DB::transaction(function () use ($parsed, $preview, $now, $userId): void {
+        $payrollImport = DB::transaction(function () use ($parsed, $preview, $now, $userId): PayrollImport {
             PayrollImport::query()
                 ->where('tahun', $preview['year'])
                 ->where('bulan', $preview['month'])
@@ -551,9 +618,17 @@ class PayrollController extends Controller
                     ['office_code', 'bank_office_code', 'no_rekening', 'nama_nasabah', 'tgl_gajian', 'rekening_tabungan', 'no_hp_keris', ...self::ENTRY_AMOUNT_FIELDS, 'source_import_id', 'updated_by', 'updated_at'],
                 );
             }
+
+            return $payrollImport;
         });
 
-        Storage::disk('local')->delete($path);
+        $publications->createForImport(
+            $payrollImport,
+            'scheduled',
+            $preview['scheduled_at'] ?? null,
+            $userId,
+        );
+
         unset($previews[$validated['preview_token']]);
         $request->session()->put('payroll_previews', $previews);
 
@@ -574,16 +649,7 @@ class PayrollController extends Controller
             return $count;
         });
 
-        $previews = $request->session()->pull('payroll_previews', []);
-        $userId = (string) $request->session()->get('id_user');
-        foreach ($previews as $preview) {
-            if (is_array($preview) && (string) ($preview['user_id'] ?? '') === $userId) {
-                $path = (string) ($preview['path'] ?? '');
-                if (str_starts_with($path, 'payroll-previews/')) {
-                    Storage::disk('local')->delete($path);
-                }
-            }
-        }
+        $request->session()->forget('payroll_previews');
 
         return to_route('payroll.index')->with(
             'success',
@@ -940,7 +1006,6 @@ class PayrollController extends Controller
         $previews = $request->session()->get('payroll_previews', []);
         foreach ($previews as $token => $preview) {
             if ((int) ($preview['expires_at'] ?? 0) < now()->timestamp) {
-                Storage::disk('local')->delete($preview['path'] ?? '');
                 unset($previews[$token]);
             }
         }
@@ -1010,6 +1075,36 @@ class PayrollController extends Controller
         }
 
         return number_format((float) $left + (float) $right, 2, '.', '');
+    }
+
+    private function publicationScheduleFromEntries(array $entries): array
+    {
+        $dates = collect($entries)
+            ->map(fn (array $entry): string => trim((string) ($entry['tgl_gajian'] ?? '')))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($dates->count() > 1) {
+            return [
+                'scheduled_at' => null,
+                'error' => 'Tanggal gajian harus sama untuk seluruh pegawai dalam satu import. Pisahkan import jika tanggal gaji berbeda.',
+            ];
+        }
+
+        if ($dates->isEmpty()) {
+            return ['scheduled_at' => null, 'error' => null];
+        }
+
+        try {
+            $scheduledAt = Carbon::createFromFormat('Y-m-d', (string) $dates->first(), 'Asia/Jakarta')
+                ->setTime(8, 0)
+                ->setTimezone(config('app.timezone'));
+        } catch (\Throwable) {
+            return ['scheduled_at' => null, 'error' => 'Tanggal gajian tidak dapat dijadikan jadwal publikasi.'];
+        }
+
+        return ['scheduled_at' => $scheduledAt, 'error' => null];
     }
 
     private function nullableText(mixed $value, int $maxLength): ?string

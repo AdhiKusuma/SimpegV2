@@ -14,10 +14,17 @@ class TbDiklat extends Model
 
     protected $casts = [
         'biaya' => 'integer',
+        'biaya_per_peserta' => 'integer',
+        'diklat_id' => 'integer',
         'date_reg' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     protected $guarded = [];
+
+    public function masterKegiatan()
+    {
+        return $this->belongsTo(TbBiayaPendidikan::class, 'diklat_id', 'biaya_id');
+    }
 }

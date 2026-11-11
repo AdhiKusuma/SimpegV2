@@ -41,6 +41,15 @@ const stageOptions = [
     },
 ];
 
+function MobileAmountGrid({ fields, values }) {
+    return <dl className="grid grid-cols-2 gap-3">
+        {fields.map(([field, label]) => <div key={field} className="simpeg-card-soft rounded-xl border p-3">
+            <dt className="simpeg-muted text-xs leading-5">{label}</dt>
+            <dd className="simpeg-text mt-1 text-sm font-bold tabular-nums">{formatRupiah(values[field])}</dd>
+        </div>)}
+    </dl>;
+}
+
 export default function Index({ filters, years = [], offices = [], summaryRows = [], summaryTotals = {}, entries, payrollImport, canImport, canEditMaster = false, canClearHistory = false, payrollHistoryCount = 0, scopeLabel, scopeLocked, flash = {} }) {
     const [selectedOffice, setSelectedOffice] = useState(String(filters.office || ''));
     const [selectedYear, setSelectedYear] = useState(String(filters.tahun));
@@ -50,6 +59,7 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
     const clearHistoryForm = useForm({ confirmation: '' });
     const activeStage = stageOptions.find((option) => option.value === (filters.stage || 'final')) || stageOptions[2];
     const stageFields = activeStage.fields;
+    const showDeductionTotals = filters.view === 'rincian' && activeStage.value === 'potongan' && Boolean(payrollImport);
     useEffect(() => {
         setSelectedOffice(String(filters.office || ''));
         setSelectedYear(String(filters.tahun));
@@ -132,7 +142,7 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
 
             {canImport && <section className="simpeg-card-soft mb-6 rounded-2xl border p-4 sm:p-5" aria-labelledby="payroll-template-heading">
                 <h2 id="payroll-template-heading" className="simpeg-text font-bold">Format file</h2>
-                <p className="simpeg-muted mt-2 text-sm leading-6">Unduh template resmi, isi kolom payroll tanpa mengubah susunannya, lalu unggah file untuk memeriksa preview. Nama sheet bebas. Hasil ekspor mengikuti format sheet hasil ketika export pada workbook.</p>
+                <p className="simpeg-muted mt-2 text-sm leading-6">Gunakan template resmi, isi data payroll tanpa mengubah susunannya, lalu unggah untuk melihat pratinjau. Nama lembar kerja boleh disesuaikan. Hasil ekspor mengikuti susunan data yang ditampilkan.</p>
                 <a href="/payroll/template" download className="simpeg-primary mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]">
                     <Download aria-hidden="true" className="h-4 w-4" /> Unduh template XLSX
                 </a>
@@ -230,8 +240,28 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                 {!payrollImport ? <div className="px-5 py-14 text-center">
                     <FileSpreadsheet aria-hidden="true" className="simpeg-subtle mx-auto mb-3 h-8 w-8" />
                     <p className="simpeg-text font-semibold">Belum ada payroll untuk periode ini.</p>
-                    <p className="simpeg-muted mt-1 text-sm">Pilih periode lain atau unggah workbook dengan kolom payroll yang sesuai template.</p>
-                </div> : filters.view === 'rekap' ? <div className="overflow-x-auto">
+                            <p className="simpeg-muted mt-1 text-sm">Pilih periode lain atau unggah file payroll dengan kolom sesuai template.</p>
+                </div> : filters.view === 'rekap' ? <>
+                    <div className="grid gap-3 p-4 md:hidden">
+                        {summaryRows.length === 0 ? <div className="simpeg-muted px-2 py-10 text-center text-sm">Tidak ada data kantor pada periode ini.</div> : summaryRows.map((row) => <article key={row.office_code} className="simpeg-card-soft rounded-xl border p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h3 className="simpeg-text truncate font-semibold">{row.office_name}</h3>
+                                    <p className="simpeg-muted mt-1 font-mono text-xs">{row.office_code}{row.branch_code ? ` · Cabang ${row.branch_code}` : ''}</p>
+                                </div>
+                                <span className="simpeg-utility shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold">{row.employee_count.toLocaleString('id-ID')} pegawai</span>
+                            </div>
+                            <div className="mt-4"><MobileAmountGrid fields={stageFields} values={row} /></div>
+                        </article>)}
+                        {summaryRows.length > 0 && <article className="simpeg-card-soft rounded-xl border p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <h3 className="simpeg-text font-semibold">Total dalam tampilan</h3>
+                                <span className="simpeg-muted text-xs">{Number(summaryTotals.employee_count || 0).toLocaleString('id-ID')} pegawai</span>
+                            </div>
+                            <div className="mt-4"><MobileAmountGrid fields={stageFields} values={summaryTotals} /></div>
+                        </article>}
+                    </div>
+                    <div className="hidden overflow-x-auto md:block">
                     <table className="w-full min-w-[900px] text-left text-sm">
                         <thead className="simpeg-muted border-b text-xs uppercase tracking-wide"><tr>
                             <th className="px-5 py-4">Kantor</th><th className="px-4 py-4 text-right">Pegawai</th>
@@ -249,8 +279,52 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                             {stageFields.map(([field]) => <td key={field} className="px-4 py-4 text-right tabular-nums">{formatRupiah(summaryTotals[field])}</td>)}
                         </tr></tfoot>}
                     </table>
-                </div> : <>
-                    <div className="overflow-x-auto">
+                </div></> : <>
+                    {showDeductionTotals && <div className="border-b px-4 py-4 sm:px-5" aria-labelledby="payroll-deduction-totals-title">
+                        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+                            <div>
+                                <h3 id="payroll-deduction-totals-title" className="simpeg-text font-semibold">Total potongan seluruh pegawai</h3>
+                                <p className="simpeg-muted mt-1 text-xs">Akumulasi seluruh komponen potongan pada periode dan cakupan kantor yang dipilih.</p>
+                            </div>
+                            <span className="simpeg-muted text-xs">{Number(summaryTotals.employee_count || 0).toLocaleString('id-ID')} pegawai</span>
+                        </div>
+                        <div className="md:hidden">
+                            <MobileAmountGrid fields={stageFields} values={summaryTotals} />
+                        </div>
+                        <div className="hidden overflow-x-auto rounded-xl border md:block">
+                            <table className="w-full min-w-[900px] text-left text-sm">
+                                <thead className="simpeg-muted border-b bg-slate-50/70 text-xs uppercase tracking-wide dark:bg-slate-900/40"><tr>
+                                    <th className="px-4 py-3">Akumulasi</th>
+                                    {stageFields.map(([, label]) => <th key={label} className="px-4 py-3 text-right">{label}</th>)}
+                                </tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td className="simpeg-text px-4 py-4 font-semibold">Total seluruh pegawai</td>
+                                        {stageFields.map(([field]) => <td key={field} className="simpeg-text px-4 py-4 text-right font-semibold tabular-nums">{formatRupiah(summaryTotals[field])}</td>)}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>}
+                    <div className="grid gap-3 p-4 md:hidden">
+                        {entries?.data?.length ? entries.data.map((entry) => <article key={entry.id} className="simpeg-card-soft rounded-xl border p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h3 className="simpeg-text truncate font-semibold">{entry.employee_name}</h3>
+                                    <p className="simpeg-muted mt-1 font-mono text-xs">{entry.employee_id}</p>
+                                </div>
+                                <span className="simpeg-utility shrink-0 rounded-full border px-2.5 py-1 font-mono text-xs">{entry.office_code}</span>
+                            </div>
+                            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                                <div><dt className="simpeg-muted text-xs">Nama nasabah</dt><dd className="simpeg-text mt-1 truncate">{entry.nama_nasabah || '—'}</dd></div>
+                                <div><dt className="simpeg-muted text-xs">Tanggal gajian</dt><dd className="simpeg-text mt-1">{entry.tgl_gajian || '—'}</dd></div>
+                                <div><dt className="simpeg-muted text-xs">Kode kantor rekening</dt><dd className="simpeg-text mt-1 font-mono text-xs">{entry.bank_office_code || '—'}</dd></div>
+                                <div><dt className="simpeg-muted text-xs">No rekening</dt><dd className="simpeg-text mt-1 font-mono text-xs">{entry.no_rekening || '—'}</dd></div>
+                            </dl>
+                            <div className="mt-4 border-t pt-4"><MobileAmountGrid fields={stageFields} values={entry} /></div>
+                        </article>) : <div className="simpeg-muted px-2 py-10 text-center text-sm">Tidak ada rincian pegawai untuk kantor dan periode ini.</div>}
+                    </div>
+                    <div className="hidden overflow-x-auto md:block">
                         <table className="w-full min-w-[1900px] text-left text-sm">
                             <thead className="simpeg-muted border-b text-xs uppercase tracking-wide"><tr>
                                 <th className="sticky left-0 z-10 simpeg-card px-4 py-4">Pegawai</th><th className="px-4 py-4">Kantor payroll</th>

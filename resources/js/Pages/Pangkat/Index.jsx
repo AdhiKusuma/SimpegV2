@@ -30,14 +30,14 @@ export default function PangkatIndex({ items, golongan, filters, canManage }) {
                 <div>
                     <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Riwayat Kepegawaian</p>
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Riwayat pangkat</h1>
-                    <p className="mt-2 max-w-2xl text-slate-500">Daftar pangkat dan golongan yang tersimpan pada tabel sistem.</p>
+                    <p className="mt-2 max-w-2xl text-slate-500">Daftar pangkat dan golongan pegawai yang tersimpan.</p>
                 </div>
                 {canManage && <div className="flex flex-wrap gap-2"><Link href="/golongan" className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Kelola golongan</Link><Link href="/pangkat/create" className="inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Tambah data</Link></div>}
             </div>
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[1fr_180px_160px_auto] lg:items-end">
-                    <div className="simpeg-mobile-filter-search"><label htmlFor="rank-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Pencarian</label><input id="rank-search" name="search" defaultValue={filters.search} placeholder="Nama, ID pegawai, pangkat, atau nomor SK" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
+                    <div className="simpeg-mobile-filter-search"><label htmlFor="rank-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari pegawai</label><input id="rank-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
                     <MobileFilterGroup id="rank-mobile-filters" activeCount={Number(Boolean(filters.gol)) + Number(Boolean(filters.status))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
                         <SelectCombobox id="rank-gol" name="gol" label="Golongan" value={filters.gol} options={golongan} emptyLabel="Semua" />
                         <SelectCombobox id="rank-status" name="status" label="Status" value={filters.status} options={[{ value: 'Aktif', label: 'Aktif' }, { value: 'nonaktif', label: 'Tidak aktif' }]} emptyLabel="Semua" />

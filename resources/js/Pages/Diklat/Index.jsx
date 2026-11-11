@@ -9,6 +9,12 @@ export default function DiklatIndex({ items, years, trainingTypes, offices, filt
     const { flash } = usePage().props;
     const [deleteTarget, setDeleteTarget] = useState(null);
     const deleteForm = useForm({ reason: '' });
+    const withFilters = (url) => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
+        const query = params.toString();
+        return query ? `${url}?${query}` : url;
+    };
 
     function submit(event) {
         event.preventDefault();
@@ -23,7 +29,7 @@ export default function DiklatIndex({ items, years, trainingTypes, offices, filt
     return (
         <LegacyPageShell title="Daftar Diklat Pegawai">
             <Head title="Daftar Diklat Pegawai" />
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Pengembangan Pegawai</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar pelatihan & diklat</h1><p className="mt-2 text-slate-500">Menampilkan riwayat pelatihan dari tabel sistem yang sama.</p></div>{canManage && <div className="flex flex-wrap gap-2"><Link href="/diklat/import" className="rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Import XLSX</Link><Link href="/diklat/create" className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Tambah Data</Link></div>}</div>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Pengembangan Pegawai</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar pelatihan & diklat</h1><p className="mt-2 text-slate-500">Menampilkan riwayat pelatihan dan diklat pegawai.</p></div><div className="flex flex-wrap gap-2"><a href={withFilters('/diklat/export')} className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">Export XLSX</a>{canManage && <Link href="/diklat/import" className="rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Import XLSX</Link>}{canManage && <Link href="/diklat/create" className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Tambah Data</Link>}</div></div>
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[160px_1fr_220px_1fr_auto] lg:items-end">
                 <MobileFilterGroup id="training-mobile-filters" activeCount={[filters.tahun, filters.diklat, filters.kantor].filter((value) => value && value !== 'Semua').length} toggleClassName="simpeg-mobile-filter-toggle--after-search">

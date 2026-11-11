@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
@@ -57,7 +56,7 @@ class ReportController extends Controller
         ]);
     }
 
-    public function exportNominative(Request $request, XlsxExportService $xlsxExport): StreamedResponse
+    public function exportNominative(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
@@ -76,6 +75,13 @@ class ReportController extends Controller
             ->distinct()
             ->orderBy('p.nama');
 
+        if ($request->string('type')->lower()->value() === 'pdf') {
+            return response()->view('reports.nominative-print', [
+                'employees' => $query->get(),
+                'filters' => $filters,
+            ]);
+        }
+
         $rows = [['No', 'Nama Pegawai', 'ID Pegawai', 'Jabatan', 'TMT Jabatan', 'Unit Kerja', 'Status Kepegawaian', 'Jenjang Pendidikan', 'Sekolah/Universitas']];
         $number = 1;
 
@@ -87,7 +93,7 @@ class ReportController extends Controller
             ];
         }
 
-        $content = $xlsxExport->make($rows, 'Laporan Nominatif');
+        $content = $xlsxExport->make($rows, 'Laporan Nominatif', true);
 
         return response()->streamDownload(static function () use ($content): void {
             echo $content;
@@ -103,11 +109,15 @@ class ReportController extends Controller
         return Inertia::render('Reports/Formation', $this->formationData($request));
     }
 
-    public function exportFormation(Request $request, XlsxExportService $xlsxExport): StreamedResponse
+    public function exportFormation(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
         $data = $this->formationData($request);
+
+        if ($request->string('type')->lower()->value() === 'pdf') {
+            return response()->view('reports.formation-print', $data);
+        }
 
         $rows = [['No', 'Jabatan', 'Kuota', 'Terisi', 'Sisa', 'Status']];
 
@@ -130,7 +140,7 @@ class ReportController extends Controller
             $data['totals']['sisa'],
             '',
         ];
-        $content = $xlsxExport->make($rows, 'Laporan Formasi');
+        $content = $xlsxExport->make($rows, 'Laporan Formasi', true);
 
         return response()->streamDownload(static function () use ($content): void {
             echo $content;
@@ -148,11 +158,15 @@ class ReportController extends Controller
         return Inertia::render('Reports/TrainingCosts', $data);
     }
 
-    public function exportTrainingCosts(Request $request, XlsxExportService $xlsxExport): StreamedResponse
+    public function exportTrainingCosts(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
         $data = $this->trainingCostData($request);
+
+        if ($request->string('type')->lower()->value() === 'pdf') {
+            return response()->view('reports.training-costs-print', $data);
+        }
 
         $rows = [['No', 'Nama Kegiatan', 'Penyelenggara', 'Tahun', 'Peserta', 'Total Biaya']];
 
@@ -168,7 +182,7 @@ class ReportController extends Controller
         }
 
         $rows[] = ['', 'GRAND TOTAL', '', '', $data['totals']['peserta'], $data['totals']['biaya']];
-        $content = $xlsxExport->make($rows, 'Rekap Biaya Diklat');
+        $content = $xlsxExport->make($rows, 'Rekap Biaya Diklat', true);
 
         return response()->streamDownload(static function () use ($content): void {
             echo $content;
@@ -262,7 +276,7 @@ class ReportController extends Controller
         }
 
         $rows[] = ['', 'GRAND TOTAL', '', '', '', '', $data['totals']['peserta'], $data['totals']['biaya']];
-        $content = $xlsxExport->make($rows, 'Rekap Biaya Pendidikan');
+        $content = $xlsxExport->make($rows, 'Rekap Biaya Pendidikan', true);
 
         return response()->streamDownload(static function () use ($content): void {
             echo $content;
@@ -280,11 +294,16 @@ class ReportController extends Controller
         return Inertia::render('Reports/Condition', $data);
     }
 
-    public function exportCondition(Request $request, XlsxExportService $xlsxExport): StreamedResponse
+    public function exportCondition(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
         $data = $this->conditionData($request);
+
+        if ($request->string('type')->lower()->value() === 'pdf') {
+            return response()->view('reports.condition-print', $data);
+        }
+
         $outputRows = [['Jenis Laporan', ...$data['ranges'], 'Total']];
 
         foreach ($data['categories'] as $category) {
@@ -305,7 +324,7 @@ class ReportController extends Controller
             }
         }
 
-        $content = $xlsxExport->make($outputRows, 'Laporan Keadaan Pegawai');
+        $content = $xlsxExport->make($outputRows, 'Laporan Keadaan Pegawai', true);
 
         return response()->streamDownload(static function () use ($content): void {
             echo $content;
@@ -344,9 +363,7 @@ class ReportController extends Controller
                 $like = '%'.$filters['search'].'%';
                 $builder->where(function (Builder $scope) use ($like): void {
                     $scope->where('p.nama', 'like', $like)
-                        ->orWhere('p.id_peg', 'like', $like)
-                        ->orWhere('j.jabatan', 'like', $like)
-                        ->orWhere('k.nama_kantor', 'like', $like);
+                        ->orWhere('p.id_peg', 'like', $like);
                 });
             });
 

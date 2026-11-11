@@ -9,6 +9,84 @@
         background-color: var(--simpeg-surface) !important;
     }
 
+    /* Fractional slate surfaces must follow the dark palette as well. */
+    html.dark [class*="bg-slate-50/"] {
+        background-color: var(--simpeg-card-soft) !important;
+    }
+
+    html.dark [class*="bg-slate-100/"] {
+        background-color: #202b38 !important;
+    }
+
+    html.dark [class*="bg-blue-50/"],
+    html.dark [class*="bg-blue-100/"] {
+        background-color: var(--simpeg-primary-soft) !important;
+    }
+
+    html.dark [class*="bg-amber-50/"] {
+        background-color: rgb(120 53 15 / 0.28) !important;
+    }
+
+    /* Non-semantic accent utilities use the active theme accent in dark mode. */
+    html.dark [class*="text-indigo-"],
+    html.dark [class*="text-violet-"],
+    html.dark [class*="text-cyan-"],
+    html.dark [class*="text-teal-"],
+    html.dark [class*="text-purple-"] {
+        color: var(--simpeg-primary) !important;
+    }
+
+    html.dark [class*="bg-indigo-50"],
+    html.dark [class*="bg-indigo-100"],
+    html.dark [class*="bg-indigo-200"],
+    html.dark [class*="bg-violet-50"],
+    html.dark [class*="bg-violet-100"],
+    html.dark [class*="bg-violet-200"],
+    html.dark [class*="bg-cyan-50"],
+    html.dark [class*="bg-cyan-100"],
+    html.dark [class*="bg-cyan-200"],
+    html.dark [class*="bg-teal-50"],
+    html.dark [class*="bg-teal-100"],
+    html.dark [class*="bg-teal-200"],
+    html.dark [class*="bg-purple-50"],
+    html.dark [class*="bg-purple-100"],
+    html.dark [class*="bg-purple-200"] {
+        background-color: var(--simpeg-primary-soft) !important;
+    }
+
+    html.dark [class*="border-indigo-"],
+    html.dark [class*="border-violet-"],
+    html.dark [class*="border-cyan-"],
+    html.dark [class*="border-teal-"],
+    html.dark [class*="border-purple-"],
+    html.dark [class*="border-slate-100/"],
+    html.dark [class*="border-slate-200/"],
+    html.dark [class*="border-slate-300/"],
+    html.dark [class*="border-black/"] {
+        border-color: var(--simpeg-border) !important;
+    }
+
+    html.dark :is(
+        [class*="hover:bg-indigo-"],
+        [class*="hover:bg-violet-"],
+        [class*="hover:bg-cyan-"],
+        [class*="hover:bg-teal-"],
+        [class*="hover:bg-purple-"]
+    ):hover {
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-primary) !important;
+    }
+
+    html.dark :is(
+        [class*="hover:border-indigo-"],
+        [class*="hover:border-violet-"],
+        [class*="hover:border-cyan-"],
+        [class*="hover:border-teal-"],
+        [class*="hover:border-purple-"]
+    ):hover {
+        border-color: var(--simpeg-primary) !important;
+    }
+
     html.dark .bg-slate-100 {
         background-color: #202b38 !important;
     }
@@ -138,6 +216,10 @@
     }
 
     html.dark .hover\:bg-slate-50:hover {
+        background-color: #263244 !important;
+    }
+
+    html.dark [class*="hover:bg-slate-50/"]:hover {
         background-color: #263244 !important;
     }
 

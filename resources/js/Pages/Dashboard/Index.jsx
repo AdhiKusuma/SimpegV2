@@ -14,9 +14,9 @@ import {
 } from 'lucide-react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import SelectCombobox from '../../Components/SelectCombobox';
-import { buttonVariants } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { NumberTicker } from '../../components/ui/number-ticker';
+import { buttonVariants } from '../../Components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../Components/ui/card';
+import { NumberTicker } from '../../Components/ui/number-ticker';
 
 const DashboardCharts = lazy(() => import('../../Components/DashboardCharts').then(({ DashboardCharts: Component }) => ({ default: Component })));
 

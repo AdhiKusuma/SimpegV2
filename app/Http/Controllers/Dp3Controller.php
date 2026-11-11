@@ -54,9 +54,7 @@ class Dp3Controller extends Controller
                 $like = "%{$search}%";
                 $builder->where(function (QueryBuilder $scope) use ($like): void {
                     $scope->where('pegawai.nama', 'like', $like)
-                        ->orWhere('dp3.id_peg', 'like', $like)
-                        ->orWhere('dp3.pejabat_penilai', 'like', $like)
-                        ->orWhere('dp3.atasan_pejabat_penilai', 'like', $like);
+                        ->orWhere('dp3.id_peg', 'like', $like);
                 });
             });
 

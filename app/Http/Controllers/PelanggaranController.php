@@ -7,13 +7,16 @@ use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbRecycleBin;
 use App\Services\XlsxExportService;
+use App\Services\XlsxImportService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -34,6 +37,18 @@ class PelanggaranController extends Controller
     private const OFFICIAL_POSITIONS = [
         'Direktur Operasional',
         'Kepala Divisi SDM dan Umum',
+    ];
+
+    private const IMPORT_FIELDS = [
+        'id_peg', 'hukuman', 'keterangan', 'tgl_sk', 'no_sk', 'pejabat_sk',
+        'jabatan_sk', 'pejabat_pulih', 'jabatan_pulih', 'no_pulih', 'tgl_pulih',
+    ];
+
+    private const IMPORT_COLUMNS = [
+        'ID Pegawai', 'Jenis Sanksi', 'Keterangan', 'Tanggal SK (dd-mm-yyyy)',
+        'Nomor SK', 'Pejabat SK', 'Jabatan SK', 'Pejabat Pemulihan (opsional)',
+        'Jabatan Pemulihan (opsional)', 'Nomor Surat Pemulihan (opsional)',
+        'Tanggal Pemulihan (dd-mm-yyyy, opsional)',
     ];
 
     public function index(Request $request): Response
@@ -100,6 +115,324 @@ class PelanggaranController extends Controller
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    public function importForm(Request $request): Response
+    {
+        $this->ensureCanManage($request);
+
+        return Inertia::render('Imports/XlsxImport', [
+            'title' => 'Import Data Pelanggaran',
+            'backUrl' => '/pelanggaran',
+            'previewUrl' => '/pelanggaran/import/preview',
+            'storeUrl' => '/pelanggaran/import',
+            'templateUrl' => '/pelanggaran/import/template',
+            'columns' => self::IMPORT_COLUMNS,
+            'preview' => null,
+        ]);
+    }
+
+    public function importTemplate(Request $request, XlsxExportService $xlsxExport): StreamedResponse
+    {
+        $this->ensureCanManage($request);
+
+        $employeeIds = TbPegawai::query()
+            ->orderBy('id_peg')
+            ->pluck('id_peg')
+            ->map(fn ($id): string => (string) $id)
+            ->values()
+            ->all();
+
+        $content = $xlsxExport->makeTemplate(
+            self::IMPORT_COLUMNS,
+            'Pelanggaran',
+            [[
+                '102-001', 'Surat Peringatan I', 'Contoh pelanggaran untuk dihapus sebelum import',
+                '10-02-2026', 'SK/CONTOH/2026', 'Nama pejabat', 'Direktur Operasional',
+                '', '', '', '',
+            ]],
+            [
+                'id_pegawai' => ['title' => 'ID Pegawai', 'values' => $employeeIds],
+                'jenis_sanksi' => ['title' => 'Jenis Sanksi', 'values' => self::TYPES],
+            ],
+            [
+                ['column' => 'A', 'list' => 'id_pegawai', 'prompt' => 'Pilih ID pegawai yang tersedia.'],
+                ['column' => 'B', 'list' => 'jenis_sanksi', 'prompt' => 'Pilih jenis sanksi dari daftar.'],
+            ],
+        );
+
+        return response()->streamDownload(static function () use ($content): void {
+            echo $content;
+        }, 'Template_Import_Pelanggaran.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function previewImport(Request $request, XlsxImportService $xlsxImport): JsonResponse
+    {
+        $this->ensureCanManage($request);
+        $request->validate([
+            'file_excel' => ['required', 'file', 'mimes:xlsx', 'max:5120'],
+        ], [
+            'file_excel.required' => 'Pilih file XLSX terlebih dahulu.',
+            'file_excel.mimes' => 'File import harus berformat XLSX.',
+            'file_excel.max' => 'Ukuran file import maksimal 5 MB.',
+        ]);
+
+        $rows = $xlsxImport->rows((string) $request->file('file_excel')->getRealPath());
+        $header = array_shift($rows) ?: [];
+        $header = $this->trimImportRow($header);
+        $expectedHeader = array_map(
+            fn (string $column): string => $xlsxImport->normalizeHeader($column),
+            self::IMPORT_COLUMNS,
+        );
+        $actualHeader = array_map(
+            fn (mixed $column): string => $xlsxImport->normalizeHeader($column),
+            $header,
+        );
+
+        if ($actualHeader !== $expectedHeader) {
+            throw ValidationException::withMessages([
+                'file_excel' => 'Kolom template tidak sesuai. Unduh dan gunakan template import pelanggaran terbaru.',
+            ]);
+        }
+
+        $employeeIds = $this->importEmployeeIds();
+        $preparedRows = [];
+        $seen = [];
+
+        foreach ($rows as $index => $row) {
+            $row = array_pad(array_slice($row, 0, count(self::IMPORT_FIELDS)), count(self::IMPORT_FIELDS), '');
+            if ($this->isBlankImportRow($row)) {
+                continue;
+            }
+
+            $prepared = $this->prepareImportRow($row, $index + 2, $employeeIds, $xlsxImport);
+            $key = $this->importDuplicateKey($prepared['data']);
+
+            if ($key !== '::' && isset($seen[$key])) {
+                $prepared['errors'][] = 'Data duplikat dengan baris '.$seen[$key].' pada file import.';
+            } elseif ($key !== '::') {
+                $seen[$key] = $prepared['row_number'];
+            }
+
+            if ($prepared['errors'] === [] && $this->existingPenalty($prepared['data'])) {
+                $prepared['errors'][] = 'Data pelanggaran dengan ID pegawai, nomor SK, dan tanggal SK tersebut sudah ada.';
+            }
+
+            $prepared['status'] = $prepared['errors'] === [] ? 'Data baru' : 'Perlu diperiksa';
+            $preparedRows[] = $prepared;
+        }
+
+        if ($preparedRows === []) {
+            throw ValidationException::withMessages(['file_excel' => 'Tidak ada baris data yang dapat diimport.']);
+        }
+
+        $invalidCount = count(array_filter($preparedRows, fn (array $row): bool => $row['errors'] !== []));
+
+        return response()->json([
+            'rows' => $preparedRows,
+            'preview' => array_slice($preparedRows, 0, 25),
+            'total' => count($preparedRows),
+            'invalid_count' => $invalidCount,
+            'columns' => self::IMPORT_COLUMNS,
+        ]);
+    }
+
+    public function storeImport(Request $request, XlsxImportService $xlsxImport): RedirectResponse
+    {
+        $this->ensureCanManage($request);
+        $validated = $request->validate([
+            'data_rows' => ['required', 'string', 'max:5120'],
+        ]);
+        $rows = json_decode($validated['data_rows'], true);
+
+        if (! is_array($rows) || $rows === []) {
+            throw ValidationException::withMessages(['data_rows' => 'Preview import tidak ditemukan. Periksa file kembali.']);
+        }
+
+        $employeeIds = $this->importEmployeeIds();
+        $validRows = [];
+        $errors = [];
+        $seen = [];
+
+        foreach ($rows as $index => $row) {
+            $payload = is_array($row) && is_array($row['data'] ?? null) ? $row['data'] : [];
+            $rawValues = array_map(fn (string $field): mixed => $payload[$field] ?? '', self::IMPORT_FIELDS);
+            $prepared = $this->prepareImportRow($rawValues, (int) ($row['row_number'] ?? $index + 2), $employeeIds, $xlsxImport);
+            $key = $this->importDuplicateKey($prepared['data']);
+
+            if ($key !== '::' && isset($seen[$key])) {
+                $prepared['errors'][] = 'Data duplikat dengan baris '.$seen[$key].' pada file import.';
+            } elseif ($key !== '::') {
+                $seen[$key] = $prepared['row_number'];
+            }
+
+            if ($prepared['errors'] === [] && $this->existingPenalty($prepared['data'])) {
+                $prepared['errors'][] = 'Data pelanggaran dengan ID pegawai, nomor SK, dan tanggal SK tersebut sudah ada.';
+            }
+
+            if ($prepared['errors'] !== []) {
+                $errors[] = 'Baris '.$prepared['row_number'].': '.implode('; ', $prepared['errors']);
+                continue;
+            }
+
+            $validRows[] = $prepared['data'];
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages([
+                'data_rows' => 'Import dibatalkan karena ada data yang berubah atau tidak valid. '.implode(' ', $errors),
+            ]);
+        }
+
+        DB::transaction(function () use ($validRows): void {
+            $ids = array_values(array_unique(array_filter(array_map(
+                static fn (array $row): string => (string) $row['id_peg'],
+                $validRows,
+            ))));
+            TbPegawai::query()->whereIn('id_peg', $ids)->lockForUpdate()->get(['id_peg']);
+
+            foreach ($validRows as $data) {
+                if ($this->existingPenalty($data)) {
+                    throw ValidationException::withMessages([
+                        'data_rows' => 'Import dibatalkan karena ada data pelanggaran yang sudah tersimpan.',
+                    ]);
+                }
+
+                TbHukuman::query()->create([
+                    ...$data,
+                    'dokumen' => '',
+                    'date_reg' => now()->toDateString(),
+                ]);
+            }
+        });
+
+        return to_route('pelanggaran.index')->with('success', count($validRows).' data pelanggaran berhasil diimport.');
+    }
+
+    private function importEmployeeIds(): array
+    {
+        return TbPegawai::query()
+            ->pluck('id_peg')
+            ->mapWithKeys(fn ($id): array => [(string) $id => true])
+            ->all();
+    }
+
+    private function prepareImportRow(
+        array $values,
+        int $rowNumber,
+        array $employeeIds,
+        XlsxImportService $xlsxImport,
+    ): array {
+        $values = array_map(static fn (mixed $value): string => trim((string) $value), $values);
+        $data = array_combine(self::IMPORT_FIELDS, array_pad($values, count(self::IMPORT_FIELDS), '')) ?: [];
+        $errors = [];
+        $rawTanggalSk = trim((string) ($data['tgl_sk'] ?? ''));
+
+        foreach (['tgl_sk', 'tgl_pulih'] as $dateField) {
+            $rawDate = (string) ($data[$dateField] ?? '');
+
+            if ($rawDate === '' || $rawDate === '-') {
+                $data[$dateField] = null;
+                continue;
+            }
+
+            $parsedDate = $xlsxImport->date($rawDate);
+            if ($parsedDate === null) {
+                $label = $dateField === 'tgl_sk' ? 'Tanggal SK' : 'Tanggal pemulihan';
+                $errors[] = $label.' harus berformat dd-mm-yyyy.';
+                $data[$dateField] = null;
+            } else {
+                $data[$dateField] = $parsedDate;
+            }
+        }
+
+        $idPeg = (string) ($data['id_peg'] ?? '');
+        if ($idPeg === '') {
+            $errors[] = 'ID Pegawai wajib diisi.';
+        } elseif (mb_strlen($idPeg) > 12) {
+            $errors[] = 'ID Pegawai maksimal 12 karakter.';
+        } elseif (! isset($employeeIds[$idPeg])) {
+            $errors[] = 'ID Pegawai tidak ditemukan.';
+        }
+
+        $hukuman = (string) ($data['hukuman'] ?? '');
+        if ($hukuman === '') {
+            $errors[] = 'Jenis sanksi wajib diisi.';
+        } elseif (! in_array($hukuman, self::TYPES, true)) {
+            $errors[] = 'Jenis sanksi tidak tersedia pada daftar pilihan.';
+        }
+
+        foreach ([
+            'no_sk' => ['label' => 'Nomor SK', 'required' => true, 'max' => 32],
+            'pejabat_sk' => ['label' => 'Pejabat SK', 'required' => true, 'max' => 64],
+            'jabatan_sk' => ['label' => 'Jabatan SK', 'required' => true, 'max' => 64],
+            'pejabat_pulih' => ['label' => 'Pejabat pemulihan', 'required' => false, 'max' => 64],
+            'jabatan_pulih' => ['label' => 'Jabatan pemulihan', 'required' => false, 'max' => 64],
+            'no_pulih' => ['label' => 'Nomor surat pemulihan', 'required' => false, 'max' => 32],
+        ] as $field => $rule) {
+            $value = trim((string) ($data[$field] ?? ''));
+            $data[$field] = $value === '' ? null : $value;
+
+            if ($rule['required'] && $value === '') {
+                $errors[] = $rule['label'].' wajib diisi.';
+            } elseif ($value !== '' && mb_strlen($value) > $rule['max']) {
+                $errors[] = $rule['label'].' maksimal '.$rule['max'].' karakter.';
+            }
+        }
+
+        if (($data['tgl_sk'] ?? null) === null && $rawTanggalSk === '') {
+            $errors[] = 'Tanggal SK wajib diisi.';
+        }
+
+        return [
+            'row_number' => $rowNumber,
+            'status' => $errors === [] ? 'Data baru' : 'Perlu diperiksa',
+            'errors' => array_values(array_unique($errors)),
+            'values' => $values,
+            'data' => $data,
+        ];
+    }
+
+    private function trimImportRow(array $row): array
+    {
+        while ($row !== [] && trim((string) end($row)) === '') {
+            array_pop($row);
+        }
+
+        if (isset($row[0])) {
+            $row[0] = preg_replace('/^\xEF\xBB\xBF/u', '', (string) $row[0]) ?: (string) $row[0];
+        }
+
+        return array_values($row);
+    }
+
+    private function isBlankImportRow(array $row): bool
+    {
+        return count(array_filter($row, static fn (mixed $value): bool => trim((string) $value) !== '')) === 0;
+    }
+
+    private function importDuplicateKey(array $data): string
+    {
+        $idPeg = trim((string) ($data['id_peg'] ?? ''));
+        $noSk = trim((string) ($data['no_sk'] ?? ''));
+        $tglSk = trim((string) ($data['tgl_sk'] ?? ''));
+
+        return $idPeg.'::'.$noSk.'::'.$tglSk;
+    }
+
+    private function existingPenalty(array $data): bool
+    {
+        if (($data['id_peg'] ?? '') === '' || ($data['no_sk'] ?? '') === '' || ($data['tgl_sk'] ?? '') === null) {
+            return false;
+        }
+
+        return TbHukuman::query()
+            ->where('id_peg', $data['id_peg'])
+            ->where('no_sk', $data['no_sk'])
+            ->whereDate('tgl_sk', $data['tgl_sk'])
+            ->exists();
     }
 
     private function basePenaltyQuery(Request $request): Builder

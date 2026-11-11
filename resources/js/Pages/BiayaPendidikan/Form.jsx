@@ -40,7 +40,7 @@ export default function BiayaPendidikanForm({ mode, record, categories, parties 
         <LegacyPageShell title={`${isEdit ? 'Edit' : 'Tambah'} Kegiatan Diklat`}>
             <Head title={`${isEdit ? 'Edit' : 'Tambah'} Kegiatan Diklat`} />
             <div className="mx-auto max-w-4xl">
-                <div className="mb-6"><Link href="/biaya-pendidikan" className="text-sm font-bold text-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Kembali ke daftar kegiatan</Link><p className="mt-4 mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Pengembangan Pegawai</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{isEdit ? 'Edit' : 'Tambah'} kegiatan diklat</h1><p className="mt-2 text-slate-500">Isi kolom sesuai struktur tabel `tb_biaya_pendidikan` yang sudah digunakan SIMPEG.</p></div>
+                <div className="mb-6"><Link href="/biaya-pendidikan" className="text-sm font-bold text-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Kembali ke daftar kegiatan</Link><p className="mt-4 mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Pengembangan Pegawai</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{isEdit ? 'Edit' : 'Tambah'} kegiatan diklat</h1><p className="mt-2 text-slate-500">Lengkapi informasi kegiatan diklat dan anggarannya.</p></div>
 
                 <form onSubmit={submit} className="simpeg-form-card">
                     <div className="grid gap-5 sm:grid-cols-2">

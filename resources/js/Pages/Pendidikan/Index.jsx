@@ -10,6 +10,12 @@ export default function PendidikanIndex({ items, years, offices, levels, filters
     const [deleteTarget, setDeleteTarget] = useState(null);
     const deleteForm = useForm({ reason: '' });
     const withUid = (url) => filters.uid ? `${url}${url.includes('?') ? '&' : '?'}uid=${encodeURIComponent(filters.uid)}` : url;
+    const withFilters = (url) => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
+        const query = params.toString();
+        return query ? `${url}?${query}` : url;
+    };
 
     function submit(event) {
         event.preventDefault();
@@ -24,7 +30,7 @@ export default function PendidikanIndex({ items, years, offices, levels, filters
     return (
         <LegacyPageShell title="Daftar Pendidikan">
             <Head title="Daftar Pendidikan" />
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-600">Riwayat Kepegawaian</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar pendidikan</h1><p className="mt-2 text-slate-500">Monitoring pendidikan formal dari tabel sistem yang sama.</p></div>{canManage && <Link href={withUid('/pendidikan/create')} className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">+ Tambah Data</Link>}</div>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-600">Riwayat Kepegawaian</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar pendidikan</h1><p className="mt-2 text-slate-500">Pantau riwayat pendidikan formal pegawai.</p></div><div className="flex flex-wrap gap-2"><a href={withFilters('/pendidikan/export')} className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">Export XLSX</a>{canManage && <Link href={withUid('/pendidikan/import')} className="rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-50">Import XLSX</Link>}{canManage && <Link href={withUid('/pendidikan/create')} className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">+ Tambah Data</Link>}</div></div>
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[150px_150px_220px_1fr_auto] lg:items-end">
                     <input type="hidden" name="uid" value={filters.uid} />

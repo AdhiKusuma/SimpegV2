@@ -1,24 +1,53 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Banknote, FileSpreadsheet, Search, Trash2 } from 'lucide-react';
+import { ArrowUpRight, Banknote, CalendarClock, FileSpreadsheet, Search, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import SelectCombobox from '../../Components/SelectCombobox';
 import { formatRupiah } from '../../lib/payrollMoney';
 
 function pageLabel(label) {
     return label === '&laquo; Previous' ? 'Sebelumnya' : label === 'Next &raquo;' ? 'Berikutnya' : label;
 }
 
-export default function Master({ masters, filters = {}, canEdit = false, canDelete = false, deleteRequiresApproval = false, canImport = false, scopeLabel, flash = {} }) {
+const monthOptions = [
+    { value: '1', label: 'Januari' },
+    { value: '2', label: 'Februari' },
+    { value: '3', label: 'Maret' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'Mei' },
+    { value: '6', label: 'Juni' },
+    { value: '7', label: 'Juli' },
+    { value: '8', label: 'Agustus' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'Oktober' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'Desember' },
+];
+
+export default function Master({ masters, filters = {}, canEdit = false, canDelete = false, deleteRequiresApproval = false, canImport = false, canTransfer = false, transferDefaults = {}, scopeLabel, flash = {} }) {
     const exportHref = `/payroll/master/export${filters.search ? `?${new URLSearchParams({ search: filters.search })}` : ''}`;
     const [selectedDelete, setSelectedDelete] = useState(null);
+    const [transferOpen, setTransferOpen] = useState(false);
     const deleteDialog = useRef(null);
+    const transferDialog = useRef(null);
     const deleteForm = useForm({ confirmation: '' });
+    const transferForm = useForm({
+        tahun: String(transferDefaults.tahun || new Date().getFullYear()),
+        bulan: String(transferDefaults.bulan || new Date().getMonth() + 1),
+        tgl_gajian: transferDefaults.tgl_gajian || new Date().toISOString().slice(0, 10),
+    });
     useEffect(() => {
         const dialog = deleteDialog.current;
         if (!dialog) return;
         if (selectedDelete && !dialog.open) dialog.showModal();
         if (!selectedDelete && dialog.open) dialog.close();
     }, [selectedDelete]);
+    useEffect(() => {
+        const dialog = transferDialog.current;
+        if (!dialog) return;
+        if (transferOpen && !dialog.open) dialog.showModal();
+        if (!transferOpen && dialog.open) dialog.close();
+    }, [transferOpen]);
 
     function search(event) {
         event.preventDefault();
@@ -50,6 +79,25 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
         });
     }
 
+    function openTransfer() {
+        transferForm.clearErrors();
+        setTransferOpen(true);
+    }
+
+    function closeTransfer() {
+        if (transferForm.processing) return;
+        setTransferOpen(false);
+        transferForm.clearErrors();
+    }
+
+    function submitTransfer(event) {
+        event.preventDefault();
+        transferForm.post('/payroll/edit/transfer', {
+            preserveScroll: true,
+            onSuccess: () => setTransferOpen(false),
+        });
+    }
+
     return (
         <LegacyPageShell title="Master Gaji">
             <Head title="Master Gaji" />
@@ -62,6 +110,7 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <a href={exportHref} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Export XLSX</a>
+                    {canTransfer && <button type="button" onClick={openTransfer} disabled={!Number(masters.total || 0)} className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"><ArrowUpRight aria-hidden="true" className="h-4 w-4" />Transfer ke Payroll</button>}
                     {canImport && <Link href="/payroll/import" className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Import XLSX</Link>}
                 </div>
             </div>
@@ -112,6 +161,63 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
                     {masters.links.map((link, index) => link.url ? <Link key={`${index}-${link.label}`} href={link.url} preserveScroll className={`simpeg-utility inline-flex min-h-9 items-center rounded-lg border px-3 text-sm ${link.active ? 'font-bold' : ''}`}>{pageLabel(link.label)}</Link> : <span key={`${index}-${link.label}`} className="simpeg-muted inline-flex min-h-9 items-center rounded-lg border px-3 text-sm opacity-60">{pageLabel(link.label)}</span>)}
                 </nav>}
             </section>
+
+            <dialog
+                ref={transferDialog}
+                onClose={() => setTransferOpen(false)}
+                aria-labelledby="transfer-payroll-title"
+                aria-describedby="transfer-payroll-description"
+                className="simpeg-card m-auto w-[min(42rem,calc(100%-2rem))] max-w-none rounded-2xl border p-0 shadow-2xl backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm"
+            >
+                <form onSubmit={submitTransfer} className="p-5 sm:p-6">
+                    <div className="mb-5 flex items-start gap-3">
+                        <span className="simpeg-card-soft inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border">
+                            <CalendarClock aria-hidden="true" className="h-5 w-5" />
+                        </span>
+                        <div>
+                            <h2 id="transfer-payroll-title" className="simpeg-text text-lg font-bold">Transfer Master Gaji ke Payroll</h2>
+                            <p id="transfer-payroll-description" className="simpeg-muted mt-1 text-sm leading-6">Gunakan data Master Gaji pada cakupan akun ini untuk membuat batch payroll dan menjadwalkan pengiriman slip.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block">
+                            <span className="simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide">Tahun</span>
+                            <input type="number" min="2000" max="2100" value={transferForm.data.tahun} onChange={(event) => transferForm.setData('tahun', event.target.value)} className="simpeg-input h-11 w-full rounded-xl border px-3 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]" />
+                            {transferForm.errors.tahun && <span className="mt-1 block text-xs text-red-600">{transferForm.errors.tahun}</span>}
+                        </label>
+                        <SelectCombobox
+                            id="transfer-bulan"
+                            label="Bulan"
+                            options={monthOptions}
+                            value={String(transferForm.data.bulan)}
+                            onChange={(value) => transferForm.setData('bulan', value)}
+                            optionValue={(option) => option.value}
+                            optionLabel={(option) => option.label}
+                            placeholder="Pilih bulan"
+                            error={transferForm.errors.bulan}
+                        />
+                        <label className="block sm:col-span-2">
+                            <span className="simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide">Tanggal gajian</span>
+                            <input type="date" required value={transferForm.data.tgl_gajian} onChange={(event) => transferForm.setData('tgl_gajian', event.target.value)} className="simpeg-input h-11 w-full rounded-xl border px-3 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]" />
+                            {transferForm.errors.tgl_gajian && <span className="mt-1 block text-xs text-red-600">{transferForm.errors.tgl_gajian}</span>}
+                        </label>
+                    </div>
+
+                    <div className="simpeg-card-soft mt-5 rounded-xl border px-3 py-3 text-sm">
+                        <p className="simpeg-text font-semibold">Yang akan diproses</p>
+                        <p className="simpeg-muted mt-1 leading-6">{Number(masters.total || 0).toLocaleString('id-ID')} Master Gaji. Batch sebelumnya tetap tersimpan sebagai riwayat; hanya batch baru yang menjadi payroll aktif.</p>
+                    </div>
+                    {transferForm.errors.transfer && <p role="alert" className="mt-3 text-sm font-medium text-red-700 dark:text-red-300">{transferForm.errors.transfer}</p>}
+
+                    <div className="mt-6 flex flex-col-reverse justify-end gap-2 sm:flex-row">
+                        <button type="button" onClick={closeTransfer} disabled={transferForm.processing} className="simpeg-utility inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)] disabled:opacity-60">Batal</button>
+                        <button type="submit" disabled={transferForm.processing} className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60">
+                            <ArrowUpRight aria-hidden="true" className="h-4 w-4" />{transferForm.processing ? 'Memproses…' : 'Transfer & Jadwalkan'}
+                        </button>
+                    </div>
+                </form>
+            </dialog>
 
             <dialog
                 ref={deleteDialog}

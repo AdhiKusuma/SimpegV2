@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbAngkat;
 use App\Models\Legacy\TbPegawai;
+use App\Models\Legacy\TbRecycleBin;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\RedirectResponse;
@@ -45,9 +46,7 @@ class PengangkatanController extends Controller
                 $builder->where(function (QueryBuilder $scope) use ($like): void {
                     $scope->where('pegawai.nama', 'like', $like)
                         ->orWhere('angkat.id_peg', 'like', $like)
-                        ->orWhere('angkat.id_peg_baru', 'like', $like)
-                        ->orWhere('angkat.jns_mutasi', 'like', $like)
-                        ->orWhere('angkat.no_mutasi', 'like', $like);
+                        ->orWhere('angkat.id_peg_baru', 'like', $like);
                 });
             });
 
@@ -141,6 +140,32 @@ class PengangkatanController extends Controller
         return to_route('pengangkatan.index')->with('success', 'TMT pengangkatan berhasil diperbarui.');
     }
 
+    public function destroy(Request $request, int $id): RedirectResponse
+    {
+        $this->ensureCanManage($request);
+        $validated = $request->validate(['reason' => ['required', 'string', 'max:1000']]);
+        $document = null;
+
+        DB::transaction(function () use ($request, $id, $validated, &$document): void {
+            $record = TbAngkat::query()->lockForUpdate()->findOrFail($id);
+            $document = $record->sk_mutasi;
+
+            TbRecycleBin::query()->create([
+                'tabel_by' => 'tb_angkat',
+                'data_json' => json_encode($record->getAttributes(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                'alasan' => $validated['reason'],
+                'created_by' => $request->session()->get('nama_user', 'Admin'),
+                'created' => now(),
+            ]);
+
+            $record->delete();
+        });
+
+        $this->deleteDocument($document);
+
+        return to_route('pengangkatan.index')->with('success', 'Data pengangkatan dipindahkan ke Recycle Bin.');
+    }
+
     public function document(Request $request, int $id): BinaryFileResponse
     {
         $this->ensureStaffAccess($request);
@@ -164,14 +189,29 @@ class PengangkatanController extends Controller
 
     private function validatedData(Request $request): array
     {
-        return $request->validate([
+        // Keep the current form contract (`id_peg`) while accepting the
+        // legacy payload name when an older client still sends it.
+        if (! $request->has('id_peg') && $request->has('id_peg_baru')) {
+            $request->merge(['id_peg' => $request->input('id_peg_baru')]);
+        }
+
+        $rules = [
             'id_peg' => ['required', 'string', 'max:12', Rule::exists('tb_pegawai', 'id_peg')],
             'jns_mutasi' => ['required', Rule::in(self::TYPES)],
             'tgl_mutasi' => ['required', 'date'],
             'tmt' => ['required', 'date'],
             'no_mutasi' => ['required', 'string', 'max:50'],
             'sk_mutasi' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
-        ]);
+        ];
+
+        // If the legacy field is present, validate it too and require it to
+        // identify the same employee. Requests from the current UI do not
+        // include this field, so their validation flow remains unchanged.
+        if ($request->has('id_peg_baru')) {
+            $rules['id_peg_baru'] = ['required', 'string', 'max:12', Rule::exists('tb_pegawai', 'id_peg'), 'same:id_peg'];
+        }
+
+        return $request->validate($rules);
     }
 
     private function employeesForCreate(): array
@@ -215,9 +255,13 @@ class PengangkatanController extends Controller
 
     private function deleteDocument(?string $filename): void
     {
-        if ($filename) {
-            Storage::disk('public')->delete('sk_angkat/'.basename($filename));
+        if (! $filename) {
+            return;
         }
+
+        $disk = Storage::disk('public');
+        $safeFilename = basename($filename);
+        $disk->delete(['sk_angkat/'.$safeFilename, 'sk_mutasi/'.$safeFilename]);
     }
 
     private function documentExists(string $filename): bool
