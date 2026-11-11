@@ -102,3 +102,15 @@ html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger:hover .simpeg-sidebar-gr
     opacity: 1 !important;
     filter: none !important;
 }
+
+/* Lucide icons render their visible line through SVG stroke; force that
+ * stroke as well so a later icon rule cannot make the icon disappear. */
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link:hover svg,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger:hover svg,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link:hover svg * ,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger:hover svg * {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+    opacity: 1 !important;
+}
