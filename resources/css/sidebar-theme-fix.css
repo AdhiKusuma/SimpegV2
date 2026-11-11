@@ -69,3 +69,36 @@ html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover
 html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover .simpeg-nav-active-icon {
     color: #171717 !important;
 }
+
+/* Dark mode: hover tetap oranye, tetapi teks dan ikon harus putih agar terbaca. */
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link:not(.simpeg-nav-active):hover,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-link:hover {
+    background: #ffb81c !important;
+    background-color: #ffb81c !important;
+    background-image: none !important;
+    border-color: #ffb81c !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    filter: none !important;
+    box-shadow: none !important;
+}
+
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover .simpeg-sidebar-nav-label,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover .simpeg-nav-icon,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover .simpeg-nav-active-icon,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link:not(.simpeg-nav-active):hover .simpeg-sidebar-nav-label,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link:not(.simpeg-nav-active):hover .simpeg-nav-icon,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link:not(.simpeg-nav-active):hover .simpeg-nav-active-icon,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover .simpeg-sidebar-group-label,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover .simpeg-nav-icon,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover .simpeg-nav-group-active-icon,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-link:hover .simpeg-sidebar-group-label,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-link:hover .simpeg-nav-icon,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-link:hover .simpeg-nav-group-active-icon,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger:hover .simpeg-sidebar-group-chevron {
+    color: #ffffff !important;
+    opacity: 1 !important;
+    filter: none !important;
+}
