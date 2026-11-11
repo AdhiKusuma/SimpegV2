@@ -5,8 +5,8 @@ export const THEME_STORAGE_KEY = 'simpeg-theme';
 
 export const THEME_OPTIONS = [
     { value: 'light', label: 'Terang', swatches: ['#ffffff', '#d7dde5'] },
-    { value: 'dark', label: 'Gelap', swatches: ['#131822', '#687587'] },
-    { value: 'corporate', label: 'Korporat', swatches: ['#263285', '#eb983c'] },
+    { value: 'dark', label: 'Gelap', swatches: ['#111827', '#6366f1'] },
+    { value: 'corporate', label: 'Korporat', swatches: ['#ffffff', '#4f46e5'] },
 ];
 
 const THEME_VALUES = new Set(THEME_OPTIONS.map((option) => option.value));

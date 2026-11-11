@@ -1,7 +1,7 @@
 import { cn } from '../../lib/utils';
 
 const variants = {
-    default: 'border-[#131822]/10 bg-[#F7F5F0] text-[#131822]/75',
+    default: 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200',
     success: 'border-emerald-200/50 bg-emerald-100/80 text-emerald-900 dark:border-emerald-300/30 dark:bg-emerald-900/45 dark:text-emerald-200',
     warning: 'border-amber-200/50 bg-amber-100/80 text-amber-900 dark:border-amber-300/30 dark:bg-amber-900/45 dark:text-amber-200',
     danger: 'border-rose-200/50 bg-rose-100/80 text-rose-900 dark:border-rose-300/30 dark:bg-rose-900/45 dark:text-rose-200',

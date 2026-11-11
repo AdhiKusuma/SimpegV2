@@ -1,0 +1,141 @@
+/*
+ * Shared visual migration layer.
+ *
+ * Existing pages keep their class names, selectors, forms, and interactions.
+ * These rules only normalize the presentation to the Laravel starter-kit
+ * visual language: neutral surfaces, indigo actions, compact radii, and
+ * predictable focus states.
+ */
+@layer utilities {
+    .simpeg-primary {
+        background-color: var(--simpeg-primary) !important;
+        color: var(--simpeg-primary-foreground) !important;
+        border-color: var(--simpeg-primary) !important;
+    }
+
+    .simpeg-primary:hover:not(:disabled) {
+        background-color: var(--simpeg-primary-hover) !important;
+        border-color: var(--simpeg-primary-hover) !important;
+    }
+
+    .simpeg-utility,
+    .simpeg-theme-toggle,
+    .simpeg-search-trigger {
+        border-radius: 0.5rem !important;
+        box-shadow: 0 1px 2px rgb(15 23 42 / 0.05) !important;
+    }
+
+    .simpeg-card,
+    .simpeg-card-soft,
+    .simpeg-form-shell,
+    .simpeg-employee-form-card {
+        border-radius: 0.75rem !important;
+    }
+
+    .simpeg-input,
+    .simpeg-combobox-trigger,
+    .simpeg-combobox-menu,
+    .simpeg-combobox-option {
+        border-radius: 0.5rem;
+    }
+
+    /* Existing screens still contain a few legacy arbitrary color classes. */
+    :is([class~="text-[#131822]"], [class~="text-[#F7F5F0]"]) {
+        color: var(--simpeg-text) !important;
+    }
+
+    :is([class~="bg-[#131822]"], [class~="bg-slate-900"]) {
+        background-color: var(--simpeg-primary) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    [class~="bg-[#F7F5F0]"] {
+        background-color: var(--simpeg-card) !important;
+    }
+
+    [class~="text-[#131822]/45"],
+    [class~="text-[#131822]/40"],
+    [class~="text-[#131822]/55"],
+    [class~="text-[#131822]/60"],
+    [class*="text-[#131822]/"] {
+        color: var(--simpeg-subtle) !important;
+    }
+
+    [class~="text-[#FAD873]"],
+    [class~="text-[#F5CE59]"],
+    [class~="text-[#E7B83F]"] {
+        color: var(--simpeg-primary) !important;
+    }
+
+    [class~="bg-[#FAD873]"],
+    [class~="bg-[#F5CE59]"] {
+        background-color: var(--simpeg-primary) !important;
+    }
+
+    [class*="border-[#131822]"],
+    [class*="border-[#F5CE59]"],
+    [class*="border-[#FAD873]"] {
+        border-color: var(--simpeg-primary-border) !important;
+    }
+
+    :is([class*="hover:bg-[#FAD873]"], [class*="hover:bg-[#F5CE59]"]):hover {
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-hover-ink) !important;
+    }
+
+    :is([class*="focus:ring-[#F5CE59]"], [class*="focus-visible:ring-[#FAD873]"]):is(:focus, :focus-visible) {
+        --tw-ring-color: var(--simpeg-focus-ring) !important;
+    }
+
+    :is([class*="focus:border-[#F5CE59]"], [class*="focus:border-[#FAD873]"]):focus {
+        border-color: var(--simpeg-primary) !important;
+    }
+
+    /* Compact radii prevent mixed oversized controls across legacy pages. */
+    [class~="rounded-2xl"] {
+        border-radius: 0.75rem !important;
+    }
+
+    [class~="rounded-xl"] {
+        border-radius: 0.5rem !important;
+    }
+
+    html[data-theme="corporate"] .simpeg-nav-link,
+    html[data-theme="corporate"] .simpeg-nav-group-link,
+    html[data-theme="corporate"] .simpeg-nav-icon {
+        color: var(--simpeg-muted) !important;
+    }
+
+    html[data-theme="corporate"] .simpeg-nav-link:hover,
+    html[data-theme="corporate"] .simpeg-nav-group-link:hover,
+    html[data-theme="corporate"] .simpeg-nav-group-active {
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-hover-ink) !important;
+        box-shadow: inset 0 0 0 1px var(--simpeg-primary-border) !important;
+    }
+
+    html[data-theme="corporate"] .simpeg-nav-active,
+    html[data-theme="corporate"] .simpeg-nav-active:hover {
+        background-color: var(--simpeg-primary) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    html[data-theme="corporate"] .simpeg-header,
+    html[data-theme="corporate"] .simpeg-header .simpeg-utility,
+    html[data-theme="corporate"] .simpeg-header .simpeg-theme-toggle,
+    html[data-theme="corporate"] .simpeg-header .simpeg-search-trigger {
+        background-color: var(--simpeg-header) !important;
+        border-color: var(--simpeg-border) !important;
+        color: var(--simpeg-text) !important;
+    }
+
+    html[data-theme="corporate"] .simpeg-header .simpeg-text,
+    html[data-theme="corporate"] .simpeg-header .simpeg-live-datetime,
+    html[data-theme="corporate"] .simpeg-header .simpeg-search-trigger .simpeg-muted {
+        color: var(--simpeg-text) !important;
+    }
+
+    html[data-theme="corporate"] .simpeg-header .simpeg-muted {
+        color: var(--simpeg-muted) !important;
+    }
+}

@@ -15,7 +15,7 @@
     }
 
     html.dark [class*="bg-slate-100/"] {
-        background-color: #202b38 !important;
+        background-color: var(--simpeg-card-soft) !important;
     }
 
     html.dark [class*="bg-blue-50/"],
@@ -88,11 +88,11 @@
     }
 
     html.dark .bg-slate-100 {
-        background-color: #202b38 !important;
+        background-color: var(--simpeg-card) !important;
     }
 
     html.dark .bg-slate-200 {
-        background-color: #2a3746 !important;
+        background-color: #374151 !important;
     }
 
     html.dark .text-slate-900,
@@ -216,11 +216,11 @@
     }
 
     html.dark .hover\:bg-slate-50:hover {
-        background-color: #263244 !important;
+        background-color: var(--simpeg-primary-soft) !important;
     }
 
     html.dark [class*="hover:bg-slate-50/"]:hover {
-        background-color: #263244 !important;
+        background-color: var(--simpeg-primary-soft) !important;
     }
 
     html.dark [class~="hover:bg-blue-50"]:hover {
@@ -229,8 +229,8 @@
     }
 
     html.dark [class~="hover:bg-white"]:hover {
-        background-color: #263244 !important;
-        color: #f7f5f0 !important;
+        background-color: var(--simpeg-card) !important;
+        color: var(--simpeg-text) !important;
     }
 
     html.dark [class~="hover:bg-emerald-50"]:hover {

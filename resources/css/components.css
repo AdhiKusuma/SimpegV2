@@ -9,7 +9,7 @@
     .simpeg-card-spotlight {
         position: relative;
         overflow: hidden;
-        border-radius: 1.5rem;
+        border-radius: 0.75rem;
         isolation: isolate;
     }
 
@@ -17,7 +17,7 @@
         position: absolute;
         inset: 0;
         z-index: -1;
-        background: radial-gradient(18rem circle at 0% 0%, rgb(250 216 115 / 0.18), transparent 70%);
+        background: radial-gradient(18rem circle at 0% 0%, rgb(99 102 241 / 0.14), transparent 70%);
         content: '';
         opacity: 0;
         transition: opacity 180ms ease;
@@ -54,7 +54,7 @@
         inset: -1px;
         z-index: 1;
         border-radius: inherit;
-        background: conic-gradient(from 0deg, transparent 0deg, transparent 250deg, #f5ce59 300deg, transparent 340deg);
+        background: conic-gradient(from 0deg, transparent 0deg, transparent 250deg, var(--simpeg-primary) 300deg, transparent 340deg);
         pointer-events: none;
         mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
         mask-composite: exclude;
@@ -109,14 +109,14 @@
     }
 
     .simpeg-form-card :is(input:not([type='file']), select, textarea):focus {
-        border-color: var(--simpeg-hover-border) !important;
+        border-color: var(--simpeg-primary) !important;
         box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
     }
 
     .simpeg-employee-form-card {
         overflow: hidden;
         border: 1px solid var(--simpeg-border);
-        border-radius: 1rem;
+        border-radius: 0.75rem;
         background-color: var(--simpeg-card);
         box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
     }

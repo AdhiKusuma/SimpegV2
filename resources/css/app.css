@@ -6,6 +6,7 @@
 @import './pages.css';
 @import './theme-compat.css';
 @import './themes.css';
+@import './laravel-starter-overrides.css';
 
 @source '../js/**/*.jsx';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

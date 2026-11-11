@@ -1,7 +1,7 @@
 import { cn } from '../../lib/utils';
 
 export function Card({ className, ...props }) {
-    return <div className={cn('simpeg-card rounded-2xl border shadow-sm', className)} {...props} />;
+    return <div className={cn('simpeg-card rounded-xl border shadow-sm', className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }) {

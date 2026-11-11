@@ -1,21 +1,22 @@
 @layer utilities {
-/* Keeps sistem workflow pages on the SIMPEG palette during incremental UI migration. */
+    /* Compatibility layer: keep existing page classes while using the
+     * neutral/indigo palette used by Laravel's starter kit. */
     .text-slate-900,
     .text-slate-800 {
-        color: #131822 !important;
+        color: #111827 !important;
     }
 
     .text-slate-700,
     .text-slate-600 {
-        color: #323743 !important;
+        color: #374151 !important;
     }
 
     .text-slate-500 {
-        color: #5f6673 !important;
+        color: #6b7280 !important;
     }
 
     .text-slate-400 {
-        color: #7a8291 !important;
+        color: #9ca3af !important;
     }
 
     .bg-slate-50 {
@@ -31,15 +32,15 @@
     }
 
     .border-slate-100 {
-        border-color: rgb(19 24 34 / 0.08) !important;
+        border-color: #f3f4f6 !important;
     }
 
     .border-slate-200 {
-        border-color: rgb(19 24 34 / 0.14) !important;
+        border-color: #e5e7eb !important;
     }
 
     .border-slate-300 {
-        border-color: rgb(19 24 34 / 0.24) !important;
+        border-color: #d1d5db !important;
     }
 
     .simpeg-primary {

@@ -1,6 +1,6 @@
 @layer base {
     :where(a, button, input, select, textarea):focus-visible {
-        outline: 2px solid var(--color-simpeg-gold);
+        outline: 2px solid var(--simpeg-primary);
         outline-offset: 2px;
     }
 

@@ -266,89 +266,89 @@
 
     .simpeg-nav-link,
     .simpeg-nav-group-link {
-        color: #475569 !important;
+        color: var(--simpeg-muted) !important;
     }
 
     .simpeg-nav-link:hover,
     .simpeg-nav-group-link:hover {
-        background-color: #f8fafc !important;
-        color: #131822 !important;
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-hover-ink) !important;
     }
 
     .simpeg-nav-active {
-        background-color: #131822 !important;
-        color: #ffffff !important;
+        background-color: var(--simpeg-primary) !important;
+        color: var(--simpeg-primary-foreground) !important;
     }
 
     .simpeg-nav-active:hover {
-        background-color: #1e2634 !important;
-        color: #ffffff !important;
+        background-color: var(--simpeg-primary-hover) !important;
+        color: var(--simpeg-primary-foreground) !important;
     }
 
     .simpeg-nav-group-active {
-        background-color: #f1f5f9 !important;
-        color: #131822 !important;
-        box-shadow: inset 0 0 0 1px rgb(245 206 89 / 0.75);
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-hover-ink) !important;
+        box-shadow: inset 0 0 0 1px var(--simpeg-primary-border);
     }
 
     .simpeg-nav-icon {
-        color: #64748b !important;
+        color: var(--simpeg-subtle) !important;
     }
 
     .simpeg-nav-link:hover .simpeg-nav-icon,
     .simpeg-nav-group-link:hover .simpeg-nav-icon {
-        color: #131822 !important;
+        color: var(--simpeg-hover-ink) !important;
     }
 
     .simpeg-nav-active-icon {
-        color: #ffffff !important;
+        color: var(--simpeg-primary-foreground) !important;
     }
 
     .simpeg-nav-group-active-icon {
-        color: #131822 !important;
+        color: var(--simpeg-hover-ink) !important;
     }
 
     html.dark .simpeg-nav-link,
     html.dark .simpeg-nav-group-link {
-        color: #d1d9e3 !important;
+        color: var(--simpeg-muted) !important;
     }
 
     html.dark .simpeg-nav-link:hover,
     html.dark .simpeg-nav-group-link:hover {
-        background-color: #202b38 !important;
-        color: #f7f5f0 !important;
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-hover-ink) !important;
     }
 
     html.dark .simpeg-nav-active {
-        background-color: #f7f5f0 !important;
-        color: #131822 !important;
+        background-color: var(--simpeg-primary) !important;
+        color: var(--simpeg-primary-foreground) !important;
     }
 
     html.dark .simpeg-nav-active:hover {
-        background-color: #ffffff !important;
-        color: #131822 !important;
+        background-color: var(--simpeg-primary-hover) !important;
+        color: var(--simpeg-primary-foreground) !important;
     }
 
     html.dark .simpeg-nav-group-active {
-        background-color: #202b38 !important;
-        color: #f7f5f0 !important;
-        box-shadow: inset 0 0 0 1px rgb(250 216 115 / 0.45);
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-hover-ink) !important;
+        box-shadow: inset 0 0 0 1px var(--simpeg-primary-border);
     }
 
     html.dark .simpeg-nav-icon {
-        color: #aeb9c7 !important;
+        color: var(--simpeg-subtle) !important;
     }
 
     html.dark .simpeg-nav-link:hover .simpeg-nav-icon,
     html.dark .simpeg-nav-group-link:hover .simpeg-nav-icon {
-        color: #f7f5f0 !important;
+        color: var(--simpeg-hover-ink) !important;
     }
 
     html.dark .simpeg-nav-active-icon {
-        color: #131822 !important;
+        color: var(--simpeg-primary-foreground) !important;
     }
 
     html.dark .simpeg-nav-group-active-icon {
-        color: #f7f5f0 !important;
+        color: var(--simpeg-hover-ink) !important;
     }
 }
