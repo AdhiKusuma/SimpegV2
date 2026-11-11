@@ -1298,3 +1298,56 @@ html[data-theme="corporate"] .simpeg-sidebar .simpeg-nav-group-active *,
 html.dark .simpeg-sidebar .simpeg-nav-group-active * {
     color: #ffb81c !important;
 }
+
+/* MIGRASI UI: samakan geometri semua form tambah/edit dengan form payroll.
+ * Hanya mengubah presentasi; field, route, validasi, event, dan submit tetap. */
+form.simpeg-form-card {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none !important;
+    overflow: hidden;
+    padding: 0 !important;
+    border: 1px solid var(--simpeg-border) !important;
+    border-radius: 0.875rem !important;
+    background: var(--simpeg-card) !important;
+    box-shadow: none !important;
+}
+
+form.simpeg-form-card > :is(section, div:not(.flex)) {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 !important;
+    padding: 1.5rem !important;
+}
+
+form.simpeg-form-card > :is(section, div:not(.flex)) + :is(section, div:not(.flex)) {
+    border-top: 1px solid var(--simpeg-border) !important;
+}
+
+form.simpeg-form-card > div.flex.justify-end {
+    box-sizing: border-box;
+    margin: 0 !important;
+    border-top: 1px solid var(--simpeg-border) !important;
+    padding: 1.25rem 1.5rem !important;
+}
+
+form.simpeg-form-card > p {
+    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 0 1.5rem 1.5rem !important;
+}
+
+form.simpeg-form-card > :is(section, div:not(.flex)) > .grid {
+    gap: 1.25rem !important;
+}
+
+@media (max-width: 639px) {
+    form.simpeg-form-card > :is(section, div:not(.flex)),
+    form.simpeg-form-card > p {
+        padding: 1rem !important;
+    }
+
+    form.simpeg-form-card > div.flex.justify-end {
+        padding: 1rem !important;
+    }
+}
