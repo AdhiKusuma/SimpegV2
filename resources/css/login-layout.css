@@ -1806,21 +1806,22 @@ html.dark .simpeg-login-page .simpeg-login-clean-form {
 }
 
 .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar {
-    position: fixed;
-    inset: 1rem 1rem auto;
+    position: relative;
+    inset: auto;
     z-index: 20;
     min-height: 0;
     border: 0;
-    padding: 0;
-    pointer-events: none;
+    justify-content: center;
+    padding: 2rem 0 0;
 }
 
 .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand {
-    position: fixed;
-    top: clamp(2rem, 7vh, 4.5rem);
-    left: 50%;
+    position: relative;
     display: block;
-    transform: translateX(-50%);
+    top: auto;
+    left: auto;
+    margin-inline: auto;
+    transform: none;
     pointer-events: auto;
 }
 
@@ -1853,7 +1854,7 @@ html.dark .simpeg-login-page .simpeg-login-clean-form {
     width: 100%;
     flex-direction: column;
     gap: 2.25rem;
-    padding: clamp(13rem, 26vh, 17rem) 0 2rem;
+    padding: clamp(3rem, 8vh, 5rem) 0 2rem;
 }
 
 .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-clean-form {
@@ -1918,11 +1919,11 @@ html.dark .simpeg-login-page .simpeg-login-clean-form {
 
 @media (max-width: 767px) {
     .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar {
-        inset: 0.75rem 0.75rem auto;
+        padding: 1.5rem 0 0;
     }
 
     .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand {
-        top: 2rem;
+        top: auto;
     }
 
     .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand-mark {
@@ -1931,7 +1932,7 @@ html.dark .simpeg-login-page .simpeg-login-clean-form {
 
     .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-stage {
         gap: 2rem;
-        padding-top: 16rem;
+        padding-top: 2.5rem;
     }
 }
 
