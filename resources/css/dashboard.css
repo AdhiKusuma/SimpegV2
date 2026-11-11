@@ -86,4 +86,187 @@
         padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
 }
+
+/* Dashboard visual layer: keep data, routes, permissions, and interactions unchanged. */
+.simpeg-app-canvas:has(.simpeg-dashboard-shell),
+.simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-frame,
+.simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-content {
+    background: #ffffff !important;
+    color: #18181b;
+}
+
+html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell),
+html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-frame,
+html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-content {
+    background: #080808 !important;
+    color: #fafafa;
+}
+
+.simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-header {
+    background: #ffffff !important;
+    border-color: #e4e4e7 !important;
+    backdrop-filter: none;
+}
+
+html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-header {
+    background: #080808 !important;
+    border-color: #27272a !important;
+}
+
+.simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-sidebar {
+    background: #ffffff !important;
+    border-color: #e4e4e7 !important;
+}
+
+html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-sidebar {
+    background: #080808 !important;
+    border-color: #27272a !important;
+}
+
+.simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell {
+    max-width: 76rem;
+    margin-inline: auto;
+}
+
+.simpeg-dashboard-shell .simpeg-card,
+.simpeg-dashboard-shell .simpeg-card-soft {
+    border-radius: 0.75rem !important;
+    box-shadow: 0 1px 2px rgb(24 24 27 / 0.04);
+}
+
+.simpeg-dashboard-shell .simpeg-card {
+    background: #ffffff !important;
+    border-color: #e4e4e7 !important;
+}
+
+.simpeg-dashboard-shell .simpeg-card-soft {
+    background: #fafafa !important;
+    border-color: #e4e4e7 !important;
+}
+
+html.dark .simpeg-dashboard-shell .simpeg-card,
+html.dark .simpeg-dashboard-shell .simpeg-card-soft {
+    background: #101012 !important;
+    border-color: #27272a !important;
+    box-shadow: none;
+}
+
+html.dark .simpeg-dashboard-shell .simpeg-card-soft {
+    background: #18181b !important;
+}
+
+.simpeg-dashboard-shell .simpeg-dashboard-card-header,
+.simpeg-dashboard-shell .simpeg-dashboard-card-content,
+.simpeg-dashboard-shell .simpeg-border {
+    border-color: #e4e4e7 !important;
+}
+
+html.dark .simpeg-dashboard-shell .simpeg-dashboard-card-header,
+html.dark .simpeg-dashboard-shell .simpeg-dashboard-card-content,
+html.dark .simpeg-dashboard-shell .simpeg-border {
+    border-color: #27272a !important;
+}
+
+.simpeg-dashboard-shell .simpeg-primary {
+    background: var(--simpeg-primary) !important;
+    border-color: var(--simpeg-primary) !important;
+    color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-dashboard-shell .simpeg-primary:hover:not(:disabled) {
+    background: var(--simpeg-primary-hover) !important;
+    border-color: var(--simpeg-primary-hover) !important;
+}
+
+.simpeg-dashboard-shell .simpeg-dashboard-action,
+.simpeg-dashboard-shell .simpeg-dashboard-action:hover:not(:disabled),
+.simpeg-dashboard-shell .simpeg-dashboard-action:focus-visible {
+    background: var(--simpeg-primary) !important;
+    border-color: var(--simpeg-primary) !important;
+    color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-dashboard-shell .simpeg-dashboard-action:hover:not(:disabled),
+.simpeg-dashboard-shell .simpeg-dashboard-action:focus-visible {
+    background: var(--simpeg-primary-hover) !important;
+    border-color: var(--simpeg-primary-hover) !important;
+}
+
+.simpeg-dashboard-shell .simpeg-utility,
+.simpeg-dashboard-shell .simpeg-theme-toggle {
+    background: transparent !important;
+    border-color: #d4d4d8 !important;
+    color: #27272a !important;
+    box-shadow: none !important;
+}
+
+.simpeg-dashboard-shell .simpeg-utility:hover,
+.simpeg-dashboard-shell .simpeg-theme-toggle:hover {
+    background: #f4f4f5 !important;
+    border-color: #a1a1aa !important;
+}
+
+html.dark .simpeg-dashboard-shell .simpeg-utility,
+html.dark .simpeg-dashboard-shell .simpeg-theme-toggle {
+    border-color: #3f3f46 !important;
+    color: #f4f4f5 !important;
+}
+
+html.dark .simpeg-dashboard-shell .simpeg-utility:hover,
+html.dark .simpeg-dashboard-shell .simpeg-theme-toggle:hover {
+    background: #18181b !important;
+    border-color: #52525b !important;
+}
+
+.simpeg-dashboard-shell .simpeg-track {
+    background: #e4e4e7 !important;
+}
+
+html.dark .simpeg-dashboard-shell .simpeg-track {
+    background: #27272a !important;
+}
+
+.simpeg-dashboard-shell .simpeg-progress-fill {
+    background: var(--simpeg-primary) !important;
+}
+
+html.dark .simpeg-dashboard-shell [class~="bg-[#F7F5F0]/70"] {
+    background: #18181b !important;
+}
+
+/* Quiet metric cards and compact status badges, following the reference layout. */
+.simpeg-dashboard-shell .simpeg-dashboard-stat {
+    background: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
+    box-shadow: none !important;
+}
+
+.simpeg-dashboard-shell .simpeg-dashboard-stat:hover {
+    border-color: var(--simpeg-hover-border) !important;
+}
+
+.simpeg-dashboard-stat-value {
+    font-size: clamp(1.9rem, 2.8vw, 2.35rem);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.simpeg-dashboard-stat-link {
+    transition: color 140ms ease;
+}
+
+.simpeg-dashboard-stat:hover .simpeg-dashboard-stat-link {
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-dashboard-shell [data-slot="badge"] {
+    box-shadow: none !important;
+}
+
+html.dark .simpeg-dashboard-shell .simpeg-tenure-dialog {
+    background: #101012;
+    border-color: #27272a;
+    box-shadow: 0 24px 72px rgb(0 0 0 / 0.5);
+}
 }

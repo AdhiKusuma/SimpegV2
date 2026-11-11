@@ -15,21 +15,22 @@ import {
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import SelectCombobox from '../../Components/SelectCombobox';
 import { buttonVariants } from '../../Components/ui/button';
+import { Badge } from '../../Components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../Components/ui/card';
 import { NumberTicker } from '../../Components/ui/number-ticker';
 
 const DashboardCharts = lazy(() => import('../../Components/DashboardCharts').then(({ DashboardCharts: Component }) => ({ default: Component })));
 
 const statMeta = {
-    employees: { icon: UsersRound, accent: 'from-[#263285] to-[#eb983c]', iconClass: 'simpeg-text', kicker: 'Data aktif' },
-    inactive: { icon: Activity, accent: 'from-[#263285] to-[#eb983c]', iconClass: 'simpeg-text', kicker: 'Perubahan status' },
-    punishments: { icon: ShieldAlert, accent: 'from-[#263285] to-[#eb983c]', iconClass: 'simpeg-text', kicker: 'Catatan tahun berjalan' },
-    training: { icon: GraduationCap, accent: 'from-[#263285] to-[#eb983c]', iconClass: 'simpeg-text', kicker: 'Peserta tahun berjalan' },
+    employees: { icon: UsersRound, iconClass: 'simpeg-text', kicker: 'Data aktif', badge: 'success' },
+    inactive: { icon: Activity, iconClass: 'simpeg-text', kicker: 'Perubahan status', badge: 'warning' },
+    punishments: { icon: ShieldAlert, iconClass: 'simpeg-text', kicker: 'Catatan tahun berjalan', badge: 'danger' },
+    training: { icon: GraduationCap, iconClass: 'simpeg-text', kicker: 'Peserta tahun berjalan', badge: 'info' },
 };
 
 const tenureColors = {
-    primary: 'from-[#263285] to-[#eb983c]',
-    accent: 'from-[#eb983c] to-[#263285]',
+    primary: 'from-[var(--simpeg-primary)] to-[var(--simpeg-primary-hover)]',
+    accent: 'from-[var(--simpeg-primary-hover)] to-[var(--simpeg-primary)]',
 };
 
 function StatCard({ stat }) {
@@ -37,17 +38,21 @@ function StatCard({ stat }) {
     const Icon = meta.icon;
 
     return (
-        <Card className="group relative h-full min-w-0 border p-0 shadow-sm transition-colors hover:border-slate-300 dark:hover:border-slate-600">
-            <Link href={stat.href} className="block min-w-0 p-4 focus-visible:rounded-2xl sm:p-5">
+        <Card className="simpeg-dashboard-stat group relative h-full min-w-0 border p-0 transition-colors">
+            <Link href={stat.href} className="block min-w-0 p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-4">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100 sm:h-12 sm:w-12 sm:rounded-2xl">
-                        <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${meta.iconClass}`} strokeWidth={1.8} aria-hidden="true" />
-                    </span>
-                    <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-900 dark:group-hover:text-white sm:h-5 sm:w-5" strokeWidth={1.8} aria-hidden="true" />
+                    <p className="simpeg-muted min-w-0 break-words text-sm">{stat.label}</p>
+                    <Icon className={`h-5 w-5 shrink-0 ${meta.iconClass}`} strokeWidth={1.7} aria-hidden="true" />
                 </div>
-                <p className="simpeg-text mt-4 text-2xl font-medium sm:mt-5 sm:text-3xl"><NumberTicker value={stat.value} /></p>
-                <p className="simpeg-text mt-1 break-words text-xs font-medium leading-5 sm:mt-2 sm:text-sm">{stat.label}</p>
-                <p className="simpeg-muted mt-1 break-words text-[0.6875rem] leading-4 sm:text-xs">{meta.kicker}</p>
+                <p className="simpeg-dashboard-stat-value simpeg-text mt-5"><NumberTicker value={stat.value} /></p>
+                <div className="mt-3 flex min-h-6 items-center">
+                    <Badge variant={meta.badge}>{meta.kicker}</Badge>
+                </div>
+                <p className="simpeg-muted mt-4 break-words text-sm leading-5">Ringkasan pada tahun berjalan</p>
+                <span className="simpeg-dashboard-stat-link simpeg-muted mt-5 inline-flex items-center gap-2 text-sm">
+                    Buka ringkasan
+                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" strokeWidth={1.8} aria-hidden="true" />
+                </span>
             </Link>
         </Card>
     );
@@ -233,7 +238,7 @@ export default function Dashboard({ stats = [], tenure = [], year, unit, offices
             <div className="simpeg-dashboard-shell space-y-6">
                 <section className="flex flex-col gap-6 border-b simpeg-border pb-7 xl:flex-row xl:items-end xl:justify-between" aria-labelledby="dashboard-title">
                     <div className="min-w-0">
-                        <p className="mb-3 text-sm font-medium text-[#8A6820]">{dashboardLabel}</p>
+                        <p className="simpeg-text mb-3 text-sm font-medium">{dashboardLabel}</p>
                         <h1 id="dashboard-title" className="simpeg-text max-w-3xl text-3xl font-medium sm:text-4xl">Ringkasan kepegawaian</h1>
                         <p className="simpeg-muted mt-3 max-w-3xl text-sm leading-6 sm:text-base">Ringkasan data kepegawaian dari sistem SIMPEG untuk tahun {year}{selectedUnit ? ` pada wilayah ${selectedOffice?.nama || selectedUnit}` : ''}.</p>
                     </div>
@@ -253,11 +258,11 @@ export default function Dashboard({ stats = [], tenure = [], year, unit, offices
                             description={dashboardLocked ? 'Terkunci sesuai kantor pada akun kepala.' : undefined}
                             className="w-full sm:min-w-56"
                         />
-                        <Link href="/pegawai" className={buttonVariants({ variant: 'default' })}>
+                        <Link href="/pegawai" className={buttonVariants({ variant: 'default', className: 'simpeg-dashboard-action' })}>
                             <UsersRound className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                             Daftar pegawai
                         </Link>
-                        <Link href="/laporan/nominatif" className={buttonVariants({ variant: 'default' })}>
+                        <Link href="/laporan/nominatif" className={buttonVariants({ variant: 'default', className: 'simpeg-dashboard-action' })}>
                             <FileBarChart2 className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                             Laporan nominatif
                         </Link>
@@ -275,7 +280,7 @@ export default function Dashboard({ stats = [], tenure = [], year, unit, offices
                             <CardTitle as="h2" id="tenure-title" className="mt-1 text-xl">Statistik masa kerja</CardTitle>
                             <CardDescription className="mt-1">Pegawai aktif berdasarkan selisih penuh tahun dari TMT kerja.</CardDescription>
                         </div>
-                        <Link href="/laporan/nominatif" className="simpeg-utility inline-flex min-h-11 items-center gap-2 self-start rounded-xl border px-3 text-sm font-medium transition hover:border-[#F5CE59] hover:bg-[#FAD873]/20 focus:outline-none focus:ring-2 focus:ring-[#F5CE59]/60">
+                        <Link href="/laporan/nominatif" className="simpeg-utility inline-flex min-h-11 items-center gap-2 self-start rounded-xl border px-3 text-sm font-medium transition hover:border-[var(--simpeg-primary-border)] hover:bg-[var(--simpeg-primary-soft)] focus:outline-none focus:ring-2 focus:ring-[var(--simpeg-primary-border)]">
                             Lihat laporan
                             <ArrowUpRight className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                         </Link>

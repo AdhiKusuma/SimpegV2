@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { Activity, ArrowUpRight, FileBarChart2, UsersRound } from 'lucide-react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import { Badge } from '../../Components/ui/badge';
 import { buttonVariants } from '../../Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../Components/ui/card';
 import { NumberTicker } from '../../Components/ui/number-ticker';
@@ -15,16 +16,21 @@ function BranchStat({ stat }) {
     const Icon = statIcons[stat.key] || statIcons.default;
 
     return (
-        <Card className="group h-full min-w-0 border p-0 shadow-sm transition-colors hover:border-slate-300 dark:hover:border-slate-600">
-            <Link href={stat.href} className="block min-w-0 p-4 focus-visible:rounded-2xl sm:p-5">
+        <Card className="simpeg-dashboard-stat group h-full min-w-0 border p-0 transition-colors">
+            <Link href={stat.href} className="block min-w-0 p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-4">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100 sm:h-12 sm:w-12 sm:rounded-2xl">
-                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.8} aria-hidden="true" />
-                    </span>
-                    <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-slate-900 dark:group-hover:text-white sm:h-5 sm:w-5" strokeWidth={1.8} aria-hidden="true" />
+                    <p className="simpeg-muted min-w-0 break-words text-sm">{stat.label}</p>
+                    <Icon className="h-5 w-5 shrink-0 simpeg-text" strokeWidth={1.7} aria-hidden="true" />
                 </div>
-                <p className="simpeg-text mt-4 text-2xl font-medium sm:mt-5 sm:text-3xl"><NumberTicker value={stat.value} /></p>
-                <p className="simpeg-text mt-1 break-words text-xs font-medium leading-5 sm:mt-2 sm:text-sm">{stat.label}</p>
+                <p className="simpeg-dashboard-stat-value simpeg-text mt-5"><NumberTicker value={stat.value} /></p>
+                <div className="mt-3 flex min-h-6 items-center">
+                    <Badge variant="default">Data unit kerja</Badge>
+                </div>
+                <p className="simpeg-muted mt-4 break-words text-sm leading-5">Ringkasan wilayah aktif</p>
+                <span className="simpeg-dashboard-stat-link simpeg-muted mt-5 inline-flex items-center gap-2 text-sm">
+                    Buka ringkasan
+                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" strokeWidth={1.8} aria-hidden="true" />
+                </span>
             </Link>
         </Card>
     );
@@ -41,7 +47,7 @@ export default function BranchDashboard({ stats = [], tenure = [], year, unit, s
                             <h1 id="branch-dashboard-title" className="simpeg-text text-3xl font-medium sm:text-4xl">Ruang kerja kepala cabang</h1>
                             <p className="simpeg-muted mt-3 max-w-2xl text-sm leading-6 sm:text-base">Ringkasan unit kerja {unit || 'belum ditentukan'} untuk tahun {year}.</p>
                         </div>
-                        <Link href="/laporan/nominatif" className={buttonVariants({ variant: 'default' })}>
+                        <Link href="/laporan/nominatif" className={buttonVariants({ variant: 'default', className: 'simpeg-dashboard-action' })}>
                             <FileBarChart2 className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                             Laporan nominatif
                         </Link>
