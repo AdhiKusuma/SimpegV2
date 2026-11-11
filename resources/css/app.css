@@ -9,6 +9,7 @@
 @import './themes.css';
 @import './laravel-starter-overrides.css';
 @import './nora-ui.css';
+@import './sidebar-theme-fix.css';
 
 @source '../js/**/*.jsx';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
