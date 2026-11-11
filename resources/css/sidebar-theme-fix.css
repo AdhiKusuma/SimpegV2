@@ -1,39 +1,6 @@
 /* Final sidebar palette guard.
  * Presentation only: no route, state, or navigation behaviour is changed. */
-html[data-theme="corporate"] .simpeg-nav-active,
-html[data-theme="corporate"] .simpeg-nav-active:hover,
-html.dark .simpeg-nav-active,
-html.dark .simpeg-nav-active:hover {
-    background: #ffb81c !important;
-    background-color: #ffb81c !important;
-    background-image: none !important;
-    border-color: #ffb81c !important;
-    color: #171717 !important;
-    box-shadow: none !important;
-}
 
-/* Keep every sidebar token on the same orange palette. This also covers
- * theme rules that paint active links through --simpeg-primary. */
-html[data-theme="corporate"] .simpeg-sidebar,
-html.dark .simpeg-sidebar {
-    --simpeg-primary: #ffb81c !important;
-    --simpeg-primary-hover: #e6a400 !important;
-    --simpeg-primary-foreground: #171717 !important;
-    --simpeg-primary-soft: rgb(255 184 28 / 16%) !important;
-    --simpeg-hover-ink: #171717 !important;
-}
-
-html[data-theme="corporate"] .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active,
-html[data-theme="corporate"] .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover,
-html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active,
-html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover {
-    background: #ffb81c !important;
-    background-color: #ffb81c !important;
-    background-image: none !important;
-    color: #171717 !important;
-}
-
-/* Fallback for all registered light/dark theme markers. */
 html .simpeg-sidebar {
     --simpeg-primary: #ffb81c !important;
     --simpeg-primary-hover: #e6a400 !important;
@@ -42,88 +9,63 @@ html .simpeg-sidebar {
     --simpeg-hover-ink: #171717 !important;
 }
 
+/* Active leaf and hovered leaf: solid orange with readable dark content. */
 html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active,
-html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover {
+html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover,
+html .simpeg-sidebar .simpeg-sidebar-nav-link:not(.simpeg-nav-active):hover {
     background: #ffb81c !important;
     background-color: #ffb81c !important;
     background-image: none !important;
     border-color: #ffb81c !important;
     color: #171717 !important;
+    opacity: 1 !important;
+    filter: none !important;
     box-shadow: none !important;
 }
 
-html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active *,
-html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover * {
+html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active .simpeg-sidebar-nav-label,
+html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active .simpeg-nav-icon,
+html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active .simpeg-nav-active-icon,
+html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover .simpeg-sidebar-nav-label,
+html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover .simpeg-nav-icon,
+html .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover .simpeg-nav-active-icon,
+html .simpeg-sidebar .simpeg-sidebar-nav-link:not(.simpeg-nav-active):hover .simpeg-sidebar-nav-label,
+html .simpeg-sidebar .simpeg-sidebar-nav-link:not(.simpeg-nav-active):hover .simpeg-nav-icon,
+html .simpeg-sidebar .simpeg-sidebar-nav-link:not(.simpeg-nav-active):hover .simpeg-nav-active-icon {
     color: #171717 !important;
+    opacity: 1 !important;
+    filter: none !important;
 }
 
-html .simpeg-sidebar .simpeg-sidebar-nav-link:hover,
-html .simpeg-sidebar .simpeg-sidebar-group-trigger:hover {
-    background: #ffb81c !important;
-    background-color: #ffb81c !important;
-    background-image: none !important;
-    color: #171717 !important;
-}
-
-html .simpeg-sidebar .simpeg-sidebar-nav-link:hover *,
-html .simpeg-sidebar .simpeg-sidebar-group-trigger:hover * {
-    color: #171717 !important;
-}
-
+/* Expanded parent: subtle orange state; hovering it uses the same readable
+ * solid-orange treatment as the leaf links. */
 html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active {
     background: rgb(255 184 28 / 16%) !important;
     background-color: rgb(255 184 28 / 16%) !important;
+    background-image: none !important;
     border-color: rgb(255 184 28 / 52%) !important;
     color: #ffb81c !important;
     box-shadow: inset 0 0 0 1px rgb(255 184 28 / 52%) !important;
 }
 
-html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active * {
+html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active .simpeg-sidebar-nav-label,
+html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active .simpeg-nav-icon,
+html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active .simpeg-nav-active-icon {
     color: #ffb81c !important;
+    opacity: 1 !important;
+    filter: none !important;
 }
 
-html[data-theme="corporate"] .simpeg-nav-active *,
-html[data-theme="corporate"] .simpeg-nav-active:hover *,
-html.dark .simpeg-nav-active *,
-html.dark .simpeg-nav-active:hover * {
-    color: #171717 !important;
-}
-
-html[data-theme="corporate"] .simpeg-nav-link:hover,
-html[data-theme="corporate"] .simpeg-nav-group-link:hover,
-html[data-theme="corporate"] .simpeg-sidebar-nav-link:hover,
-html[data-theme="corporate"] .simpeg-sidebar-group-trigger:hover,
-html.dark .simpeg-nav-link:hover,
-html.dark .simpeg-nav-group-link:hover,
-html.dark .simpeg-sidebar-nav-link:hover,
-html.dark .simpeg-sidebar-group-trigger:hover {
+html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover {
     background: #ffb81c !important;
     background-color: #ffb81c !important;
-    background-image: none !important;
+    border-color: #ffb81c !important;
     color: #171717 !important;
+    box-shadow: none !important;
 }
 
-html[data-theme="corporate"] .simpeg-nav-link:hover *,
-html[data-theme="corporate"] .simpeg-nav-group-link:hover *,
-html[data-theme="corporate"] .simpeg-sidebar-nav-link:hover *,
-html[data-theme="corporate"] .simpeg-sidebar-group-trigger:hover *,
-html.dark .simpeg-nav-link:hover *,
-html.dark .simpeg-nav-group-link:hover *,
-html.dark .simpeg-sidebar-nav-link:hover *,
-html.dark .simpeg-sidebar-group-trigger:hover * {
+html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover .simpeg-sidebar-nav-label,
+html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover .simpeg-nav-icon,
+html .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover .simpeg-nav-active-icon {
     color: #171717 !important;
-}
-
-html[data-theme="corporate"] .simpeg-nav-group-active,
-html.dark .simpeg-nav-group-active {
-    background: rgb(255 184 28 / 16%) !important;
-    background-color: rgb(255 184 28 / 16%) !important;
-    border-color: rgb(255 184 28 / 52%) !important;
-    color: #ffb81c !important;
-    box-shadow: inset 0 0 0 1px rgb(255 184 28 / 52%) !important;
-}
-
-html[data-theme="corporate"] .simpeg-nav-group-active *,
-html.dark .simpeg-nav-group-active * {
-    color: #ffb81c !important;
 }
