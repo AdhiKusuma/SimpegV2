@@ -319,3 +319,190 @@ select:focus {
         box-shadow: 12px 0 30px rgb(0 0 0 / 0.08) !important;
     }
 }
+
+/* Nora-style shell refinement: keep the existing navigation and actions,
+ * but give the shared layout the flatter, denser starter-kit treatment. */
+.simpeg-shell-frame {
+    background: var(--simpeg-canvas) !important;
+}
+
+.simpeg-sidebar {
+    width: 18rem !important;
+    background: var(--simpeg-sidebar) !important;
+    border-right-color: var(--simpeg-border) !important;
+}
+
+.simpeg-sidebar-inner {
+    padding: 1.25rem 0.75rem 1rem !important;
+}
+
+.simpeg-sidebar-brand {
+    padding-inline: 0.25rem !important;
+}
+
+.simpeg-sidebar-brand-link {
+    gap: 0.75rem !important;
+    border-radius: 0.7rem !important;
+    padding: 0.35rem 0.5rem !important;
+}
+
+.simpeg-sidebar-logo {
+    height: 2.65rem !important;
+    width: 2.65rem !important;
+    border-radius: 0.8rem !important;
+}
+
+.simpeg-sidebar-brand-details span:first-child {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+}
+
+.simpeg-sidebar-nav-scroll {
+    margin-top: 1.75rem !important;
+    padding-right: 0 !important;
+}
+
+.simpeg-sidebar-section-label {
+    margin-bottom: 0.6rem !important;
+    padding-inline: 0.75rem !important;
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}
+
+.simpeg-sidebar-nav {
+    gap: 0.2rem !important;
+}
+
+.simpeg-sidebar-nav-link,
+.simpeg-sidebar-group-trigger,
+.simpeg-sidebar-logout {
+    min-height: 2.55rem !important;
+    border-radius: 0.5rem !important;
+    padding: 0.55rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+.simpeg-sidebar-nav-content {
+    gap: 0.15rem !important;
+    border-left-color: var(--simpeg-border) !important;
+    padding-left: 0.65rem !important;
+}
+
+.simpeg-sidebar-nav-content .simpeg-sidebar-nav-link {
+    min-height: 2.35rem !important;
+    font-size: 0.8125rem !important;
+}
+
+.simpeg-nav-active,
+.simpeg-nav-active:hover {
+    background: var(--nora-nav-active) !important;
+    color: var(--nora-nav-active-ink) !important;
+}
+
+.simpeg-nav-active .simpeg-sidebar-nav-label,
+.simpeg-nav-active .simpeg-nav-active-icon {
+    color: var(--nora-nav-active-ink) !important;
+}
+
+.simpeg-sidebar-active-indicator {
+    display: none !important;
+}
+
+.simpeg-sidebar-profile {
+    margin-bottom: 0.45rem !important;
+    border-radius: 0.7rem !important;
+    padding: 0.65rem !important;
+}
+
+.simpeg-sidebar-logout {
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-sidebar-logout:hover {
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-shell-content > .simpeg-header > div,
+.simpeg-shell-content > main {
+    max-width: none !important;
+}
+
+.simpeg-shell-content > .simpeg-header > div {
+    min-height: 4.25rem !important;
+    padding-inline: 2rem !important;
+}
+
+.simpeg-shell-content > main {
+    padding: 2rem 2.25rem 3rem !important;
+}
+
+.simpeg-header {
+    min-height: 4.25rem !important;
+    backdrop-filter: none !important;
+}
+
+.simpeg-header-context p:last-child {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+}
+
+.simpeg-search-trigger {
+    min-height: 2.7rem !important;
+    max-width: 48rem !important;
+    border-radius: 0.65rem !important;
+}
+
+.simpeg-utility,
+.simpeg-theme-toggle,
+.simpeg-sidebar-collapse-toggle {
+    border-radius: 0.65rem !important;
+}
+
+.simpeg-shell-content .rounded-3xl {
+    border-radius: 0.8rem !important;
+}
+
+.simpeg-shell-content .rounded-2xl {
+    border-radius: 0.7rem !important;
+}
+
+.simpeg-shell-content .rounded-xl {
+    border-radius: 0.55rem !important;
+}
+
+.simpeg-shell-content .shadow-sm,
+.simpeg-shell-content .shadow-md,
+.simpeg-shell-content .shadow-lg,
+.simpeg-shell-content .shadow-xl,
+.simpeg-shell-content .shadow-2xl {
+    box-shadow: none !important;
+}
+
+.simpeg-shell-content table thead th {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+    text-transform: uppercase !important;
+}
+
+.simpeg-shell-content table tbody tr {
+    transition: background-color 140ms ease !important;
+}
+
+@media (max-width: 1023px) {
+    .simpeg-shell-content > .simpeg-header > div {
+        padding-inline: 1rem !important;
+    }
+
+    .simpeg-shell-content > main {
+        padding: 1.25rem 1rem 2rem !important;
+    }
+}
+
+@media (max-width: 639px) {
+    .simpeg-shell-content > main {
+        padding: 1rem 0.75rem 1.5rem !important;
+    }
+}
