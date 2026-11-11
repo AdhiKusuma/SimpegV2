@@ -31,8 +31,9 @@
     --simpeg-primary-soft: rgb(8 120 201 / 0.10);
     --simpeg-primary-border: rgb(8 120 201 / 0.32);
     --simpeg-focus-ring: rgb(8 120 201 / 0.22);
-    --nora-nav-active: #f6b719;
-    --nora-nav-active-ink: #171717;
+    --simpeg-nav-active: #ffb81c;
+    --simpeg-nav-hover: #fff0c2;
+    --simpeg-nav-active-ink: #171717;
     --primary: var(--simpeg-primary);
     --primary-foreground: var(--simpeg-primary-foreground);
     --background: var(--simpeg-canvas);
@@ -78,8 +79,9 @@ html.dark {
     --simpeg-primary-soft: rgb(8 120 201 / 0.16);
     --simpeg-primary-border: rgb(8 120 201 / 0.46);
     --simpeg-focus-ring: rgb(8 120 201 / 0.32);
-    --nora-nav-active: #f6b719;
-    --nora-nav-active-ink: #171717;
+    --simpeg-nav-active: #ffb81c;
+    --simpeg-nav-hover: #4a390f;
+    --simpeg-nav-active-ink: #171717;
 }
 
 html[data-theme="corporate"] {
@@ -89,8 +91,9 @@ html[data-theme="corporate"] {
     --simpeg-primary-soft: rgb(8 120 201 / 0.10);
     --simpeg-primary-border: rgb(8 120 201 / 0.32);
     --simpeg-focus-ring: rgb(8 120 201 / 0.22);
-    --nora-nav-active: #f6b719;
-    --nora-nav-active-ink: #171717;
+    --simpeg-nav-active: #ffb81c;
+    --simpeg-nav-hover: #fff0c2;
+    --simpeg-nav-active-ink: #171717;
 }
 
 /* Shared application frame */
@@ -131,22 +134,26 @@ html[data-theme="corporate"] {
 .simpeg-nav-link:hover,
 .simpeg-nav-group-link:hover,
 .simpeg-sidebar-nav-link:hover,
-.simpeg-sidebar-group-trigger:hover,
-.simpeg-sidebar-logout:hover {
-    background: var(--simpeg-hover-surface) !important;
-    color: var(--simpeg-text) !important;
+.simpeg-sidebar-group-trigger:hover {
+    background: var(--simpeg-nav-active) !important;
+    color: var(--simpeg-nav-active-ink) !important;
 }
 
 .simpeg-nav-active,
 .simpeg-nav-active:hover {
-    background: var(--nora-nav-active) !important;
-    color: var(--nora-nav-active-ink) !important;
+    background: var(--simpeg-nav-active) !important;
+    color: var(--simpeg-nav-active-ink) !important;
     box-shadow: none !important;
 }
 
 .simpeg-nav-active-icon,
 .simpeg-nav-active:hover .simpeg-nav-active-icon {
-    color: var(--nora-nav-active-ink) !important;
+    color: var(--simpeg-nav-active-ink) !important;
+}
+
+.simpeg-sidebar-nav-link:hover .simpeg-nav-icon,
+.simpeg-sidebar-group-trigger:hover .simpeg-nav-icon {
+    color: var(--simpeg-nav-active-ink) !important;
 }
 
 .simpeg-nav-group-active {
@@ -397,13 +404,13 @@ select:focus {
 
 .simpeg-nav-active,
 .simpeg-nav-active:hover {
-    background: var(--nora-nav-active) !important;
-    color: var(--nora-nav-active-ink) !important;
+    background: var(--simpeg-nav-active) !important;
+    color: var(--simpeg-nav-active-ink) !important;
 }
 
 .simpeg-nav-active .simpeg-sidebar-nav-label,
 .simpeg-nav-active .simpeg-nav-active-icon {
-    color: var(--nora-nav-active-ink) !important;
+    color: var(--simpeg-nav-active-ink) !important;
 }
 
 .simpeg-sidebar-active-indicator {
@@ -436,6 +443,40 @@ select:focus {
 
 .simpeg-shell-content > main {
     padding: 2rem 2.25rem 3rem !important;
+}
+
+/* Keep Dashboard aligned with the same content gutter as list pages such as
+ * Daftar Pegawai. The page-specific max width previously added an extra
+ * inset, making the shared layout feel inconsistent between menus. */
+.simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell {
+    width: 100%;
+    max-width: none !important;
+    margin-inline: 0;
+}
+
+/*
+ * Keep page-level wrappers aligned with the shared shell.
+ *
+ * Several import screens used wider Tailwind wrappers while form screens
+ * used different narrow widths. Normalize only the direct page wrapper so
+ * inner descriptions, dialogs, tables, and controls keep their intended
+ * widths and behavior.
+ */
+.simpeg-shell-content > main > .mx-auto.max-w-6xl,
+.simpeg-shell-content > main > .mx-auto.max-w-7xl {
+    width: 100%;
+    max-width: none !important;
+    margin-inline: 0 !important;
+}
+
+.simpeg-shell-content > main > :is(
+    .mx-auto.max-w-4xl,
+    .mx-auto.max-w-5xl,
+    .max-w-6xl:not(.mx-auto)
+):has(.simpeg-form-card) {
+    width: 100%;
+    max-width: 64rem !important;
+    margin-inline: auto !important;
 }
 
 .simpeg-header {
@@ -681,6 +722,9 @@ html.dark .simpeg-ui-badge--danger {
  * remains independent.
  */
 :root {
+    --simpeg-info-soft: rgb(14 165 233 / 0.10);
+    --simpeg-info-border: rgb(14 165 233 / 0.42);
+    --simpeg-info-ink: #0369a1;
     --simpeg-success-soft: rgb(22 163 74 / 0.07);
     --simpeg-success-border: rgb(22 163 74 / 0.28);
     --simpeg-success-ink: #15803d;
@@ -694,6 +738,9 @@ html.dark .simpeg-ui-badge--danger {
 
 html.dark,
 html[data-theme="dark"] {
+    --simpeg-info-soft: rgb(56 189 248 / 0.12);
+    --simpeg-info-border: rgb(56 189 248 / 0.48);
+    --simpeg-info-ink: #7dd3fc;
     --simpeg-success-soft: rgb(34 197 94 / 0.10);
     --simpeg-success-border: rgb(74 222 128 / 0.30);
     --simpeg-success-ink: #86efac;
@@ -980,4 +1027,137 @@ html[data-theme="dark"] {
     [class~="hover:bg-gray-200"]
 ):hover {
     background-color: var(--simpeg-hover-surface) !important;
+}
+
+/* Reference palette: orange sidebar affordance and quiet semantic badges. */
+.simpeg-nav-link:hover,
+.simpeg-nav-group-link:hover,
+.simpeg-sidebar-nav-link:hover,
+.simpeg-sidebar-group-trigger:hover {
+    background: var(--simpeg-nav-active) !important;
+    color: var(--simpeg-nav-active-ink) !important;
+    box-shadow: none !important;
+}
+
+.simpeg-nav-active,
+.simpeg-nav-active:hover {
+    background: var(--simpeg-nav-active) !important;
+    color: var(--simpeg-nav-active-ink) !important;
+    box-shadow: none !important;
+}
+
+.simpeg-nav-link:hover .simpeg-nav-icon,
+.simpeg-nav-group-link:hover .simpeg-nav-icon,
+.simpeg-sidebar-nav-link:hover .simpeg-nav-icon,
+.simpeg-sidebar-group-trigger:hover .simpeg-nav-icon {
+    color: var(--simpeg-nav-active-ink) !important;
+}
+
+.simpeg-nav-active .simpeg-sidebar-nav-label,
+.simpeg-nav-active .simpeg-nav-active-icon,
+.simpeg-nav-active:hover .simpeg-nav-active-icon,
+.simpeg-nav-group-active-icon {
+    color: var(--simpeg-nav-active-ink) !important;
+}
+
+.simpeg-nav-group-active {
+    background: color-mix(in srgb, var(--simpeg-nav-active) 18%, var(--simpeg-sidebar)) !important;
+    color: var(--simpeg-nav-active-ink) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--simpeg-nav-active) 48%, transparent) !important;
+}
+
+.simpeg-ui-badge--info {
+    background: var(--simpeg-info-soft) !important;
+    border-color: var(--simpeg-info-border) !important;
+    color: var(--simpeg-info-ink) !important;
+}
+
+.simpeg-ui-badge--success {
+    background: var(--simpeg-success-soft) !important;
+    border-color: var(--simpeg-success-border) !important;
+    color: var(--simpeg-success-ink) !important;
+}
+
+.simpeg-ui-badge--warning {
+    background: var(--simpeg-warning-soft) !important;
+    border-color: var(--simpeg-warning-border) !important;
+    color: var(--simpeg-warning-ink) !important;
+}
+
+.simpeg-ui-badge--danger {
+    background: var(--simpeg-danger-soft) !important;
+    border-color: var(--simpeg-danger-border) !important;
+    color: var(--simpeg-danger-ink) !important;
+}
+
+/* Final sidebar precedence: keep legacy/corporate utility rules from
+ * reintroducing the blue active state on any theme. */
+html .simpeg-sidebar .simpeg-nav-link:hover,
+html .simpeg-sidebar .simpeg-nav-group-link:hover,
+html .simpeg-sidebar .simpeg-sidebar-nav-link:hover,
+html .simpeg-sidebar .simpeg-sidebar-group-trigger:hover,
+html .simpeg-sidebar .simpeg-nav-active,
+html .simpeg-sidebar .simpeg-nav-active:hover {
+    background: var(--simpeg-nav-active) !important;
+    color: var(--simpeg-nav-active-ink) !important;
+    box-shadow: none !important;
+}
+
+html .simpeg-sidebar .simpeg-nav-group-active {
+    background: color-mix(in srgb, var(--simpeg-nav-active) 18%, var(--simpeg-sidebar)) !important;
+    color: var(--simpeg-nav-active-ink) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--simpeg-nav-active) 48%, transparent) !important;
+}
+
+html .simpeg-sidebar .simpeg-nav-active-icon,
+html .simpeg-sidebar .simpeg-nav-active:hover .simpeg-nav-active-icon,
+html .simpeg-sidebar .simpeg-nav-group-active-icon,
+html .simpeg-sidebar .simpeg-nav-link:hover .simpeg-nav-icon,
+html .simpeg-sidebar .simpeg-nav-group-link:hover .simpeg-nav-icon,
+html .simpeg-sidebar .simpeg-sidebar-nav-link:hover .simpeg-nav-icon,
+html .simpeg-sidebar .simpeg-sidebar-group-trigger:hover .simpeg-nav-icon {
+    color: var(--simpeg-nav-active-ink) !important;
+}
+
+/* Hard theme guard: the sidebar uses orange for hover/active states.
+ * Keep this after all starter/corporate utility overrides. */
+html[data-theme="corporate"] .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active,
+html[data-theme="corporate"] .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover {
+    background: #ffb81c !important;
+    background-color: #ffb81c !important;
+    border-color: #ffb81c !important;
+    color: #171717 !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="corporate"] .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active *,
+html[data-theme="corporate"] .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover *,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active *,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link.simpeg-nav-active:hover * {
+    color: #171717 !important;
+}
+
+html[data-theme="corporate"] .simpeg-sidebar .simpeg-sidebar-nav-link:hover,
+html[data-theme="corporate"] .simpeg-sidebar .simpeg-sidebar-group-trigger:hover,
+html.dark .simpeg-sidebar .simpeg-sidebar-nav-link:hover,
+html.dark .simpeg-sidebar .simpeg-sidebar-group-trigger:hover {
+    background: #ffb81c !important;
+    background-color: #ffb81c !important;
+    color: #171717 !important;
+}
+
+html[data-theme="corporate"] .simpeg-sidebar .simpeg-nav-group-active,
+html.dark .simpeg-sidebar .simpeg-nav-group-active {
+    background: rgb(255 184 28 / 16%) !important;
+    background-color: rgb(255 184 28 / 16%) !important;
+    border-color: rgb(255 184 28 / 52%) !important;
+    color: #ffb81c !important;
+    box-shadow: inset 0 0 0 1px rgb(255 184 28 / 52%) !important;
+}
+
+html[data-theme="corporate"] .simpeg-sidebar .simpeg-nav-group-active *,
+html.dark .simpeg-sidebar .simpeg-nav-group-active * {
+    color: #ffb81c !important;
 }

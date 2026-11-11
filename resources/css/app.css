@@ -8,7 +8,7 @@
 @import './theme-compat.css';
 @import './themes.css';
 @import './laravel-starter-overrides.css';
-@import './nora-ui.css';
+@import './simpeg-ui.css';
 @import './sidebar-theme-fix.css';
 
 @source '../js/**/*.jsx';
