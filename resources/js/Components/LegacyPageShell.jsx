@@ -23,10 +23,8 @@ import {
     ShieldAlert,
     ShieldCheck,
     SlidersHorizontal,
-    UserPlus,
     UserRound,
     UsersRound,
-    Upload,
     X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -109,9 +107,7 @@ const navigationCatalog = [
         icon: UsersRound,
         items: [
             navItem('/pegawai', 'Daftar Pegawai', UsersRound),
-            navItem('/pegawai/create', 'Tambah Pegawai', UserPlus),
             navItem('/pengangkatan', 'Pengangkatan Pegawai', BriefcaseBusiness),
-            navItem('/pegawai/import', 'Import Excel', Upload),
             navItem('/mutasi', 'Penonaktifan', UserRound),
         ],
     },
