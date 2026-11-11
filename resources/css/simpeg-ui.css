@@ -497,6 +497,125 @@ select:focus {
   margin-inline: 0 !important;
 }
 
+/* Shared form consistency: presentation-only normalization for every
+ * create/edit/import form. Form names, routes, events, validation, and
+ * business logic remain unchanged. */
+.simpeg-shell-content > main > div:has(.simpeg-form-card) {
+  width: min(100%, 72rem);
+  max-width: 72rem !important;
+  margin-inline: auto !important;
+}
+
+.simpeg-shell-content .simpeg-form-card {
+  width: 100%;
+  max-width: none !important;
+  border-color: var(--simpeg-border) !important;
+  background: var(--simpeg-card) !important;
+  color: var(--simpeg-text) !important;
+  border-radius: 0.875rem !important;
+  box-shadow: none !important;
+}
+
+.simpeg-shell-content .simpeg-form-card :is(input, textarea, select) {
+  border-color: var(--simpeg-border) !important;
+  background: var(--simpeg-input) !important;
+  color: var(--simpeg-text) !important;
+}
+
+.simpeg-shell-content .simpeg-form-card :is(input, textarea, select):focus {
+  border-color: var(--simpeg-primary-border) !important;
+  background: var(--simpeg-input) !important;
+  box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
+  outline: none !important;
+}
+
+.simpeg-shell-content .simpeg-form-card button[type="submit"] {
+  border-color: var(--simpeg-primary) !important;
+  background: var(--simpeg-primary) !important;
+  color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-shell-content .simpeg-form-card button[type="submit"]:hover {
+  border-color: var(--simpeg-primary-hover) !important;
+  background: var(--simpeg-primary-hover) !important;
+}
+
+.simpeg-shell-content .simpeg-form-card input[type="file"] {
+  border-color: var(--simpeg-border) !important;
+  background: var(--simpeg-input) !important;
+  color: var(--simpeg-muted) !important;
+}
+
+.simpeg-shell-content .simpeg-form-card input[type="file"]::file-selector-button {
+  border: 0 !important;
+  border-radius: 0.5rem !important;
+  background: var(--simpeg-primary-soft) !important;
+  color: var(--simpeg-primary) !important;
+  font-weight: 700 !important;
+}
+
+/* Header accents are shared across modules; validation/error text keeps its
+ * semantic danger color because it is not part of the page accent. */
+.simpeg-shell-content > main > div:has(.simpeg-form-card) > div:first-child > a,
+.simpeg-shell-content > main > div:has(.simpeg-form-card) > div:first-child > p.uppercase {
+  color: var(--simpeg-primary) !important;
+}
+
+.simpeg-shell-content > main > div:has(.simpeg-form-card) > div:first-child > h1 {
+  color: var(--simpeg-text) !important;
+}
+
+@media (max-width: 767px) {
+  .simpeg-shell-content > main > div:has(.simpeg-form-card) {
+    width: 100%;
+  }
+}
+
+/* Form card geometry follows the payroll edit form: every section and
+ * action row gets the same breathing room without changing the form markup,
+ * fields, routes, events, validation, or submit flow. */
+.simpeg-shell-content .simpeg-form-card {
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.simpeg-shell-content .simpeg-form-card > :is(.grid, section) {
+  gap: 1rem !important;
+  padding: 1.5rem !important;
+}
+
+.simpeg-shell-content .simpeg-form-card > :is(.grid, section) + :is(.grid, section) {
+  border-top: 1px solid var(--simpeg-border) !important;
+}
+
+.simpeg-shell-content .simpeg-form-card > div[class*="mt-8"]:not([class*="flex"]),
+.simpeg-shell-content .simpeg-form-card > div[class*="my-8"]:not([class*="flex"]) {
+  margin-top: 0 !important;
+  padding: 1.5rem !important;
+}
+
+.simpeg-shell-content .simpeg-form-card > div.flex[class*="justify-end"] {
+  margin-top: 0 !important;
+  border-top: 1px solid var(--simpeg-border) !important;
+  padding: 1.25rem 1.5rem !important;
+}
+
+.simpeg-shell-content .simpeg-form-card > div.flex[class*="justify-end"] :is(a, button) {
+  min-height: 2.75rem;
+}
+
+@media (max-width: 639px) {
+  .simpeg-shell-content .simpeg-form-card > :is(.grid, section),
+  .simpeg-shell-content .simpeg-form-card > div[class*="mt-8"]:not([class*="flex"]),
+  .simpeg-shell-content .simpeg-form-card > div[class*="my-8"]:not([class*="flex"]) {
+    padding: 1rem !important;
+  }
+
+  .simpeg-shell-content .simpeg-form-card > div.flex[class*="justify-end"] {
+    padding: 1rem !important;
+  }
+}
+
 .simpeg-header {
     min-height: 4.25rem !important;
     backdrop-filter: none !important;
