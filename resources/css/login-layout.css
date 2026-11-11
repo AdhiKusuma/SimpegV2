@@ -237,7 +237,7 @@
     color: var(--simpeg-text);
 }
 
-.simpeg-login-submit {
+.simpeg-login-page .simpeg-login-submit {
     min-height: 3.25rem;
     border-radius: 1rem;
 }
@@ -1033,6 +1033,906 @@ html.dark .simpeg-login-resource-overlay {
 
 .simpeg-login-form-footer p {
     max-width: 20rem;
+}
+
+/* Minimal centered login visual layer. Functional markup and interactions stay unchanged. */
+.simpeg-login-page {
+    background: #ffffff;
+    color: #18181b;
+}
+
+.simpeg-login-page .simpeg-background-grid {
+    display: none;
+}
+
+html.dark .simpeg-login-page {
+    background: #080808;
+    color: #fafafa;
+}
+
+html[data-theme="corporate"] .simpeg-login-page {
+    background: #f8fafc;
+    color: #18181b;
+}
+
+.simpeg-login-shell {
+    max-width: 32rem;
+    min-height: 100dvh;
+}
+
+.simpeg-login-topbar {
+    position: fixed;
+    inset: 1rem 1rem auto;
+    z-index: 20;
+    border: 0;
+    padding: 0;
+    pointer-events: none;
+}
+
+.simpeg-login-brand {
+    position: fixed;
+    top: clamp(2rem, 7vh, 4.5rem);
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    transform: translateX(-50%);
+    text-align: center;
+    pointer-events: auto;
+}
+
+.simpeg-login-brand-mark {
+    height: 4.25rem;
+    width: 4.25rem;
+    border: 0;
+    border-radius: 1rem;
+    background: transparent;
+}
+
+.simpeg-login-topbar .simpeg-login-brand-name {
+    color: #18181b;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+.simpeg-login-topbar .simpeg-login-brand-caption {
+    color: #71717a;
+    font-size: 0.75rem;
+}
+
+html.dark .simpeg-login-topbar .simpeg-login-brand-name {
+    color: #fafafa;
+}
+
+html.dark .simpeg-login-topbar .simpeg-login-brand-caption {
+    color: #a1a1aa;
+}
+
+.simpeg-login-topbar-actions {
+    margin-left: auto;
+    pointer-events: auto;
+}
+
+.simpeg-login-topbar-meta {
+    display: none;
+}
+
+.simpeg-login-stage {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 2.25rem;
+    padding: clamp(11rem, 24vh, 14rem) 0 2rem;
+}
+
+.simpeg-login-clean-form {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+}
+
+.simpeg-login-clean-form .simpeg-login-form-heading {
+    max-width: none;
+    text-align: center;
+}
+
+.simpeg-login-clean-form .simpeg-login-form-kicker {
+    display: none;
+}
+
+.simpeg-login-clean-form .simpeg-login-form-heading h2 {
+    color: #18181b;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    font-weight: 500;
+    letter-spacing: -0.045em;
+    line-height: 1.05;
+}
+
+.simpeg-login-clean-form .simpeg-login-form-heading > p:last-child {
+    max-width: 26rem;
+    margin-right: auto;
+    margin-left: auto;
+    color: #71717a;
+    font-size: 0.9rem;
+}
+
+html.dark .simpeg-login-clean-form .simpeg-login-form-heading h2 {
+    color: #fafafa;
+}
+
+html.dark .simpeg-login-clean-form .simpeg-login-form-heading > p:last-child {
+    color: #a1a1aa;
+}
+
+.simpeg-login-form {
+    max-width: none;
+    margin-top: 2.75rem;
+    gap: 1.25rem;
+}
+
+.simpeg-login-label {
+    margin-bottom: 0.55rem;
+    color: #27272a;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+html.dark .simpeg-login-label {
+    color: #f4f4f5;
+}
+
+.simpeg-login-clean-form .simpeg-input {
+    min-height: 3.25rem;
+    border: 1px solid #d4d4d8 !important;
+    border-radius: 0.45rem;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #18181b !important;
+}
+
+.simpeg-login-clean-form .simpeg-input:focus {
+    border-color: var(--simpeg-primary) !important;
+    box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
+}
+
+html.dark .simpeg-login-clean-form .simpeg-input {
+    border-color: #27272a !important;
+    color: #fafafa !important;
+}
+
+html.dark .simpeg-login-clean-form .simpeg-input:focus {
+    border-color: var(--simpeg-primary) !important;
+    box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
+}
+
+.simpeg-login-page .simpeg-login-submit {
+    min-height: 3.25rem;
+    border: 1px solid var(--simpeg-primary) !important;
+    border-radius: 0.45rem;
+    background: var(--simpeg-primary) !important;
+    color: var(--simpeg-primary-foreground) !important;
+    box-shadow: none !important;
+    font-weight: 500;
+}
+
+.simpeg-login-page .simpeg-login-submit:hover:not(:disabled),
+.simpeg-login-page .simpeg-login-submit:focus-visible {
+    border-color: var(--simpeg-primary-hover) !important;
+    background: var(--simpeg-primary-hover) !important;
+}
+
+.simpeg-login-form-footer {
+    max-width: none;
+    margin-top: 2rem;
+}
+
+.simpeg-login-support-trigger {
+    color: #71717a;
+}
+
+.simpeg-login-support-trigger span {
+    color: #27272a;
+}
+
+html.dark .simpeg-login-support-trigger {
+    color: #a1a1aa;
+}
+
+html.dark .simpeg-login-support-trigger span {
+    color: #f4f4f5;
+}
+
+.simpeg-login-context {
+    display: block;
+    width: 100%;
+    border-top: 1px solid #e4e4e7;
+    padding-top: 1.25rem;
+    text-align: center;
+}
+
+html.dark .simpeg-login-context {
+    border-color: #27272a;
+}
+
+.simpeg-login-context-line {
+    display: none;
+}
+
+.simpeg-login-context h2,
+.simpeg-login-context p {
+    max-width: none;
+}
+
+.simpeg-login-context h2 {
+    color: #27272a;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.simpeg-login-context p {
+    color: #71717a;
+    font-size: 0.8rem;
+}
+
+html.dark .simpeg-login-context h2 {
+    color: #f4f4f5;
+}
+
+html.dark .simpeg-login-context p {
+    color: #a1a1aa;
+}
+
+.simpeg-login-dots,
+.simpeg-login-resource-trigger,
+.simpeg-login-context .simpeg-login-access-note {
+    justify-content: center;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.simpeg-login-resource-trigger {
+    max-width: 26rem;
+    border-color: #e4e4e7;
+    background: transparent;
+    text-align: center;
+}
+
+html.dark .simpeg-login-resource-trigger {
+    border-color: #27272a;
+    background: transparent;
+}
+
+.simpeg-login-context .simpeg-login-access-note {
+    max-width: 26rem;
+    border-top-color: #e4e4e7;
+    text-align: left;
+}
+
+html.dark .simpeg-login-context .simpeg-login-access-note {
+    border-top-color: #27272a;
+}
+
+@media (max-width: 639px) {
+    .simpeg-login-topbar {
+        inset: 0.75rem 0.75rem auto;
+    }
+
+    .simpeg-login-stage {
+        padding-top: 10rem;
+    }
+
+    .simpeg-login-brand {
+        top: 2rem;
+    }
+}
+
+/* Use the supplied wide BKK SIMPEG mark without duplicating the brand text. */
+.simpeg-login-brand {
+    gap: 0;
+}
+
+.simpeg-login-brand > div {
+    display: none;
+}
+
+.simpeg-login-brand-mark {
+    width: min(17rem, 78vw);
+    height: auto;
+    aspect-ratio: 1966 / 800;
+    border-radius: 0;
+}
+
+.simpeg-login-brand-mark img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.simpeg-login-stage {
+    padding-top: clamp(13rem, 26vh, 17rem);
+}
+
+@media (max-width: 639px) {
+    .simpeg-login-brand-mark {
+        width: min(15rem, 78vw);
+    }
+
+    .simpeg-login-stage {
+        padding-top: 12rem;
+    }
+}
+
+/* Keep the brand in the document flow so it cannot overlap the form while scrolling. */
+.simpeg-login-topbar {
+    position: absolute;
+}
+
+.simpeg-login-brand {
+    position: absolute;
+}
+
+.simpeg-login-topbar-actions {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+}
+
+@media (max-width: 767px) {
+    .simpeg-login-topbar {
+        inset: 1rem 0 auto;
+        justify-content: center;
+    }
+
+    .simpeg-login-brand {
+        position: relative;
+        top: 0;
+        left: auto;
+        transform: none;
+        margin-inline: auto;
+    }
+
+    .simpeg-login-brand-mark {
+        width: min(15rem, calc(100vw - 3rem));
+    }
+
+    .simpeg-login-stage {
+        width: 100%;
+        gap: 2rem;
+        padding-top: 13rem;
+    }
+
+    .simpeg-login-clean-form,
+    .simpeg-login-context {
+        width: 100%;
+        max-width: 32rem;
+    }
+
+    .simpeg-login-form,
+    .simpeg-login-form-footer,
+    .simpeg-login-context > div {
+        width: 100%;
+    }
+
+    .simpeg-login-topbar-actions {
+        top: 0.75rem;
+        right: 0.75rem;
+    }
+}
+
+/* Keep the login form and the information slider on independent, stable widths. */
+.simpeg-login-stage {
+    align-items: center;
+}
+
+.simpeg-login-clean-form,
+.simpeg-login-context {
+    width: min(100%, 32rem);
+    max-width: 32rem;
+    align-self: center;
+}
+
+.simpeg-login-form,
+.simpeg-login-form-footer,
+.simpeg-login-context > div {
+    width: min(100%, 28rem);
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.simpeg-login-context > div {
+    min-width: 0;
+}
+
+@media (max-width: 767px) {
+    /* The supplied logo is wide; reserve its full visual height before the form. */
+    .simpeg-login-brand-mark {
+        width: min(12.5rem, calc(100vw - 4rem));
+    }
+
+    .simpeg-login-clean-form {
+        margin-top: 6rem;
+    }
+
+    .simpeg-login-stage {
+        padding-top: 16rem;
+    }
+}
+
+/* Reference login composition: header, form card, and information panel. */
+.simpeg-login-page .simpeg-background-grid {
+    display: block;
+    opacity: 0.42;
+}
+
+html.dark .simpeg-login-page .simpeg-background-grid {
+    opacity: 0.14;
+}
+
+.simpeg-login-shell {
+    max-width: 72rem;
+    min-height: 100dvh;
+}
+
+.simpeg-login-topbar {
+    position: static;
+    min-height: 5.25rem;
+    border-bottom: 1px solid var(--simpeg-border);
+    padding: 0.75rem 0 1rem;
+}
+
+.simpeg-login-brand {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    transform: none;
+    text-align: left;
+}
+
+.simpeg-login-brand-mark {
+    width: min(15rem, 30vw);
+    height: auto;
+    aspect-ratio: 1966 / 800;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.simpeg-login-brand-mark img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.simpeg-login-topbar-actions {
+    position: static;
+    margin-left: auto;
+}
+
+.simpeg-login-topbar-meta {
+    display: flex;
+}
+
+.simpeg-login-stage {
+    display: grid;
+    width: 100%;
+    align-items: center;
+    gap: clamp(3rem, 8vw, 7rem);
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 21rem);
+    padding: clamp(4rem, 9vh, 7rem) 0 5rem;
+}
+
+.simpeg-login-clean-form {
+    width: 100%;
+    max-width: 42rem;
+    margin: 0;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1.5rem;
+    background: var(--simpeg-card);
+    padding: clamp(1.5rem, 4vw, 3.25rem);
+    box-shadow: 0 1.5rem 3.5rem rgb(15 23 42 / 0.08);
+}
+
+.simpeg-login-clean-form .simpeg-login-form-heading {
+    max-width: 34rem;
+    text-align: left;
+}
+
+.simpeg-login-clean-form .simpeg-login-form-heading h2 {
+    font-size: clamp(2.35rem, 4.2vw, 4rem);
+    letter-spacing: -0.07em;
+}
+
+.simpeg-login-clean-form .simpeg-login-form {
+    width: 100%;
+    max-width: 34rem;
+    margin-top: 2.75rem;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.simpeg-login-clean-form .simpeg-login-form-footer {
+    width: 100%;
+    max-width: 34rem;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.simpeg-login-context {
+    width: 100%;
+    max-width: 21rem;
+    align-self: center;
+    grid-template-columns: 1px minmax(0, 1fr);
+}
+
+.simpeg-login-context > div {
+    width: 100%;
+    margin-right: 0;
+    margin-left: 0;
+}
+
+.simpeg-login-context-line {
+    height: 14rem;
+}
+
+@media (max-width: 767px) {
+    .simpeg-login-shell {
+        max-width: 32rem;
+        min-height: 100dvh;
+    }
+
+    .simpeg-login-topbar {
+        min-height: 4.5rem;
+        padding: 0.75rem 0;
+    }
+
+    .simpeg-login-brand {
+        position: static;
+        gap: 0;
+        margin: 0;
+    }
+
+    .simpeg-login-brand-mark {
+        width: min(12.5rem, calc(100vw - 5rem));
+    }
+
+    .simpeg-login-topbar-meta {
+        display: none;
+    }
+
+    .simpeg-login-topbar-actions {
+        position: static;
+        margin-left: auto;
+    }
+
+    .simpeg-login-stage {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2.5rem 0 3.5rem;
+    }
+
+    .simpeg-login-clean-form {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+    }
+
+    .simpeg-login-clean-form .simpeg-login-form-heading {
+        max-width: none;
+    }
+
+    .simpeg-login-clean-form .simpeg-login-form-heading h2 {
+        font-size: clamp(2rem, 10vw, 3rem);
+    }
+
+    .simpeg-login-clean-form .simpeg-login-form,
+    .simpeg-login-clean-form .simpeg-login-form-footer {
+        width: 100%;
+        max-width: none;
+        margin-right: auto;
+        margin-left: auto;
+    }
+
+    .simpeg-login-context {
+        width: 100%;
+        max-width: 32rem;
+    }
+}
+
+/* Neutral login theme: light uses white/black, dark uses black/white. */
+.simpeg-login-page {
+    --simpeg-canvas: #f6f6f6;
+    --simpeg-card: #ffffff;
+    --simpeg-card-soft: #fafafa;
+    --simpeg-input: #ffffff;
+    --simpeg-text: #111111;
+    --simpeg-muted: #555555;
+    --simpeg-subtle: #737373;
+    --simpeg-border: #e5e5e5;
+    --simpeg-track: #e5e5e5;
+    --simpeg-primary: #111111;
+    --simpeg-primary-hover: #000000;
+    --simpeg-primary-foreground: #ffffff;
+    --simpeg-primary-soft: #f0f0f0;
+    --simpeg-primary-border: #d4d4d4;
+    --simpeg-focus-ring: rgb(17 17 17 / 0.16);
+    background: var(--simpeg-canvas);
+    color: var(--simpeg-text);
+}
+
+html.dark .simpeg-login-page {
+    --simpeg-canvas: #080808;
+    --simpeg-card: #121212;
+    --simpeg-card-soft: #181818;
+    --simpeg-input: #0b0b0b;
+    --simpeg-text: #f5f5f5;
+    --simpeg-muted: #c4c4c4;
+    --simpeg-subtle: #a3a3a3;
+    --simpeg-border: #2b2b2b;
+    --simpeg-track: #2b2b2b;
+    --simpeg-primary: #f5f5f5;
+    --simpeg-primary-hover: #ffffff;
+    --simpeg-primary-foreground: #0a0a0a;
+    --simpeg-primary-soft: #242424;
+    --simpeg-primary-border: #444444;
+    --simpeg-focus-ring: rgb(255 255 255 / 0.18);
+    background: var(--simpeg-canvas);
+    color: var(--simpeg-text);
+}
+
+html[data-theme="corporate"] .simpeg-login-page {
+    --simpeg-canvas: #f6f6f6;
+    --simpeg-card: #ffffff;
+    --simpeg-card-soft: #fafafa;
+    --simpeg-input: #ffffff;
+    --simpeg-text: #111111;
+    --simpeg-muted: #555555;
+    --simpeg-subtle: #737373;
+    --simpeg-border: #e5e5e5;
+    --simpeg-track: #e5e5e5;
+    --simpeg-primary: #111111;
+    --simpeg-primary-hover: #000000;
+    --simpeg-primary-foreground: #ffffff;
+    --simpeg-primary-soft: #f0f0f0;
+    --simpeg-primary-border: #d4d4d4;
+    --simpeg-focus-ring: rgb(17 17 17 / 0.16);
+    background: var(--simpeg-canvas);
+    color: var(--simpeg-text);
+}
+
+.simpeg-login-page .simpeg-login-clean-form {
+    background: var(--simpeg-card);
+    border-color: var(--simpeg-border);
+}
+
+.simpeg-login-page .simpeg-login-form-heading h2,
+.simpeg-login-page .simpeg-login-label,
+.simpeg-login-page .simpeg-login-context h2,
+.simpeg-login-page .simpeg-login-support-trigger span {
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-login-page .simpeg-login-form-heading > p:last-child,
+.simpeg-login-page .simpeg-login-context p,
+.simpeg-login-page .simpeg-login-support-trigger {
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-login-page .simpeg-login-clean-form .simpeg-input {
+    background: var(--simpeg-input) !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-login-page .simpeg-login-clean-form .simpeg-input::placeholder {
+    color: var(--simpeg-subtle) !important;
+}
+
+.simpeg-login-page .simpeg-login-clean-form .simpeg-input:focus {
+    border-color: var(--simpeg-primary) !important;
+    box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
+}
+
+.simpeg-login-page .simpeg-login-submit {
+    border-color: var(--simpeg-primary) !important;
+    background: var(--simpeg-primary) !important;
+    color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-login-page .simpeg-login-submit:hover:not(:disabled),
+.simpeg-login-page .simpeg-login-submit:focus-visible {
+    border-color: var(--simpeg-primary-hover) !important;
+    background: var(--simpeg-primary-hover) !important;
+    color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-login-page .simpeg-login-context,
+.simpeg-login-page .simpeg-login-context .simpeg-login-access-note {
+    border-color: var(--simpeg-border) !important;
+}
+
+.simpeg-login-page .simpeg-login-resource-trigger {
+    border-color: var(--simpeg-border) !important;
+    background: var(--simpeg-card) !important;
+    color: var(--simpeg-text) !important;
+}
+
+html.dark .simpeg-login-page .simpeg-login-clean-form {
+    box-shadow: 0 1.5rem 3.5rem rgb(0 0 0 / 0.35);
+}
+
+/* Login appearance picker: only changes presentation, never the login flow. */
+.simpeg-login-appearance-menu {
+    min-width: 16rem;
+}
+
+.simpeg-login-appearance-option {
+    color: var(--simpeg-text);
+}
+
+.simpeg-login-appearance-option:hover,
+.simpeg-login-appearance-option:focus-visible {
+    background: var(--simpeg-hover-surface);
+    color: var(--simpeg-hover-ink);
+    outline: none;
+}
+
+.simpeg-login-appearance-option > span:first-child {
+    border-color: var(--simpeg-border);
+}
+
+.simpeg-login-appearance-option-active,
+.simpeg-login-appearance-option-active:hover,
+.simpeg-login-appearance-option-active:focus-visible {
+    background: var(--simpeg-primary);
+    color: var(--simpeg-primary-foreground);
+}
+
+.simpeg-login-appearance-option-active > span:first-child {
+    border-color: currentColor;
+}
+
+/* The default remains the current split layout. This opt-in variant restores
+ * the earlier focused login composition without duplicating the form markup. */
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-shell {
+    max-width: 32rem;
+    min-height: 100dvh;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar {
+    position: fixed;
+    inset: 1rem 1rem auto;
+    z-index: 20;
+    min-height: 0;
+    border: 0;
+    padding: 0;
+    pointer-events: none;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand {
+    position: fixed;
+    top: clamp(2rem, 7vh, 4.5rem);
+    left: 50%;
+    display: block;
+    transform: translateX(-50%);
+    pointer-events: auto;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand > div,
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar-meta {
+    display: none;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand-mark {
+    display: block;
+    width: min(17rem, 78vw);
+    height: auto;
+    aspect-ratio: 1966 / 800;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand-mark img {
+    width: 100%;
+    height: auto;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    pointer-events: auto;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-stage {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 2.25rem;
+    padding: clamp(13rem, 26vh, 17rem) 0 2rem;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-clean-form {
+    width: 100%;
+    max-width: 32rem;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-clean-form .simpeg-login-form-heading {
+    max-width: none;
+    text-align: center;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-form-kicker {
+    display: none;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-clean-form .simpeg-login-form-heading h2 {
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    letter-spacing: -0.045em;
+    line-height: 1.05;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-clean-form .simpeg-login-form-heading > p:last-child {
+    max-width: 26rem;
+    margin-inline: auto;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-form,
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-form-footer {
+    width: min(100%, 28rem);
+    margin-inline: auto;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-context {
+    display: block;
+    width: min(100%, 28rem);
+    max-width: 28rem;
+    border-top: 1px solid var(--simpeg-border);
+    padding-top: 1.25rem;
+    text-align: center;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-context-line {
+    display: none;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-context > div {
+    width: 100%;
+    margin-inline: auto;
+}
+
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-context h2,
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-context p {
+    max-width: none;
+}
+
+@media (max-width: 767px) {
+    .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar {
+        inset: 0.75rem 0.75rem auto;
+    }
+
+    .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand {
+        top: 2rem;
+    }
+
+    .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand-mark {
+        width: min(15rem, calc(100vw - 4rem));
+    }
+
+    .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-stage {
+        gap: 2rem;
+        padding-top: 16rem;
+    }
 }
 
 }

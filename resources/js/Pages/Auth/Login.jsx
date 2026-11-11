@@ -6,6 +6,7 @@ import { Button } from '../../Components/ui/button';
 import { Label } from '../../Components/ui/label';
 import { Form } from '../../Components/ui/form';
 import { Input } from '../../Components/ui/input';
+import LoginAppearanceToggle, { resolveLoginAppearance } from '../../Components/LoginAppearanceToggle';
 import ThemeToggle from '../../Components/ThemeToggle';
 
 const slides = [
@@ -53,6 +54,7 @@ export default function Login({ appName, appConfig }) {
     const [showSessionExpired, setShowSessionExpired] = useState(Boolean(flash?.session_expired));
     const [showLoginRateLimit, setShowLoginRateLimit] = useState(false);
     const [currentTime, setCurrentTime] = useState(() => Date.now());
+    const [loginAppearance, setLoginAppearance] = useState(() => resolveLoginAppearance());
     const { data, setData, post, processing, errors } = useForm({
         id_user: '',
         password: '',
@@ -215,12 +217,12 @@ export default function Login({ appName, appConfig }) {
     const resolvedAppName = appConfig?.name || appName || 'SIMPEG';
     const resolvedAppAlias = appConfig?.alias || 'SIMPEG';
     const resolvedAppDescription = appConfig?.description || 'Kepegawaian';
-    const resolvedAppLogoUrl = appConfig?.logoUrl || '/images/logo-simpeg-256.png';
+    const resolvedAppLogoUrl = '/images/bkk-simpeg-blue-logo.png';
 
     return (
         <>
             <Head title="Login" />
-            <BackgroundGrid as="main" className="simpeg-login-page relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-6 sm:px-6 lg:px-10">
+            <BackgroundGrid as="main" data-login-appearance={loginAppearance} className="simpeg-login-page relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-6 sm:px-6 lg:px-10">
                 <div className="simpeg-login-shell relative z-10 mx-auto w-full max-w-6xl">
                     <header className="simpeg-login-topbar">
                         <div className="simpeg-login-brand">
@@ -237,6 +239,7 @@ export default function Login({ appName, appConfig }) {
                                 <span>{resolvedAppName}</span>
                                 <span>Akses aman</span>
                             </div>
+                            <LoginAppearanceToggle appearance={loginAppearance} onChange={setLoginAppearance} />
                             <ThemeToggle />
                         </div>
                     </header>
