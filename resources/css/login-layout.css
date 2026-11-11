@@ -1843,9 +1843,11 @@ html.dark .simpeg-login-page .simpeg-login-clean-form {
 }
 
 .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar-actions {
-    position: absolute;
-    top: 0;
-    right: 0;
+    position: fixed;
+    top: max(1rem, env(safe-area-inset-top));
+    right: max(1rem, env(safe-area-inset-right));
+    z-index: 40;
+    gap: 0.5rem;
     pointer-events: auto;
 }
 
@@ -1920,6 +1922,11 @@ html.dark .simpeg-login-page .simpeg-login-clean-form {
 @media (max-width: 767px) {
     .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar {
         padding: 1.5rem 0 0;
+    }
+
+    .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-topbar-actions {
+        top: max(0.75rem, env(safe-area-inset-top));
+        right: max(0.75rem, env(safe-area-inset-right));
     }
 
     .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-brand {
