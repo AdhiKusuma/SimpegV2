@@ -1,0 +1,321 @@
+/*
+ * SIMPEG visual system
+ *
+ * This is a presentation-only layer. It intentionally targets the shared
+ * shell and semantic component classes, so routes, forms, permissions,
+ * queries, and page behaviour remain unchanged.
+ */
+:root {
+    --simpeg-canvas: #f6f6f5;
+    --simpeg-canvas-mid: #f6f6f5;
+    --simpeg-canvas-end: #fafafa;
+    --simpeg-surface: #ffffff;
+    --simpeg-card: #ffffff;
+    --simpeg-card-soft: #ffffff;
+    --simpeg-header: #ffffff;
+    --simpeg-input: #ffffff;
+    --simpeg-text: #171717;
+    --simpeg-muted: #737373;
+    --simpeg-subtle: #8a8a8a;
+    --simpeg-border: #e4e4e4;
+    --simpeg-track: #e5e5e5;
+    --simpeg-sidebar: #f3f3f2;
+    --simpeg-form-shell: #f7f7f6;
+    --simpeg-form-section: #ffffff;
+    --simpeg-hover-surface: #eeeeed;
+    --simpeg-hover-ink: #171717;
+    --simpeg-hover-border: #c7c7c7;
+    --simpeg-primary: #0878c9;
+    --simpeg-primary-hover: #0669b1;
+    --simpeg-primary-foreground: #ffffff;
+    --simpeg-primary-soft: rgb(8 120 201 / 0.10);
+    --simpeg-primary-border: rgb(8 120 201 / 0.32);
+    --simpeg-focus-ring: rgb(8 120 201 / 0.22);
+    --nora-nav-active: #f6b719;
+    --nora-nav-active-ink: #171717;
+    --primary: var(--simpeg-primary);
+    --primary-foreground: var(--simpeg-primary-foreground);
+    --background: var(--simpeg-canvas);
+    --foreground: var(--simpeg-text);
+    --card: var(--simpeg-card);
+    --card-foreground: var(--simpeg-text);
+    --popover: var(--simpeg-card);
+    --popover-foreground: var(--simpeg-text);
+    --secondary: var(--simpeg-form-shell);
+    --secondary-foreground: var(--simpeg-text);
+    --muted: var(--simpeg-form-shell);
+    --muted-foreground: var(--simpeg-muted);
+    --accent: var(--simpeg-hover-surface);
+    --accent-foreground: var(--simpeg-hover-ink);
+    --border: var(--simpeg-border);
+    --input: var(--simpeg-input);
+    --ring: var(--simpeg-focus-ring);
+}
+
+html.dark {
+    --simpeg-canvas: #080808;
+    --simpeg-canvas-mid: #080808;
+    --simpeg-canvas-end: #080808;
+    --simpeg-surface: #0b0b0b;
+    --simpeg-card: #0b0b0b;
+    --simpeg-card-soft: #101010;
+    --simpeg-header: #080808;
+    --simpeg-input: #0b0b0b;
+    --simpeg-text: #f2f2f2;
+    --simpeg-muted: #a5a5a5;
+    --simpeg-subtle: #858585;
+    --simpeg-border: #2a2a2a;
+    --simpeg-track: #292929;
+    --simpeg-sidebar: #171717;
+    --simpeg-form-shell: #111111;
+    --simpeg-form-section: #151515;
+    --simpeg-hover-surface: #202020;
+    --simpeg-hover-ink: #ffffff;
+    --simpeg-hover-border: #505050;
+    --simpeg-primary: #0878c9;
+    --simpeg-primary-hover: #1688dc;
+    --simpeg-primary-foreground: #ffffff;
+    --simpeg-primary-soft: rgb(8 120 201 / 0.16);
+    --simpeg-primary-border: rgb(8 120 201 / 0.46);
+    --simpeg-focus-ring: rgb(8 120 201 / 0.32);
+    --nora-nav-active: #f6b719;
+    --nora-nav-active-ink: #171717;
+}
+
+html[data-theme="corporate"] {
+    --simpeg-primary: #0878c9;
+    --simpeg-primary-hover: #0669b1;
+    --simpeg-primary-foreground: #ffffff;
+    --simpeg-primary-soft: rgb(8 120 201 / 0.10);
+    --simpeg-primary-border: rgb(8 120 201 / 0.32);
+    --simpeg-focus-ring: rgb(8 120 201 / 0.22);
+    --nora-nav-active: #f6b719;
+    --nora-nav-active-ink: #171717;
+}
+
+/* Shared application frame */
+.simpeg-app-canvas {
+    background: var(--simpeg-canvas) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-shell-frame,
+.simpeg-shell-content,
+.simpeg-main-shell {
+    background: var(--simpeg-surface) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-sidebar {
+    background: var(--simpeg-sidebar) !important;
+    border-color: var(--simpeg-border) !important;
+    box-shadow: none !important;
+}
+
+.simpeg-sidebar-brand-link,
+.simpeg-sidebar-profile {
+    border-color: var(--simpeg-border) !important;
+}
+
+.simpeg-sidebar-profile {
+    background: var(--simpeg-card-soft) !important;
+}
+
+.simpeg-sidebar-nav-link,
+.simpeg-sidebar-group-trigger,
+.simpeg-sidebar-logout {
+    border-radius: 0.55rem !important;
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-nav-link:hover,
+.simpeg-nav-group-link:hover,
+.simpeg-sidebar-nav-link:hover,
+.simpeg-sidebar-group-trigger:hover,
+.simpeg-sidebar-logout:hover {
+    background: var(--simpeg-hover-surface) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-nav-active,
+.simpeg-nav-active:hover {
+    background: var(--nora-nav-active) !important;
+    color: var(--nora-nav-active-ink) !important;
+    box-shadow: none !important;
+}
+
+.simpeg-nav-active-icon,
+.simpeg-nav-active:hover .simpeg-nav-active-icon {
+    color: var(--nora-nav-active-ink) !important;
+}
+
+.simpeg-nav-group-active {
+    background: color-mix(in srgb, var(--simpeg-hover-surface) 74%, transparent) !important;
+    color: var(--simpeg-text) !important;
+    box-shadow: inset 0 0 0 1px var(--simpeg-border) !important;
+}
+
+.simpeg-nav-group-active-icon {
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-header {
+    background: var(--simpeg-header) !important;
+    border-color: var(--simpeg-border) !important;
+    box-shadow: none !important;
+}
+
+.simpeg-header-context,
+.simpeg-sidebar-section-label,
+.simpeg-sidebar-nav-label,
+.simpeg-sidebar-group-label {
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-utility,
+.simpeg-theme-toggle,
+.simpeg-sidebar-collapse-toggle {
+    background: var(--simpeg-card-soft) !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+    box-shadow: none !important;
+}
+
+.simpeg-utility:hover,
+.simpeg-theme-toggle:hover,
+.simpeg-sidebar-collapse-toggle:hover {
+    background: var(--simpeg-hover-surface) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-search-trigger {
+    min-height: 2.75rem !important;
+    border-radius: 0.65rem !important;
+    background: var(--simpeg-card-soft) !important;
+    border-color: var(--simpeg-border) !important;
+    box-shadow: none !important;
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-search-trigger:hover,
+.simpeg-search-trigger:focus-visible {
+    background: var(--simpeg-hover-surface) !important;
+    border-color: var(--simpeg-hover-border) !important;
+    box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
+}
+
+/* Cards, filters, forms and tables */
+.simpeg-card,
+.simpeg-card-soft,
+.simpeg-form-card,
+.simpeg-filter-toolbar,
+.simpeg-shell-frame .rounded-2xl,
+.simpeg-shell-frame .rounded-3xl {
+    border-color: var(--simpeg-border) !important;
+    background: var(--simpeg-card) !important;
+    box-shadow: none !important;
+}
+
+.simpeg-input,
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+    border-color: var(--simpeg-border) !important;
+    background: var(--simpeg-input) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+    color: var(--simpeg-subtle) !important;
+}
+
+.simpeg-input:focus,
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--simpeg-primary-border) !important;
+    box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
+    outline: none !important;
+}
+
+.simpeg-menu-item:hover,
+.simpeg-menu-item:focus-visible,
+.simpeg-theme-option:hover,
+.simpeg-theme-option-active,
+.simpeg-combobox-option:hover,
+.simpeg-combobox-option-active {
+    background: var(--simpeg-hover-surface) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-notification-popover,
+.simpeg-account-menu,
+.simpeg-theme-menu,
+.simpeg-combobox-menu,
+.simpeg-search-dialog {
+    border-color: var(--simpeg-border) !important;
+    background: var(--simpeg-card) !important;
+    color: var(--simpeg-text) !important;
+    box-shadow: 0 18px 50px rgb(0 0 0 / 0.16) !important;
+}
+
+.simpeg-app-canvas table {
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-app-canvas table thead {
+    background: var(--simpeg-card-soft) !important;
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-app-canvas table th,
+.simpeg-app-canvas table td {
+    border-color: var(--simpeg-border) !important;
+}
+
+.simpeg-app-canvas table tbody tr:hover {
+    background: var(--simpeg-hover-surface) !important;
+}
+
+/* Primary actions keep the blue accent from the reference; secondary actions stay neutral. */
+.simpeg-primary,
+.simpeg-primary:hover:not(:disabled) {
+    background: var(--simpeg-primary) !important;
+    border-color: var(--simpeg-primary) !important;
+    color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-primary:hover:not(:disabled),
+.simpeg-app-canvas .simpeg-primary:hover:not(:disabled) {
+    background: var(--simpeg-primary-hover) !important;
+    border-color: var(--simpeg-primary-hover) !important;
+}
+
+.simpeg-ghost,
+.simpeg-app-canvas button[data-variant="outline"],
+.simpeg-app-canvas button[data-variant="ghost"] {
+    background: transparent !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-ghost:hover:not(:disabled),
+.simpeg-app-canvas button[data-variant="outline"]:hover:not(:disabled),
+.simpeg-app-canvas button[data-variant="ghost"]:hover:not(:disabled) {
+    background: var(--simpeg-hover-surface) !important;
+    border-color: var(--simpeg-hover-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+@media (max-width: 1023px) {
+    .simpeg-header {
+        background: var(--simpeg-header) !important;
+    }
+
+    .simpeg-sidebar {
+        box-shadow: 12px 0 30px rgb(0 0 0 / 0.08) !important;
+    }
+}
