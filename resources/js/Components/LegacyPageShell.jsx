@@ -35,6 +35,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../Componen
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../Components/ui/dropdown-menu';
 import { Input } from '../Components/ui/input';
 import LiveDateTime from './LiveDateTime';
+import ProfileAvatar from './ProfileAvatar';
 import ThemeToggle from './ThemeToggle';
 
 const navItem = (href, label, icon, options = {}) => ({ href, label, icon, permission: permissionForHref(href), ...options });
@@ -261,16 +262,6 @@ function NavigationGroup({ item, url, onNavigate, onExpandSidebar, depth, sideba
     );
 }
 
-function initials(name) {
-    return String(name || 'SIMPEG')
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join('')
-        .toUpperCase();
-}
-
 export default function LegacyPageShell({ title, children }) {
     const page = usePage();
     const { appConfig, auth, notificationSummary } = page.props;
@@ -436,7 +427,9 @@ export default function LegacyPageShell({ title, children }) {
 
                 <div className="simpeg-border mt-auto shrink-0 border-t pt-4">
                     <div className="simpeg-sidebar-profile mb-3 flex items-center gap-3 rounded-2xl bg-slate-100 p-3 dark:bg-slate-800">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-medium text-[#FAD873] dark:bg-slate-700">{initials(displayName)}</span>
+                        <span className="flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-900 text-xs font-medium text-[#FAD873] dark:bg-slate-700">
+                            <ProfileAvatar gender={user.jk} photoUrl={user.foto_url} alt={`Avatar ${displayName}`} />
+                        </span>
                         <div className="simpeg-sidebar-profile-details min-w-0">
                             <p className="simpeg-text truncate text-sm font-medium">{displayName}</p>
                             <p className="simpeg-muted truncate text-xs">{roleLabel}</p>
@@ -534,7 +527,9 @@ export default function LegacyPageShell({ title, children }) {
                                 <DropdownMenu open={profileOpen} onOpenChange={setProfileOpen}>
                                     <DropdownMenuTrigger asChild>
                                         <button type="button" className="simpeg-utility inline-flex min-h-11 max-w-[11rem] items-center gap-2 rounded-2xl border px-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#F5CE59]/70 sm:gap-3 sm:px-3">
-                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[0.625rem] font-medium text-[#FAD873] dark:bg-slate-700">{initials(displayName)}</span>
+                                            <span className="flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-900 text-[0.625rem] font-medium text-[#FAD873] dark:bg-slate-700">
+                                                <ProfileAvatar gender={user.jk} photoUrl={user.foto_url} alt={`Avatar ${displayName}`} />
+                                            </span>
                                             <span className="hidden min-w-0 text-left sm:block">
                                                 <span className="simpeg-text block truncate text-xs font-medium">{displayName}</span>
                                                 <span className="simpeg-muted block truncate text-xs">{roleLabel}</span>
@@ -559,7 +554,7 @@ export default function LegacyPageShell({ title, children }) {
                                                 Slip Gaji Saya
                                             </Link>
                                         </DropdownMenuItem>}
-                                        <DropdownMenuItem asChild className="simpeg-account-menu-logout text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40">
+                                        <DropdownMenuItem asChild className="simpeg-account-menu-logout text-rose-700 dark:text-rose-300">
                                             <Link href="/logout" method="post" as="button">
                                                 <LogOut className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                                                 Keluar

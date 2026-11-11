@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Legacy\TbConfig;
+use App\Models\Legacy\TbPegawai;
 use App\Services\ApplicationLogoService;
 use App\Services\NotificationService;
 use App\Services\RbacService;
@@ -21,20 +22,33 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $permissions = app(RbacService::class)->permissionsFor($request);
+        $authUser = [
+            ...$request->session()->only([
+                'id_user',
+                'nama_user',
+                'hak_akses',
+                'id_pegawai',
+                'kode_kantor',
+            ]),
+            'permissions' => $permissions,
+        ];
+
+        $employeeId = trim((string) ($authUser['id_pegawai'] ?? ''));
+        if ($employeeId !== '') {
+            $employee = TbPegawai::query()
+                ->where('id_peg', $employeeId)
+                ->first(['jk', 'foto']);
+
+            $authUser['jk'] = $employee?->jk;
+            $authUser['foto_url'] = $employee?->foto
+                ? route('employees.photo', ['filename' => $employee->foto])
+                : null;
+        }
 
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => [
-                    ...$request->session()->only([
-                        'id_user',
-                        'nama_user',
-                        'hak_akses',
-                        'id_pegawai',
-                        'kode_kantor',
-                    ]),
-                    'permissions' => $permissions,
-                ],
+                'user' => $authUser,
             ],
             'appConfig' => fn (): array => $this->applicationConfig(),
             'notificationSummary' => fn (): array => app(NotificationService::class)->summary(

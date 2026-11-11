@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import ProfileAvatar from '../../Components/ProfileAvatar';
 
 const tabs = [
     ['biodata', 'Biodata'],
@@ -10,14 +11,6 @@ const tabs = [
 
 function valueOrDash(value) {
     return value || '-';
-}
-
-function DefaultProfileAvatar({ className = '' }) {
-    return <svg viewBox="0 0 80 80" fill="none" role="img" aria-label="Foto profil belum tersedia" className={`h-full w-full ${className}`}>
-        <circle cx="40" cy="40" r="40" fill="currentColor" fillOpacity="0.08" />
-        <circle cx="40" cy="29" r="11" stroke="currentColor" strokeWidth="3.5" />
-        <path d="M20 66c2.6-11.3 10.2-17 20-17s17.4 5.7 20 17" stroke="currentColor" strokeLinecap="round" strokeWidth="3.5" />
-    </svg>;
 }
 
 function DataTable({ title, items = [], columns, empty = 'Belum ada data.', action = null, rowAction = null }) {
@@ -189,10 +182,7 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                 <section className="simpeg-profile-hero" aria-labelledby="profile-identity-title">
                     <div className="simpeg-profile-identity">
                         <div className="simpeg-profile-avatar">
-                            {employee.foto_url ? <>
-                                <img src={employee.foto_url} alt={`Foto ${employee.nama}`} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.classList.add('hidden'); event.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
-                                <DefaultProfileAvatar className="hidden p-5" />
-                            </> : <DefaultProfileAvatar className="p-5" />}
+                            <ProfileAvatar gender={employee.jk} photoUrl={employee.foto_url} alt={`Foto ${employee.nama}`} />
                         </div>
                         <div className="min-w-0">
                             <p className="simpeg-profile-identity-kicker">Pegawai aktif</p>
