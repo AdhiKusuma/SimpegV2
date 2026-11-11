@@ -72,7 +72,7 @@ export default function EmployeeForm({ mode, record }) {
     return (
         <LegacyPageShell title={`${isEdit ? 'Edit' : 'Tambah'} Data Pegawai`}>
             <Head title={`${isEdit ? 'Edit' : 'Tambah'} Data Pegawai`} />
-            <div className="mx-auto max-w-5xl">
+            <div className="w-full">
                 <div className="mb-6"><Link href={isEdit ? `/pegawai/${encodeURIComponent(record.id_peg)}` : '/pegawai'} className="text-sm font-bold text-blue-600 hover:text-blue-700">Kembali ke data pegawai</Link><p className="mb-2 mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Data Pegawai</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{isEdit ? 'Edit' : 'Tambah'} biodata pegawai</h1><p className="mt-2 text-slate-500">Lengkapi identitas, data pribadi, kontak, dan foto pegawai dalam satu template yang konsisten.</p></div>
 
                 <form onSubmit={submit} encType="multipart/form-data" className="simpeg-form-card simpeg-employee-form-card">
