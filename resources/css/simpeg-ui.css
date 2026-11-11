@@ -479,6 +479,24 @@ select:focus {
     margin-inline: auto !important;
 }
 
+/*
+ * Keep page-level forms and import screens aligned with the shared shell.
+ * Inner cards may still use their own max-width; only the outer page wrapper
+ * is normalized here so the page gutter stays consistent across modules.
+ */
+.simpeg-shell-content > main > :is(
+  .mx-auto.max-w-3xl,
+  .mx-auto.max-w-4xl,
+  .mx-auto.max-w-5xl,
+  .mx-auto.max-w-6xl,
+  .mx-auto.max-w-7xl,
+  .max-w-6xl:not(.mx-auto)
+) {
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
 .simpeg-header {
     min-height: 4.25rem !important;
     backdrop-filter: none !important;
