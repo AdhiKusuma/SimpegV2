@@ -6,13 +6,13 @@ export const LOGIN_APPEARANCE_STORAGE_KEY = 'simpeg-login-appearance';
 export const LOGIN_APPEARANCE_OPTIONS = [
     {
         value: 'split',
-        label: 'Panel informasi',
-        description: 'Form login dan informasi akses tampil berdampingan.',
+        label: 'Informasi',
+        description: 'Form login dan informasi sistem tampil berdampingan.',
     },
     {
         value: 'focus',
-        label: 'Fokus login',
-        description: 'Form login terpusat seperti tampilan sebelumnya.',
+        label: 'Minimalist',
+        description: 'Tampilan ringkas dengan fokus pada form login.',
     },
 ];
 
