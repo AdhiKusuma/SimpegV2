@@ -2,6 +2,7 @@ import { Children, cloneElement, createContext, useContext } from 'react';
 import { cn } from '../../lib/utils';
 
 const DropdownMenuContext = createContext(null);
+const dropdownMenuItemClassName = 'simpeg-menu-item flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold text-[var(--popover-foreground)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] focus-visible:bg-[var(--accent)] focus-visible:text-[var(--accent-foreground)] focus-visible:outline-none';
 
 export function DropdownMenu({ open, onOpenChange, children }) {
     return <DropdownMenuContext.Provider value={{ open, onOpenChange }}>{children}</DropdownMenuContext.Provider>;
@@ -19,7 +20,7 @@ export function DropdownMenuTrigger({ asChild = false, children, ...props }) {
         return cloneElement(child, { ...props, onClick: toggle, 'aria-expanded': context?.open, 'aria-haspopup': 'menu' });
     }
 
-    return <button type="button" {...props} onClick={toggle} aria-expanded={context?.open} aria-haspopup="menu">{children}</button>;
+    return <button data-slot="dropdown-menu-trigger" type="button" {...props} onClick={toggle} aria-expanded={context?.open} aria-haspopup="menu">{children}</button>;
 }
 
 export function DropdownMenuContent({ className, children, ...props }) {
@@ -29,7 +30,7 @@ export function DropdownMenuContent({ className, children, ...props }) {
         return null;
     }
 
-    return <div className={cn('simpeg-card z-40 rounded-xl border p-2 shadow-xl', className)} role="menu" {...props}>{children}</div>;
+    return <div data-slot="dropdown-menu-content" className={cn('simpeg-card z-40 rounded-xl border border-[var(--border)] bg-[var(--popover)] p-2 text-[var(--popover-foreground)] shadow-xl', className)} role="menu" {...props}>{children}</div>;
 }
 
 export function DropdownMenuItem({ asChild = false, className, children, ...props }) {
@@ -41,9 +42,9 @@ export function DropdownMenuItem({ asChild = false, className, children, ...prop
 
     if (asChild) {
         const child = Children.only(children);
-        return cloneElement(child, { ...props, className: cn('flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:hover:bg-slate-800', className, child.props.className), onClick: (event) => { child.props.onClick?.(event); close(event); }, role: 'menuitem' });
+        return cloneElement(child, { ...props, className: cn(dropdownMenuItemClassName, className, child.props.className), onClick: (event) => { child.props.onClick?.(event); close(event); }, role: 'menuitem' });
     }
 
-    return <button type="button" className={cn('flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:hover:bg-slate-800', className)} {...props} onClick={close} role="menuitem">{children}</button>;
+    return <button data-slot="dropdown-menu-item" type="button" className={cn(`${dropdownMenuItemClassName} w-full text-left`, className)} {...props} onClick={close} role="menuitem">{children}</button>;
 }
 

@@ -1,0 +1,35 @@
+/*
+ * Laravel Starter Kit / shadcn-compatible semantic tokens.
+ *
+ * Components consume these names instead of hard-coded palette utilities so
+ * light/dark theme changes stay consistent across the application. The
+ * existing SIMPEG tokens remain the single source of truth for the actual
+ * colors and are intentionally not replaced here.
+ */
+:root {
+    --background: var(--simpeg-canvas);
+    --foreground: var(--simpeg-text);
+    --card: var(--simpeg-card);
+    --card-foreground: var(--simpeg-text);
+    --popover: var(--simpeg-card);
+    --popover-foreground: var(--simpeg-text);
+    --primary: var(--simpeg-primary);
+    --primary-foreground: var(--simpeg-primary-foreground);
+    --secondary: var(--simpeg-surface);
+    --secondary-foreground: var(--simpeg-text);
+    --muted: var(--simpeg-form-shell);
+    --muted-foreground: var(--simpeg-muted);
+    --accent: var(--simpeg-hover-surface);
+    --accent-foreground: var(--simpeg-hover-ink);
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: var(--simpeg-border);
+    --input: var(--simpeg-input);
+    --ring: var(--simpeg-focus-ring);
+    --radius: 0.75rem;
+}
+
+html.dark {
+    --destructive: #f87171;
+    --destructive-foreground: #180a0a;
+}
