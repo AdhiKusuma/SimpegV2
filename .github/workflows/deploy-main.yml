@@ -1,12 +1,12 @@
-name: Deploy SIMPEG Refactor (dev)
+name: Deploy SIMPEG Refactor (main)
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: simpeg-refactor-dev-deploy
+  group: simpeg-refactor-main-deploy
   cancel-in-progress: false
 
 permissions:
@@ -16,7 +16,7 @@ env:
   DEPLOY_HOST: 10.0.2.2
   DEPLOY_USER: adi
   DEPLOY_APP_DIR: /www/wwwroot/devsimpeg.bkkjateng.co.id
-  DEPLOY_BRANCH: dev
+  DEPLOY_BRANCH: main
 
 jobs:
   deploy:

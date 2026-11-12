@@ -7,7 +7,7 @@ umask 027
 # This script is intentionally independent of the server's .env and database data.
 
 APP_DIR="${1:-${APP_DIR:-/www/wwwroot/devsimpeg.bkkjateng.co.id}}"
-BRANCH="${DEPLOY_BRANCH:-dev}"
+BRANCH="${DEPLOY_BRANCH:-main}"
 REPO_URL="${DEPLOY_REPO_URL:-https://github.com/AdhiKusuma/SimpegV2.git}"
 PHP_BIN="${PHP_BIN:-php}"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"

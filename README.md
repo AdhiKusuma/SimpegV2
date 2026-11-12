@@ -263,7 +263,7 @@ Jalankan perintah berikut di server melalui SSH, bukan di terminal Mac lokal. Ja
 
 ### Prasyarat server
 
-- PHP `8.4.1` atau lebih baru; branch `dev` saat ini mensyaratkan PHP `^8.4.1`. PHP `8.3.6` belum kompatibel.
+- PHP `8.4.1` atau lebih baru; branch `main` saat ini mensyaratkan PHP `^8.4.1`. PHP `8.3.6` belum kompatibel.
 - Extension PHP: `ctype`, `curl`, `dom`, `fileinfo`, `mbstring`, `openssl`, `pdo`, `pdo_mysql`, `session`, `tokenizer`, `xml`, dan `zip`.
 - Composer, Node.js/npm, Git, dan akses clone ke repository.
 - Database MySQL aktif dan `.env` server sudah berisi konfigurasi database yang benar.
@@ -284,13 +284,13 @@ Di server:
 
 ```bash
 cd /tmp
-git clone --branch dev --single-branch https://github.com/AdhiKusuma/SimpegV2.git simpegv2-deploy
+git clone --branch main --single-branch https://github.com/AdhiKusuma/SimpegV2.git simpegv2-deploy
 cd simpegv2-deploy
 
 # Ganti PHP_BIN dengan binary PHP 8.4 milik server aaPanel.
 APP_DIR=/www/wwwroot/devsimpeg.bkkjateng.co.id \
 PHP_BIN=/www/server/php/84/bin/php \
-DEPLOY_BRANCH=dev \
+DEPLOY_BRANCH=main \
 bash deploy/server-deploy.sh
 ```
 
@@ -331,12 +331,12 @@ php artisan route:cache
 php artisan view:cache
 ```
 
-### Otomasi pull dan deploy branch `dev`
+### Otomasi pull dan deploy branch `main`
 
-Repository menyediakan workflow `.github/workflows/deploy-dev.yml`. Setiap push ke branch `dev` akan:
+Repository menyediakan workflow `.github/workflows/deploy-main.yml`. Setiap push ke branch `main` akan:
 
 1. memvalidasi source dan lock file;
-2. mengambil commit branch `dev` di server;
+2. mengambil commit branch `main` di server;
 3. membuat release baru secara terpisah;
 4. menjalankan `composer install --no-dev`, `npm ci`, dan `npm run build`;
 5. menjalankan migration Laravel dengan `--force` tanpa perintah destruktif;
@@ -374,12 +374,12 @@ Tambahkan pada repository settings → Secrets and variables → Actions:
 - `DEPLOY_SSH_KEY`: private key khusus deploy, tanpa passphrase interaktif;
 - `DEPLOY_KNOWN_HOSTS`: output host key server yang sudah diverifikasi, bukan hasil `ssh-keyscan` tanpa pemeriksaan.
 
-Workflow menggunakan host `10.0.2.2`, user `adi`, path `/www/wwwroot/devsimpeg.bkkjateng.co.id`, dan branch `dev`. Jangan memasukkan password SSH atau database ke YAML. Jika runner berada langsung di server, SSH tetap harus menggunakan key khusus deploy dan user non-root.
+Workflow menggunakan host `10.0.2.2`, user `adi`, path `/www/wwwroot/devsimpeg.bkkjateng.co.id`, dan branch `main`. Jangan memasukkan password SSH atau database ke YAML. Jika runner berada langsung di server, SSH tetap harus menggunakan key khusus deploy dan user non-root.
 
 Push normal:
 
 ```bash
-git push origin dev
+git push origin main
 ```
 
 Untuk production, buat workflow terpisah dengan approval environment dan backup database wajib sebelum migration.
