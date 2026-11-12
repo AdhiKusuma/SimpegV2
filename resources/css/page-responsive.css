@@ -13,6 +13,10 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
+    .simpeg-config-logo-previews {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .simpeg-config-upload {
         border-top: 1px solid var(--simpeg-primary-border);
         border-left: 0;

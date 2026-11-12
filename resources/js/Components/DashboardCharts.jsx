@@ -30,8 +30,20 @@ function number(value) {
     return new Intl.NumberFormat('id-ID').format(Number(value) || 0);
 }
 
+function asList(value) {
+    if (Array.isArray(value)) {
+        return value;
+    }
+
+    if (value && typeof value === 'object') {
+        return Object.values(value);
+    }
+
+    return [];
+}
+
 function hasValues(values = []) {
-    return values.some((value) => Number(value) > 0);
+    return asList(values).some((value) => Number(value) > 0);
 }
 
 function ChartCard({ id, title, description, children, className = '', icon: Icon = Activity }) {
@@ -57,11 +69,13 @@ function EmptyData({ message = 'Belum ada data untuk ditampilkan.' }) {
 
 function DonutChart({ data }) {
     const total = Number(data?.total) || 0;
+    const labels = asList(data?.labels);
+    const values = asList(data?.values);
     const radius = 70;
     const circumference = 2 * Math.PI * radius;
     let offset = 0;
 
-    const segments = (data?.values || []).map((value, index) => {
+    const segments = values.map((value, index) => {
         const length = total > 0 ? (Number(value) / total) * circumference : 0;
         const segment = { length, offset, color: chartColors[index] || 'var(--simpeg-chart-3)' };
         offset += length;
@@ -79,7 +93,7 @@ function DonutChart({ data }) {
                     <circle cx="100" cy="100" r={radius} fill="none" stroke="var(--simpeg-text)" strokeOpacity="0.12" strokeWidth="26" />
                     {segments.map((segment, index) => (
                         <circle
-                            key={`${data.labels[index]}-${segment.color}`}
+                            key={`${labels[index] || index}-${segment.color}`}
                             cx="100"
                             cy="100"
                             r={radius}
@@ -91,7 +105,7 @@ function DonutChart({ data }) {
                             strokeWidth="26"
                             transform="rotate(-90 100 100)"
                         >
-                            <title>{`${data.labels[index]}: ${number(data.values[index])} pegawai`}</title>
+                            <title>{`${labels[index] || '-'}: ${number(values[index])} pegawai`}</title>
                         </circle>
                     ))}
                     <text x="100" y="96" textAnchor="middle" className="fill-[#131822] text-[22px] font-medium">{number(total)}</text>
@@ -99,14 +113,14 @@ function DonutChart({ data }) {
                 </svg>
             </div>
             <div className="grid gap-2">
-                {data.labels.map((label, index) => (
+                {labels.map((label, index) => (
                     <div key={label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-[#131822]/10 bg-[#F7F5F0]/70 px-3 py-2.5">
                         <span className="flex min-w-0 items-center gap-3 text-sm text-[#131822]">
                             <span className="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: chartColors[index] || 'var(--simpeg-chart-3)' }} aria-hidden="true" />
                             <span className="min-w-0 truncate" title={label}>{label}</span>
                         </span>
                         <span className="whitespace-nowrap text-right text-sm font-medium tabular-nums text-[#131822]">
-                            {number(data.values[index])}
+                            {number(values[index])}
                             <span className="ml-1 text-xs font-normal text-[#131822]/60">pegawai</span>
                         </span>
                     </div>
@@ -117,16 +131,19 @@ function DonutChart({ data }) {
 }
 
 function HorizontalBars({ labels = [], values = [], emptyMessage, colors = chartColors }) {
-    if (!hasValues(values)) {
+    const safeLabels = asList(labels);
+    const safeValues = asList(values);
+
+    if (!hasValues(safeValues)) {
         return <EmptyData message={emptyMessage} />;
     }
 
-    const maximum = Math.max(...values.map((value) => Number(value) || 0), 1);
+    const maximum = Math.max(...safeValues.map((value) => Number(value) || 0), 1);
 
     return (
         <div className="space-y-4">
-            {labels.map((label, index) => {
-                const value = Number(values[index]) || 0;
+            {safeLabels.map((label, index) => {
+                const value = Number(safeValues[index]) || 0;
                 const width = value > 0 ? Math.max((value / maximum) * 100, 2) : 0;
 
                 return (
@@ -144,13 +161,16 @@ function HorizontalBars({ labels = [], values = [], emptyMessage, colors = chart
 }
 
 function VerticalBars({ labels = [], values = [], emptyMessage }) {
-    if (!hasValues(values)) {
+    const safeLabels = asList(labels);
+    const safeValues = asList(values);
+
+    if (!hasValues(safeValues)) {
         return <EmptyData message={emptyMessage} />;
     }
 
-    const data = labels.map((label, index) => ({
+    const data = safeLabels.map((label, index) => ({
         label,
-        value: Number(values[index]) || 0,
+        value: Number(safeValues[index]) || 0,
         fill: `var(--simpeg-status-bar-${(index % 4) + 1})`,
     }));
     const config = {
@@ -184,8 +204,8 @@ function VerticalBars({ labels = [], values = [], emptyMessage }) {
 }
 
 function TrendChart({ data }) {
-    const values = data?.values || [];
-    const labels = data?.labels || [];
+    const values = asList(data?.values);
+    const labels = asList(data?.labels);
 
     if (!hasValues(values)) {
         return <EmptyData message={`Belum ada pelanggaran tercatat pada tahun ${data?.year || ''}.`} />;
@@ -236,15 +256,16 @@ function SearchableTable({ rows, columns, searchPlaceholder, emptyMessage, input
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const pageSize = 5;
+    const normalizedRows = useMemo(() => asList(rows), [rows]);
 
     const filteredRows = useMemo(() => {
         const query = search.trim().toLowerCase();
         if (!query) {
-            return rows;
+            return normalizedRows;
         }
 
-        return rows.filter((row) => columns.some((column) => String(row[column.key] ?? '').toLowerCase().includes(query)));
-    }, [columns, rows, search]);
+        return normalizedRows.filter((row) => columns.some((column) => String(row[column.key] ?? '').toLowerCase().includes(query)));
+    }, [columns, normalizedRows, search]);
 
     const pageCount = Math.max(Math.ceil(filteredRows.length / pageSize), 1);
     const currentPage = Math.min(page, pageCount);
@@ -254,7 +275,7 @@ function SearchableTable({ rows, columns, searchPlaceholder, emptyMessage, input
         setPage(1);
     }, [search]);
 
-    if (rows.length === 0) {
+    if (normalizedRows.length === 0) {
         return <EmptyData message={emptyMessage} />;
     }
 
@@ -341,6 +362,8 @@ function PositionAvailabilityTable({ title, description, rows, searchId }) {
 }
 
 export function DashboardCharts({ charts = {}, retirement = [], executivePositions = [], structuralPositions = [], year }) {
+    const positions = asList(charts.positions);
+
     return (
         <div className="space-y-6">
             <section className="grid min-w-0 gap-6 lg:grid-cols-12" aria-label="Komposisi pegawai">
@@ -362,9 +385,9 @@ export function DashboardCharts({ charts = {}, retirement = [], executivePositio
             </section>
 
             <ChartCard id="position-chart-title" title="Statistik Kepegawaian" description="Jumlah pegawai aktif berdasarkan jabatan aktif saat ini." className="lg:col-span-12" icon={BriefcaseBusiness}>
-                {charts.positions?.length ? (
+                {positions.length ? (
                     <div className="max-h-[30rem] overflow-y-auto pr-1">
-                        <HorizontalBars labels={charts.positions.map((item) => item.label)} values={charts.positions.map((item) => item.value)} emptyMessage="Belum ada statistik jabatan pegawai aktif." colors={['var(--simpeg-chart-1)']} />
+                        <HorizontalBars labels={positions.map((item) => item.label)} values={positions.map((item) => item.value)} emptyMessage="Belum ada statistik jabatan pegawai aktif." colors={['var(--simpeg-chart-1)']} />
                     </div>
                 ) : <EmptyData message="Belum ada statistik jabatan pegawai aktif." />}
             </ChartCard>

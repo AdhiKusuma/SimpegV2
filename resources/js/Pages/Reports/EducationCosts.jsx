@@ -22,6 +22,7 @@ export default function EducationCosts({ rows, years, filters, totals }) {
 
     return (
         <LegacyPageShell title="Rekapitulasi Biaya Pendidikan">
+            <div className="simpeg-report-page">
             <Head title="Rekapitulasi Biaya Pendidikan" />
             <div className="mb-6">
                 <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Pengembangan Pegawai</p>
@@ -67,6 +68,7 @@ export default function EducationCosts({ rows, years, filters, totals }) {
                     </table>
                 </div>
             </section>
+            </div>
         </LegacyPageShell>
     );
 }

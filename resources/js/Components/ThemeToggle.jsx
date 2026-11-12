@@ -1,28 +1,35 @@
-import { Moon, Palette, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export const THEME_STORAGE_KEY = 'simpeg-theme';
+export const THEME_PREFERENCE_KEY = 'simpeg-theme-explicit-choice-v1';
+export const DEFAULT_THEME = 'dark';
 
 export const THEME_OPTIONS = [
     { value: 'light', label: 'Terang', swatches: ['#ffffff', '#d7dde5'] },
-    { value: 'dark', label: 'Gelap', swatches: ['#111827', '#6366f1'] },
-    { value: 'corporate', label: 'Korporat', swatches: ['#ffffff', '#4f46e5'] },
+    { value: 'dark', label: 'Gelap', swatches: ['#080808', '#f5f5f5'] },
 ];
 
 const THEME_VALUES = new Set(THEME_OPTIONS.map((option) => option.value));
 
 export function resolveTheme() {
     if (typeof window === 'undefined') {
-        return 'light';
+        return DEFAULT_THEME;
     }
 
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const hasUserChoice = window.localStorage.getItem(THEME_PREFERENCE_KEY) === '1';
 
-    if (THEME_VALUES.has(stored)) {
+    if (THEME_VALUES.has(stored) && hasUserChoice) {
         return stored;
     }
 
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // Remove the retired theme from existing browser sessions.
+    if (stored === 'corporate') {
+        window.localStorage.removeItem(THEME_STORAGE_KEY);
+    }
+
+    return DEFAULT_THEME;
 }
 
 export function applyTheme(theme) {
@@ -30,7 +37,7 @@ export function applyTheme(theme) {
         return;
     }
 
-    const nextTheme = THEME_VALUES.has(theme) ? theme : 'light';
+    const nextTheme = THEME_VALUES.has(theme) ? theme : DEFAULT_THEME;
 
     document.documentElement.classList.toggle('dark', nextTheme === 'dark');
     document.documentElement.dataset.theme = nextTheme;
@@ -76,6 +83,7 @@ export default function ThemeToggle({ className = '' }) {
     function selectTheme(nextTheme) {
         setTheme(nextTheme);
         window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+        window.localStorage.setItem(THEME_PREFERENCE_KEY, '1');
         applyTheme(nextTheme);
         setMenuOpen(false);
     }
@@ -94,7 +102,7 @@ export default function ThemeToggle({ className = '' }) {
                 aria-expanded={menuOpen}
                 aria-haspopup="menu"
             >
-                {theme === 'dark' ? <Sun className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : theme === 'corporate' ? <Palette className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <Moon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
+                {theme === 'dark' ? <Moon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <Sun className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
             </button>
 
             {menuOpen && <div className="simpeg-theme-menu absolute right-0 top-[calc(100%+0.5rem)] z-50 w-52 rounded-2xl border p-2 shadow-2xl" role="menu" aria-label="Pilih tema aplikasi">

@@ -88,3 +88,168 @@
         min-height: 3rem;
     }
 }
+
+/*
+ * Report pages use the same neutral starter-kit surface language as the
+ * rest of the application. The existing utility classes remain in place so
+ * the report logic and responsive behaviour are unchanged; these scoped
+ * rules only normalize their visual tokens in light and dark mode.
+ */
+.simpeg-report-page {
+    color: var(--simpeg-text);
+}
+
+.simpeg-report-page :is(
+    section[class*="bg-white"],
+    section[class*="bg-slate-50"],
+    section[class*="bg-slate-100"],
+    section.simpeg-card,
+    section.simpeg-condition-filter,
+    section.simpeg-formation-filter
+) {
+    background-color: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text);
+}
+
+.simpeg-report-page :is(
+    thead,
+    tfoot,
+    tr[class*="bg-slate-50"],
+    tr[class*="bg-slate-100"],
+    tr.simpeg-card-soft
+) {
+    background-color: var(--simpeg-card-soft) !important;
+    border-color: var(--simpeg-border) !important;
+}
+
+.simpeg-report-page :is(
+    table,
+    th,
+    td,
+    [class*="border-slate-100"],
+    [class*="border-slate-200"],
+    [class*="border-slate-300"]
+) {
+    border-color: var(--simpeg-border) !important;
+}
+
+.simpeg-report-page :is(
+    [class*="text-slate-900"],
+    [class*="text-slate-800"],
+    [class*="text-slate-700"]
+) {
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-report-page :is(
+    [class*="text-slate-600"],
+    [class*="text-slate-500"]
+) {
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-report-page :is([class*="text-slate-400"], [class*="text-slate-300"]) {
+    color: var(--simpeg-subtle) !important;
+}
+
+.simpeg-report-page :is(
+    [class*="text-blue-600"],
+    [class*="text-blue-700"],
+    [class*="text-indigo-600"],
+    [class*="text-indigo-700"]
+) {
+    color: var(--simpeg-primary) !important;
+}
+
+.simpeg-report-page :is(
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    a[href*="/export"]:not([href*="type=pdf"])
+) {
+    background-color: var(--simpeg-primary) !important;
+    border-color: var(--simpeg-primary) !important;
+    color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-report-page :is(
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    a[href*="/export"]:not([href*="type=pdf"])
+):hover:not(:disabled) {
+    background-color: var(--simpeg-primary-hover) !important;
+    border-color: var(--simpeg-primary-hover) !important;
+    color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-report-page a[href*="/export"][href*="type=pdf"] {
+    background-color: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-report-page a[href*="/export"][href*="type=pdf"]:hover {
+    background-color: var(--simpeg-hover-surface) !important;
+    border-color: var(--simpeg-hover-border) !important;
+    color: var(--simpeg-hover-ink) !important;
+}
+
+.simpeg-report-page :is(
+    tr[class*="hover:bg-slate-50"],
+    tr[class*="hover:bg-slate-100"]
+):hover {
+    background-color: var(--simpeg-hover-surface) !important;
+    color: var(--simpeg-hover-ink) !important;
+}
+
+.simpeg-report-page .simpeg-report-pagination {
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-muted) !important;
+}
+
+.simpeg-report-page .simpeg-report-pagination a {
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-report-page .simpeg-report-pagination a:hover {
+    background-color: var(--simpeg-hover-surface) !important;
+    border-color: var(--simpeg-hover-border) !important;
+    color: var(--simpeg-hover-ink) !important;
+}
+
+.simpeg-report-page .simpeg-report-pagination a.border-blue-600.bg-blue-600,
+.simpeg-report-page .simpeg-report-pagination a[class*="bg-blue-600"] {
+    background-color: var(--simpeg-primary) !important;
+    border-color: var(--simpeg-primary) !important;
+    color: var(--simpeg-primary-foreground) !important;
+}
+
+.simpeg-report-page .simpeg-report-dialog {
+    background-color: var(--simpeg-card) !important;
+    color: var(--simpeg-text);
+}
+
+.simpeg-report-page .simpeg-report-dialog :is(
+    [class*="border-slate-200"],
+    [class*="border-slate-300"]
+) {
+    border-color: var(--simpeg-border) !important;
+}
+
+.simpeg-report-page .simpeg-report-dialog :is(
+    button[class*="border-slate-"],
+    button[class*="text-slate-"]
+) {
+    background-color: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+.simpeg-report-page .simpeg-report-dialog :is(
+    button[class*="border-slate-"]
+):hover {
+    background-color: var(--simpeg-hover-surface) !important;
+    border-color: var(--simpeg-hover-border) !important;
+    color: var(--simpeg-hover-ink) !important;
+}

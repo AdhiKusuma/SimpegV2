@@ -12,6 +12,7 @@ use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbPendidikan;
 use App\Models\Legacy\TbSertifikasi;
 use App\Models\Legacy\TbSuamiIstri;
+use App\Services\ImportPreviewService;
 use App\Services\XlsxExportService;
 use App\Services\XlsxImportService;
 use Carbon\Carbon;
@@ -102,55 +103,36 @@ class DataImportExportController extends Controller
         ]);
     }
 
-    public function preview(Request $request, string $resource, ?string $type = null): JsonResponse
+    public function preview(Request $request, ImportPreviewService $previewStore, string $resource, ?string $type = null): JsonResponse
     {
         [$resource, $type] = $this->routeResourceAndType($request, $resource, $type);
         $this->ensureAdmin($request);
         $type = $this->canonicalFamilyType($resource, $type);
         $config = $this->resourceConfig($resource, $type);
         $request->validate(['file_excel' => ['required', 'file', 'mimes:xlsx', 'max:5120']]);
-        $rows = $this->xlsxImport->rows($request->file('file_excel')->getRealPath());
-
-        if (count($rows) < 2) {
-            throw ValidationException::withMessages(['file_excel' => 'File import harus memiliki header dan minimal satu baris data.']);
-        }
-
-        $header = array_shift($rows);
-        $indexes = $this->headerIndexes($header, $config['columns'], $resource, $type);
-        $employees = $this->activeEmployeeIds();
-        $prepared = [];
-
-        foreach ($rows as $index => $row) {
-            if (count(array_filter($row, fn ($value): bool => trim((string) $value) !== '')) === 0) {
-                continue;
-            }
-
-            $data = [];
-            foreach (array_keys($config['columns']) as $field) {
-                $data[$field] = trim((string) ($row[$indexes[$field]] ?? ''));
-            }
-
-            $data['id_peg'] = $this->resolveEmployeeId($data['id_peg'], $employees);
-            $errors = $this->validateImportRow($resource, $type, $data, $employees);
-            $existing = $this->findExisting($resource, $type, $data);
-            $prepared[] = [
-                'row_number' => $index + 2,
-                'status' => $errors === [] ? ($existing ? 'Update data' : 'Data baru') : 'Perlu diperiksa',
-                'errors' => $errors,
-                'values' => array_values($data),
-                'data' => $data,
-            ];
-        }
+        $file = $request->file('file_excel');
+        $prepared = $this->parseGenericImport($file->getRealPath(), $config, $resource, $type);
 
         $invalid = collect($prepared)->filter(fn (array $row): bool => $row['errors'] !== [])->count();
 
-        return response()->json([
+        $result = [
             'columns' => array_values($config['columns']),
             'rows' => $prepared,
             'preview' => array_slice($prepared, 0, 25),
             'total' => count($prepared),
             'invalid_count' => $invalid,
-        ]);
+        ];
+        if ($prepared !== [] && $invalid === 0) {
+            $result['token'] = $previewStore->create(
+                $request,
+                'data_import_previews',
+                'data-import-previews',
+                $file,
+                ['resource' => $resource, 'type' => $type],
+            );
+        }
+
+        return response()->json($result);
     }
 
     public function template(Request $request, string $resource, XlsxExportService $xlsxExport, ?string $type = null): StreamedResponse
@@ -235,41 +217,41 @@ class DataImportExportController extends Controller
         ];
     }
 
-    public function store(Request $request, string $resource, ?string $type = null): RedirectResponse
+    public function store(Request $request, ImportPreviewService $previewStore, string $resource, ?string $type = null): RedirectResponse
     {
         [$resource, $type] = $this->routeResourceAndType($request, $resource, $type);
         $this->ensureAdmin($request);
         $type = $this->canonicalFamilyType($resource, $type);
         $config = $this->resourceConfig($resource, $type);
-        $validated = $request->validate(['data_rows' => ['required', 'string', 'max:5000000']]);
-        $rows = json_decode($validated['data_rows'], true);
+        $validated = $request->validate(['preview_token' => ['required', 'uuid']]);
+        $preview = $previewStore->resolve($request, 'data_import_previews', $validated['preview_token']);
+        abort_unless(
+            $preview !== null
+            && (string) ($preview['resource'] ?? '') === $resource
+            && (string) ($preview['type'] ?? '') === (string) $type,
+            422,
+            'Preview import tidak berlaku. Unggah kembali file untuk melanjutkan.',
+        );
 
-        if (! is_array($rows) || $rows === []) {
-            throw ValidationException::withMessages(['data_rows' => 'Data preview import tidak valid. Silakan unggah ulang file.']);
-        }
-
-        $employees = $this->activeEmployeeIds();
+        $rows = $this->parseGenericImport($preview['full_path'], $config, $resource, $type);
         $errors = [];
         foreach ($rows as $row) {
-            $data = (array) ($row['data'] ?? []);
-            $data['id_peg'] = $this->resolveEmployeeId($data['id_peg'] ?? '', $employees);
-            $rowErrors = $this->validateImportRow($resource, $type, $data, $employees);
+            $rowErrors = $row['errors'];
             if ($rowErrors !== []) {
                 $errors[] = 'Baris '.((int) ($row['row_number'] ?? 0)).': '.implode('; ', $rowErrors);
             }
         }
 
         if ($errors !== []) {
-            throw ValidationException::withMessages(['data_rows' => 'Import dibatalkan karena ada data tidak valid. '.implode(' ', array_slice($errors, 0, 5))]);
+            throw ValidationException::withMessages(['preview_token' => 'Import dibatalkan karena ada data tidak valid. '.implode(' ', array_slice($errors, 0, 5))]);
         }
 
         $summary = ['inserted' => 0, 'updated' => 0];
         $actor = $request->session()->get('id_user', $request->session()->get('nama_user', 'Admin'));
 
-        DB::transaction(function () use ($resource, $type, $rows, $actor, $employees, &$summary): void {
+        DB::transaction(function () use ($resource, $type, $rows, $actor, &$summary): void {
             foreach ($rows as $row) {
-                $data = (array) ($row['data'] ?? []);
-                $data['id_peg'] = $this->resolveEmployeeId($data['id_peg'] ?? '', $employees);
+                $data = $row['data'];
                 $record = $this->findExisting($resource, $type, $data);
                 $payload = $this->payloadForImport($resource, $type, $data, $actor);
 
@@ -287,11 +269,50 @@ class DataImportExportController extends Controller
             }
         });
 
+        $previewStore->consume($request, 'data_import_previews', $validated['preview_token']);
+
         if ($resource === 'family') {
             return to_route('family.index', ['type' => $this->localizedFamilyType($type)])->with('success', "Import {$config['label']} selesai. Data baru: {$summary['inserted']}, diperbarui: {$summary['updated']}.");
         }
 
         return to_route($config['backRoute'])->with('success', "Import {$config['label']} selesai. Data baru: {$summary['inserted']}, diperbarui: {$summary['updated']}.");
+    }
+
+    private function parseGenericImport(string $path, array $config, string $resource, ?string $type): array
+    {
+        $rows = $this->xlsxImport->rows($path);
+        if (count($rows) < 2) {
+            throw ValidationException::withMessages(['file_excel' => 'File import harus memiliki header dan minimal satu baris data.']);
+        }
+
+        $header = array_shift($rows);
+        $indexes = $this->headerIndexes($header, $config['columns'], $resource, $type);
+        $employees = $this->activeEmployeeIds();
+        $prepared = [];
+
+        foreach ($rows as $index => $row) {
+            if (count(array_filter($row, fn ($value): bool => trim((string) $value) !== '')) === 0) {
+                continue;
+            }
+
+            $data = [];
+            foreach (array_keys($config['columns']) as $field) {
+                $data[$field] = trim((string) ($row[$indexes[$field]] ?? ''));
+            }
+
+            $data['id_peg'] = $this->resolveEmployeeId($data['id_peg'], $employees);
+            $errors = $this->validateImportRow($resource, $type, $data, $employees);
+            $existing = $this->findExisting($resource, $type, $data);
+            $prepared[] = [
+                'row_number' => $index + 2,
+                'status' => $errors === [] ? ($existing ? 'Update data' : 'Data baru') : 'Perlu diperiksa',
+                'errors' => $errors,
+                'values' => array_values($data),
+                'data' => $data,
+            ];
+        }
+
+        return $prepared;
     }
 
     public function exportFamily(Request $request, string $type, XlsxExportService $xlsxExport): StreamedResponse
@@ -406,6 +427,12 @@ class DataImportExportController extends Controller
                 default => [10, 12],
             };
             $query->whereBetween(DB::raw('MONTH(b.tgl_pengembangan_sdm)'), [$startMonth, $endMonth]);
+        }
+        if ($request->filled('kode_pengembangan')) {
+            $query->where('b.kode_pengembangan', $request->string('kode_pengembangan')->trim()->value());
+        }
+        if ($request->filled('kode_pihak')) {
+            $query->where('b.kode_pihak', $request->string('kode_pihak')->trim()->value());
         }
         if ($request->filled('search')) {
             $like = '%'.$request->string('search')->trim().'%';

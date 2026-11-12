@@ -14,7 +14,9 @@
         th, td { border: 1px solid #cbd5e1; padding: 5px; vertical-align: middle; }
         th { background: #1e293b; color: white; text-align: left; }
         th.center, td.center { text-align: center; }
+        td.right { text-align: right; }
         tbody tr.category td { background: #e2e8f0; font-weight: 700; }
+        tbody tr.subtotal td { background: #dbeafe; font-weight: 700; }
         tbody tr:nth-child(even):not(.category) td { background: #f8fafc; }
         @media print { button { display: none; } }
     </style>
@@ -59,6 +61,14 @@
             @empty
                 <tr><td></td><td colspan="{{ count($ranges) + 1 }}"><em>Tidak ada data</em></td></tr>
             @endforelse
+            @php($subtotal = $subtotals[$category['key']])
+            <tr class="subtotal">
+                <td colspan="2" class="right">SUBTOTAL {{ $category['label'] }}</td>
+                @foreach ($ranges as $range)
+                    <td class="center">{{ $subtotal[$range] ?: '-' }}</td>
+                @endforeach
+                <td class="center">{{ $subtotal['total'] ?: '-' }}</td>
+            </tr>
         @endforeach
         </tbody>
     </table>

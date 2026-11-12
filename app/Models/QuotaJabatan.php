@@ -11,6 +11,7 @@ class QuotaJabatan extends Model
     protected $fillable = [
         'kode_cabang',
         'jabatan_id',
+        'nama_jabatan',
         'kuota_pegawai',
     ];
 

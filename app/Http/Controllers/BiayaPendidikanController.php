@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbBiayaPendidikan;
 use App\Models\Legacy\TbRecycleBin;
+use App\Services\ImportPreviewService;
 use App\Services\XlsxExportService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,6 +26,8 @@ class BiayaPendidikanController extends Controller
 
         $year = $request->string('tahun')->trim()->value();
         $quarter = $request->string('kuartal')->trim()->value();
+        $category = $request->string('kode_pengembangan')->trim()->value();
+        $party = $request->string('kode_pihak')->trim()->value();
         $search = $request->string('search')->trim()->value();
 
         $participantStats = DB::table('tb_diklat')
@@ -50,6 +53,8 @@ class BiayaPendidikanController extends Controller
 
                 $builder->whereBetween(DB::raw('MONTH(b.tgl_pengembangan_sdm)'), [$startMonth, $endMonth]);
             })
+            ->when($category !== '', fn (Builder $builder) => $builder->where('b.kode_pengembangan', $category))
+            ->when($party !== '', fn (Builder $builder) => $builder->where('b.kode_pihak', $party))
             ->when($search !== '', function (Builder $builder) use ($search): void {
                 $like = "%{$search}%";
                 $builder->where(function (Builder $scope) use ($like): void {
@@ -71,9 +76,12 @@ class BiayaPendidikanController extends Controller
         return Inertia::render('BiayaPendidikan/Index', [
             'items' => $items,
             'years' => $this->years(),
+            ...$this->referenceData(),
             'filters' => [
                 'tahun' => $year,
                 'kuartal' => in_array($quarter, ['1', '2', '3', '4'], true) ? $quarter : '',
+                'kode_pengembangan' => $category,
+                'kode_pihak' => $party,
                 'search' => $search,
             ],
             'canManage' => $this->canManage($request),
@@ -165,11 +173,11 @@ class BiayaPendidikanController extends Controller
 
         return Inertia::render('BiayaPendidikan/Import', [
             'preview' => null,
-            'rawRows' => null,
+            'previewToken' => null,
         ]);
     }
 
-    public function previewImport(Request $request): Response
+    public function previewImport(Request $request, ImportPreviewService $previewStore): Response
     {
         $this->ensureCanManage($request);
         $file = $this->validatedImportFile($request);
@@ -180,22 +188,35 @@ class BiayaPendidikanController extends Controller
         }
 
         $this->validateImportHeader(array_shift($rows) ?: []);
+        $previewRows = array_map(fn (array $row): array => $this->previewRow($row), $rows);
+        $previewToken = null;
+        if ($previewRows !== [] && ! collect($previewRows)->contains(fn (array $row): bool => $row['errors'] !== [])) {
+            $previewToken = $previewStore->create(
+                $request,
+                'biaya_pendidikan_import_previews',
+                'biaya-pendidikan-import-previews',
+                $file,
+            );
+        }
 
         return Inertia::render('BiayaPendidikan/Import', [
-            'preview' => array_map(fn (array $row): array => $this->previewRow($row), array_slice($rows, 0, 15)),
-            'rawRows' => $rows,
+            'preview' => array_slice($previewRows, 0, 15),
+            'previewToken' => $previewToken,
         ]);
     }
 
-    public function importRows(Request $request): RedirectResponse
+    public function importRows(Request $request, ImportPreviewService $previewStore): RedirectResponse
     {
         $this->ensureCanManage($request);
-        $validated = $request->validate(['data_rows' => ['required', 'string', 'max:5000000']]);
-        $rows = json_decode($validated['data_rows'], true);
+        $validated = $request->validate(['preview_token' => ['required', 'uuid']]);
+        $preview = $previewStore->resolve($request, 'biaya_pendidikan_import_previews', $validated['preview_token']);
+        abort_unless($preview !== null, 422, 'Preview import tidak berlaku. Unggah kembali file kegiatan diklat untuk melanjutkan.');
 
-        if (! is_array($rows) || $rows === []) {
-            throw ValidationException::withMessages(['data_rows' => 'Data preview import tidak valid. Silakan unggah ulang file.']);
+        $rows = $this->readImportRows($preview['full_path'], 'xlsx');
+        if (count($rows) < 2) {
+            throw ValidationException::withMessages(['preview_token' => 'File preview tidak lagi memiliki data. Unggah ulang file.']);
         }
+        $this->validateImportHeader(array_shift($rows) ?: []);
 
         $rowErrors = [];
         foreach ($rows as $index => $row) {
@@ -206,7 +227,7 @@ class BiayaPendidikanController extends Controller
         }
 
         if ($rowErrors !== []) {
-            throw ValidationException::withMessages(['data_rows' => implode(' ', $rowErrors)]);
+            throw ValidationException::withMessages(['preview_token' => implode(' ', $rowErrors)]);
         }
 
         $summary = ['inserted' => 0, 'updated' => 0, 'skipped' => 0];
@@ -217,6 +238,8 @@ class BiayaPendidikanController extends Controller
                 $this->saveImportRow($row, $actor, $summary);
             }
         });
+
+        $previewStore->consume($request, 'biaya_pendidikan_import_previews', $validated['preview_token']);
 
         return to_route('biaya-pendidikan.index')->with(
             'success',
@@ -326,7 +349,7 @@ class BiayaPendidikanController extends Controller
             'pihak_pelaksana' => ['nullable', 'string', 'max:255'],
             'waktu_pelaksanaan' => ['nullable', 'string', 'max:100'],
             'jumlah_sdm' => ['required', 'integer', 'min:1'],
-            'total_biaya' => ['nullable', 'string', 'max:32'],
+            'total_biaya' => ['nullable', 'string', 'max:32', 'regex:/^\d+$/'],
             'tgl_pengembangan_sdm' => ['required', 'date'],
         ]);
 

@@ -4,7 +4,7 @@ import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
 
-export default function Condition({ ranges, counts, categories, offices, filters, year }) {
+export default function Condition({ ranges, counts, categories, subtotals, offices, filters, year }) {
     function submit(event) {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -16,6 +16,7 @@ export default function Condition({ ranges, counts, categories, offices, filters
 
     return (
         <LegacyPageShell title="Laporan Keadaan Pegawai">
+            <div className="simpeg-report-page">
             <Head title="Laporan Keadaan Pegawai" />
             <div className="mb-6">
                 <p className="simpeg-muted mb-2 text-sm font-semibold uppercase tracking-[0.18em]">Laporan Kepegawaian</p>
@@ -57,11 +58,17 @@ export default function Condition({ ranges, counts, categories, offices, filters
                                     const total = values.reduce((sum, value) => sum + value, 0);
                                     return <tr key={`${category.key}-${sub}`} className="simpeg-text align-top transition hover:bg-[var(--simpeg-card-soft)]"><td className="px-5 py-4"></td><td className="simpeg-muted px-5 py-4 pl-8 text-sm">{sub}</td>{values.map((value, index) => <td key={`${sub}-${ranges[index]}`} className="px-5 py-4 text-center text-sm">{value || <span className="simpeg-subtle">-</span>}</td>)}<td className="px-5 py-4 text-center text-sm font-bold">{total || '-'}</td></tr>;
                                 })}
+                                <tr key={`${category.key}-subtotal`} className="simpeg-card-soft simpeg-text font-extrabold">
+                                    <td colSpan={2} className="px-5 py-4 text-right uppercase tracking-wide">Subtotal</td>
+                                    {ranges.map((range) => <td key={`${category.key}-subtotal-${range}`} className="px-5 py-4 text-center">{Number(subtotals?.[category.key]?.[range] || 0) || <span className="simpeg-subtle">-</span>}</td>)}
+                                    <td className="px-5 py-4 text-center">{Number(subtotals?.[category.key]?.total || 0) || '-'}</td>
+                                </tr>
                             </Fragment>)}
                         </tbody>
                     </table>
                 </div>
             </section>
+            </div>
         </LegacyPageShell>
     );
 }

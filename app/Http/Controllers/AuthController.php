@@ -17,6 +17,8 @@ use Inertia\Response;
 class AuthController extends Controller
 {
     private const AUTH_MARKER_COOKIE = 'simpeg-authenticated';
+    private const REMEMBER_COOKIE = 'simpeg-remember';
+    private const REMEMBER_LIFETIME_MINUTES = 60 * 24 * 30;
 
     public function __construct(private readonly SsoClient $ssoClient) {}
 
@@ -24,6 +26,13 @@ class AuthController extends Controller
     {
         if ($request->session()->has('id_user')) {
             return redirect()->route('dashboard');
+        }
+
+        $rememberedRole = $this->restoreRememberedSession($request);
+        if ($rememberedRole !== null) {
+            return $rememberedRole === 'user'
+                ? redirect()->route('profile')
+                : redirect()->route('dashboard');
         }
 
         return Inertia::render('Auth/Login', [
@@ -36,6 +45,7 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'id_user' => ['required', 'string', 'max:64'],
             'password' => ['required', 'string'],
+            'remember' => ['sometimes', 'boolean'],
         ]);
 
         $loginInput = trim($credentials['id_user']);
@@ -97,6 +107,37 @@ class AuthController extends Controller
             $this->upgradePasswordHash($user, $credentials['password']);
         }
 
+        $this->establishSession($request, $user, $role, $ssoToken, $ssoProfile);
+
+        $request->session()->flash('welcome', true);
+
+        $response = match ($role) {
+            'kepala' => redirect()->route('dashboard'),
+            'user' => redirect()->route('profile'),
+            'admin', 'superadmin' => redirect()->route('dashboard'),
+            default => redirect()->route('login'),
+        };
+
+        return $response->withCookie(cookie(
+            self::AUTH_MARKER_COOKIE,
+            '1',
+            60 * 24 * 365,
+            config('session.path', '/'),
+            config('session.domain'),
+            (bool) config('session.secure', false),
+            (bool) config('session.http_only', true),
+            false,
+            config('session.same_site', 'lax'),
+        ))->withCookie($this->rememberCookie($user, (bool) ($credentials['remember'] ?? false)));
+    }
+
+    private function establishSession(
+        Request $request,
+        TbUser $user,
+        string $role,
+        ?string $ssoToken = null,
+        ?array $ssoProfile = null,
+    ): void {
         $request->session()->regenerate();
 
         $sessionData = [
@@ -119,27 +160,93 @@ class AuthController extends Controller
                 ->where('status_jab', 'Aktif')
                 ->value('unit_kerja') ?? '-');
         }
+    }
 
-        $request->session()->flash('welcome', true);
+    private function restoreRememberedSession(Request $request): ?string
+    {
+        $cookieValue = $request->cookie(self::REMEMBER_COOKIE);
+        if (! is_string($cookieValue) || $cookieValue === '') {
+            return null;
+        }
 
-        $response = match ($role) {
-            'kepala' => redirect()->route('dashboard'),
-            'user' => redirect()->route('profile'),
-            'admin', 'superadmin' => redirect()->route('dashboard'),
-            default => redirect()->route('login'),
-        };
+        $normalizedCookie = strtr($cookieValue, '-_', '+/');
+        $normalizedCookie .= str_repeat('=', (4 - strlen($normalizedCookie) % 4) % 4);
+        $decoded = base64_decode($normalizedCookie, true);
+        $payload = is_string($decoded) ? json_decode($decoded, true) : null;
+        if (! is_array($payload)) {
+            return null;
+        }
 
-        return $response->withCookie(cookie(
-            self::AUTH_MARKER_COOKIE,
-            '1',
-            60 * 24 * 365,
+        $idUser = trim((string) ($payload['id_user'] ?? ''));
+        $expiresAt = (int) ($payload['expires_at'] ?? 0);
+        $token = (string) ($payload['token'] ?? '');
+        if ($idUser === '' || $expiresAt <= now()->timestamp || $token === '') {
+            return null;
+        }
+
+        $user = TbUser::query()->where('id_user', $idUser)->first();
+        if (! $user || $user->status_aktif === 'N') {
+            return null;
+        }
+
+        $role = strtolower((string) $user->hak_akses);
+        if (! in_array($role, ['admin', 'superadmin', 'kepala', 'user'], true)) {
+            return null;
+        }
+
+        $expectedToken = $this->rememberToken($user, $expiresAt);
+        if (! hash_equals($expectedToken, $token)) {
+            return null;
+        }
+
+        $this->establishSession($request, $user, $role);
+
+        return $role;
+    }
+
+    private function rememberToken(TbUser $user, int $expiresAt): string
+    {
+        return hash_hmac(
+            'sha256',
+            $user->id_user.'|'.$expiresAt,
+            (string) config('app.key').'|'.(string) $user->password,
+        );
+    }
+
+    private function rememberCookie(TbUser $user, bool $remember)
+    {
+        if (! $remember) {
+            return cookie(
+                self::REMEMBER_COOKIE,
+                '',
+                0,
+                config('session.path', '/'),
+                config('session.domain'),
+                (bool) config('session.secure', false),
+                (bool) config('session.http_only', true),
+                false,
+                config('session.same_site', 'lax'),
+            );
+        }
+
+        $expiresAt = now()->addMinutes(self::REMEMBER_LIFETIME_MINUTES)->timestamp;
+        $payload = base64_encode((string) json_encode([
+            'id_user' => $user->id_user,
+            'expires_at' => $expiresAt,
+            'token' => $this->rememberToken($user, $expiresAt),
+        ], JSON_THROW_ON_ERROR));
+
+        return cookie(
+            self::REMEMBER_COOKIE,
+            rtrim(strtr($payload, '+/', '-_'), '='),
+            self::REMEMBER_LIFETIME_MINUTES,
             config('session.path', '/'),
             config('session.domain'),
             (bool) config('session.secure', false),
             (bool) config('session.http_only', true),
             false,
             config('session.same_site', 'lax'),
-        ));
+        );
     }
 
     /**
@@ -225,6 +332,8 @@ class AuthController extends Controller
         $request->session()->flush();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->withoutCookie(self::AUTH_MARKER_COOKIE);
+        return redirect()->route('login')
+            ->withoutCookie(self::AUTH_MARKER_COOKIE)
+            ->withoutCookie(self::REMEMBER_COOKIE);
     }
 }

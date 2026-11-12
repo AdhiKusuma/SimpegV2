@@ -6,6 +6,7 @@ use App\Models\Legacy\TbHukuman;
 use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbRecycleBin;
+use App\Services\ImportPreviewService;
 use App\Services\XlsxExportService;
 use App\Services\XlsxImportService;
 use Illuminate\Database\Eloquent\Builder;
@@ -168,7 +169,7 @@ class PelanggaranController extends Controller
         ]);
     }
 
-    public function previewImport(Request $request, XlsxImportService $xlsxImport): JsonResponse
+    public function previewImport(Request $request, XlsxImportService $xlsxImport, ImportPreviewService $previewStore): JsonResponse
     {
         $this->ensureCanManage($request);
         $request->validate([
@@ -179,9 +180,90 @@ class PelanggaranController extends Controller
             'file_excel.max' => 'Ukuran file import maksimal 5 MB.',
         ]);
 
-        $rows = $xlsxImport->rows((string) $request->file('file_excel')->getRealPath());
-        $header = array_shift($rows) ?: [];
-        $header = $this->trimImportRow($header);
+        $file = $request->file('file_excel');
+        $preparedRows = $this->parsePelanggaranImport($file->getRealPath(), $xlsxImport);
+
+        if ($preparedRows === []) {
+            throw ValidationException::withMessages(['file_excel' => 'Tidak ada baris data yang dapat diimport.']);
+        }
+
+        $invalidCount = count(array_filter($preparedRows, fn (array $row): bool => $row['errors'] !== []));
+
+        $result = [
+            'rows' => $preparedRows,
+            'preview' => array_slice($preparedRows, 0, 25),
+            'total' => count($preparedRows),
+            'invalid_count' => $invalidCount,
+            'columns' => self::IMPORT_COLUMNS,
+        ];
+        if ($invalidCount === 0) {
+            $result['token'] = $previewStore->create(
+                $request,
+                'pelanggaran_import_previews',
+                'pelanggaran-import-previews',
+                $file,
+            );
+        }
+
+        return response()->json($result);
+    }
+
+    public function storeImport(Request $request, XlsxImportService $xlsxImport, ImportPreviewService $previewStore): RedirectResponse
+    {
+        $this->ensureCanManage($request);
+        $validated = $request->validate(['preview_token' => ['required', 'uuid']]);
+        $preview = $previewStore->resolve($request, 'pelanggaran_import_previews', $validated['preview_token']);
+        abort_unless($preview !== null, 422, 'Preview import tidak berlaku. Unggah kembali file pelanggaran untuk melanjutkan.');
+
+        $preparedRows = $this->parsePelanggaranImport($preview['full_path'], $xlsxImport);
+        $validRows = [];
+        $errors = [];
+        foreach ($preparedRows as $prepared) {
+            if ($prepared['errors'] !== []) {
+                $errors[] = 'Baris '.$prepared['row_number'].': '.implode('; ', $prepared['errors']);
+                continue;
+            }
+
+            $validRows[] = $prepared['data'];
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages([
+                'preview_token' => 'Import dibatalkan karena ada data yang berubah atau tidak valid. '.implode(' ', $errors),
+            ]);
+        }
+
+        DB::transaction(function () use ($validRows): void {
+            $ids = array_values(array_unique(array_filter(array_map(
+                static fn (array $row): string => (string) $row['id_peg'],
+                $validRows,
+            ))));
+            TbPegawai::query()->whereIn('id_peg', $ids)->lockForUpdate()->get(['id_peg']);
+
+            foreach ($validRows as $data) {
+                if ($this->existingPenalty($data)) {
+                    throw ValidationException::withMessages([
+                        'preview_token' => 'Import dibatalkan karena ada data pelanggaran yang sudah tersimpan.',
+                    ]);
+                }
+
+                TbHukuman::query()->create([
+                    ...$data,
+                    'dokumen' => '',
+                    'date_reg' => now()->toDateString(),
+                ]);
+            }
+        });
+
+        $previewStore->consume($request, 'pelanggaran_import_previews', $validated['preview_token']);
+
+        return to_route('pelanggaran.index')->with('success', count($validRows).' data pelanggaran berhasil diimport.');
+    }
+
+    private function parsePelanggaranImport(string $path, XlsxImportService $xlsxImport): array
+    {
+        $rows = $xlsxImport->rows($path);
+        $header = $this->trimImportRow(array_shift($rows) ?: []);
         $expectedHeader = array_map(
             fn (string $column): string => $xlsxImport->normalizeHeader($column),
             self::IMPORT_COLUMNS,
@@ -224,91 +306,7 @@ class PelanggaranController extends Controller
             $preparedRows[] = $prepared;
         }
 
-        if ($preparedRows === []) {
-            throw ValidationException::withMessages(['file_excel' => 'Tidak ada baris data yang dapat diimport.']);
-        }
-
-        $invalidCount = count(array_filter($preparedRows, fn (array $row): bool => $row['errors'] !== []));
-
-        return response()->json([
-            'rows' => $preparedRows,
-            'preview' => array_slice($preparedRows, 0, 25),
-            'total' => count($preparedRows),
-            'invalid_count' => $invalidCount,
-            'columns' => self::IMPORT_COLUMNS,
-        ]);
-    }
-
-    public function storeImport(Request $request, XlsxImportService $xlsxImport): RedirectResponse
-    {
-        $this->ensureCanManage($request);
-        $validated = $request->validate([
-            'data_rows' => ['required', 'string', 'max:5120'],
-        ]);
-        $rows = json_decode($validated['data_rows'], true);
-
-        if (! is_array($rows) || $rows === []) {
-            throw ValidationException::withMessages(['data_rows' => 'Preview import tidak ditemukan. Periksa file kembali.']);
-        }
-
-        $employeeIds = $this->importEmployeeIds();
-        $validRows = [];
-        $errors = [];
-        $seen = [];
-
-        foreach ($rows as $index => $row) {
-            $payload = is_array($row) && is_array($row['data'] ?? null) ? $row['data'] : [];
-            $rawValues = array_map(fn (string $field): mixed => $payload[$field] ?? '', self::IMPORT_FIELDS);
-            $prepared = $this->prepareImportRow($rawValues, (int) ($row['row_number'] ?? $index + 2), $employeeIds, $xlsxImport);
-            $key = $this->importDuplicateKey($prepared['data']);
-
-            if ($key !== '::' && isset($seen[$key])) {
-                $prepared['errors'][] = 'Data duplikat dengan baris '.$seen[$key].' pada file import.';
-            } elseif ($key !== '::') {
-                $seen[$key] = $prepared['row_number'];
-            }
-
-            if ($prepared['errors'] === [] && $this->existingPenalty($prepared['data'])) {
-                $prepared['errors'][] = 'Data pelanggaran dengan ID pegawai, nomor SK, dan tanggal SK tersebut sudah ada.';
-            }
-
-            if ($prepared['errors'] !== []) {
-                $errors[] = 'Baris '.$prepared['row_number'].': '.implode('; ', $prepared['errors']);
-                continue;
-            }
-
-            $validRows[] = $prepared['data'];
-        }
-
-        if ($errors !== []) {
-            throw ValidationException::withMessages([
-                'data_rows' => 'Import dibatalkan karena ada data yang berubah atau tidak valid. '.implode(' ', $errors),
-            ]);
-        }
-
-        DB::transaction(function () use ($validRows): void {
-            $ids = array_values(array_unique(array_filter(array_map(
-                static fn (array $row): string => (string) $row['id_peg'],
-                $validRows,
-            ))));
-            TbPegawai::query()->whereIn('id_peg', $ids)->lockForUpdate()->get(['id_peg']);
-
-            foreach ($validRows as $data) {
-                if ($this->existingPenalty($data)) {
-                    throw ValidationException::withMessages([
-                        'data_rows' => 'Import dibatalkan karena ada data pelanggaran yang sudah tersimpan.',
-                    ]);
-                }
-
-                TbHukuman::query()->create([
-                    ...$data,
-                    'dokumen' => '',
-                    'date_reg' => now()->toDateString(),
-                ]);
-            }
-        });
-
-        return to_route('pelanggaran.index')->with('success', count($validRows).' data pelanggaran berhasil diimport.');
+        return $preparedRows;
     }
 
     private function importEmployeeIds(): array

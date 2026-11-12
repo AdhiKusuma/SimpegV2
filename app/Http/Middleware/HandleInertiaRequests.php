@@ -83,12 +83,22 @@ class HandleInertiaRequests extends Middleware
     private function applicationConfig(): array
     {
         $config = TbConfig::query()->first();
+        $logoService = app(ApplicationLogoService::class);
+        $logoUrl = $logoService->url($config?->logo);
+        $darkLogoUrl = $logoService->darkUrl($config?->logo_dark);
 
         return [
             'name' => $config?->nama_app ?: config('app.name', 'SIMPEG'),
             'alias' => $config?->alias_app ?: 'SIMPEG',
             'description' => $config?->desc_app ?: 'Kepegawaian',
-            'logoUrl' => app(ApplicationLogoService::class)->url($config?->logo),
+            'logoUrl' => $logoUrl,
+            'darkLogoUrl' => $darkLogoUrl,
+            'loginLogoUrl' => $config?->logo
+                ? $logoUrl
+                : asset('images/bkk-simpeg-blue-logo.png'),
+            'loginDarkLogoUrl' => $config?->logo_dark
+                ? $darkLogoUrl
+                : asset('images/bkk-simpeg-dark-logo.png'),
         ];
     }
 }

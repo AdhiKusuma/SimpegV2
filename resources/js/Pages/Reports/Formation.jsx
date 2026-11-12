@@ -14,6 +14,7 @@ export default function Formation({ rows, totals, offices, filters }) {
 
     return (
         <LegacyPageShell title="Laporan Formasi Pegawai">
+            <div className="simpeg-report-page">
             <Head title="Laporan Formasi Pegawai" />
             <div className="mb-6">
                 <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Kepegawaian</p>
@@ -32,7 +33,7 @@ export default function Formation({ rows, totals, offices, filters }) {
                 </form>
             </section>
 
-            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section className="simpeg-report-table overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="min-w-[760px] w-full text-left">
                         <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
@@ -54,6 +55,7 @@ export default function Formation({ rows, totals, offices, filters }) {
                     </table>
                 </div>
             </section>
+            </div>
         </LegacyPageShell>
     );
 }

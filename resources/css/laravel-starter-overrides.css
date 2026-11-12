@@ -3,7 +3,7 @@
  *
  * Existing pages keep their class names, selectors, forms, and interactions.
  * These rules only normalize the presentation to the Laravel starter-kit
- * visual language: neutral surfaces, indigo actions, compact radii, and
+ * visual language: neutral surfaces, monochrome actions, compact radii, and
  * predictable focus states.
  */
 @layer utilities {
@@ -16,6 +16,16 @@
     .simpeg-primary:hover:not(:disabled) {
         background-color: var(--simpeg-primary-hover) !important;
         border-color: var(--simpeg-primary-hover) !important;
+    }
+
+    /* Normalize remaining slate hover utilities to the active neutral theme.
+     * This keeps legacy table/menu hover states readable in both modes. */
+    :is(
+        [class*="hover:bg-slate-50"], [class*="hover:bg-slate-100"], [class*="hover:bg-slate-200"],
+        [class*="dark:hover:bg-slate-700"], [class*="dark:hover:bg-slate-800"], [class*="dark:hover:bg-slate-900"]
+    ):hover {
+        background-color: var(--simpeg-hover-surface) !important;
+        color: var(--simpeg-hover-ink) !important;
     }
 
     .simpeg-utility,
@@ -137,5 +147,168 @@
 
     html[data-theme="corporate"] .simpeg-header .simpeg-muted {
         color: var(--simpeg-muted) !important;
+    }
+}
+
+/* Neutral theme compatibility: legacy blue/indigo utility classes follow the
+ * active black/white theme tokens. Semantic success, warning, and error
+ * colors remain available for clear feedback. */
+:root,
+html[data-theme="corporate"] {
+    --simpeg-canvas: #f6f6f6;
+    --simpeg-canvas-mid: #eeeeee;
+    --simpeg-canvas-end: #fafafa;
+    --simpeg-surface: #ffffff;
+    --simpeg-card: #ffffff;
+    --simpeg-card-soft: rgb(250 250 250 / 0.92);
+    --simpeg-header: rgb(255 255 255 / 0.96);
+    --simpeg-input: #ffffff;
+    --simpeg-text: #111111;
+    --simpeg-muted: #525252;
+    --simpeg-subtle: #737373;
+    --simpeg-border: #e5e5e5;
+    --simpeg-track: #e5e5e5;
+    --simpeg-sidebar: #ffffff;
+    --simpeg-form-shell: #f6f6f6;
+    --simpeg-form-section: #ffffff;
+    --simpeg-hover-surface: #f0f0f0;
+    --simpeg-hover-ink: #111111;
+    --simpeg-hover-border: #bdbdbd;
+    --simpeg-primary: #111111;
+    --simpeg-primary-hover: #000000;
+    --simpeg-primary-foreground: #ffffff;
+    --simpeg-primary-soft: rgb(17 17 17 / 0.08);
+    --simpeg-primary-border: rgb(17 17 17 / 0.22);
+    --simpeg-focus-ring: rgb(17 17 17 / 0.18);
+}
+
+html.dark {
+    --simpeg-canvas: #080808;
+    --simpeg-canvas-mid: #080808;
+    --simpeg-canvas-end: #080808;
+    --simpeg-surface: #0f0f0f;
+    --simpeg-card: #151515;
+    --simpeg-card-soft: rgb(21 21 21 / 0.94);
+    --simpeg-header: rgb(8 8 8 / 0.96);
+    --simpeg-input: #111111;
+    --simpeg-text: #f5f5f5;
+    --simpeg-muted: #c4c4c4;
+    --simpeg-subtle: #a3a3a3;
+    --simpeg-border: #2b2b2b;
+    --simpeg-track: #2b2b2b;
+    --simpeg-sidebar: #0b0b0b;
+    --simpeg-form-shell: #0f0f0f;
+    --simpeg-form-section: #151515;
+    --simpeg-hover-surface: #242424;
+    --simpeg-hover-ink: #ffffff;
+    --simpeg-hover-border: #666666;
+    --simpeg-primary: #f5f5f5;
+    --simpeg-primary-hover: #ffffff;
+    --simpeg-primary-foreground: #0a0a0a;
+    --simpeg-primary-soft: rgb(255 255 255 / 0.1);
+    --simpeg-primary-border: rgb(255 255 255 / 0.28);
+    --simpeg-focus-ring: rgb(255 255 255 / 0.2);
+}
+
+@layer utilities {
+    :is(
+        [class*="text-blue-"], [class*="text-indigo-"], [class*="text-cyan-"],
+        [class*="text-sky-"], [class*="text-violet-"], [class*="text-purple-"]
+    ) {
+        color: var(--simpeg-primary) !important;
+    }
+
+    :is(
+        [class*="bg-blue-50"], [class*="bg-blue-100"], [class*="bg-blue-200"],
+        [class*="bg-indigo-50"], [class*="bg-indigo-100"], [class*="bg-indigo-200"],
+        [class*="bg-cyan-50"], [class*="bg-cyan-100"], [class*="bg-cyan-200"],
+        [class*="bg-sky-50"], [class*="bg-sky-100"], [class*="bg-sky-200"],
+        [class*="bg-violet-50"], [class*="bg-violet-100"], [class*="bg-violet-200"],
+        [class*="bg-purple-50"], [class*="bg-purple-100"], [class*="bg-purple-200"],
+        [class*="bg-blue-950"], [class*="bg-indigo-950"], [class*="bg-cyan-950"],
+        [class*="bg-sky-950"], [class*="bg-violet-950"], [class*="bg-purple-950"]
+    ) {
+        background-color: var(--simpeg-primary-soft) !important;
+    }
+
+    :is(
+        [class*="bg-blue-300"], [class*="bg-blue-400"], [class*="bg-blue-500"], [class*="bg-blue-600"], [class*="bg-blue-700"],
+        [class*="bg-indigo-300"], [class*="bg-indigo-400"], [class*="bg-indigo-500"], [class*="bg-indigo-600"], [class*="bg-indigo-700"],
+        [class*="bg-cyan-300"], [class*="bg-cyan-400"], [class*="bg-cyan-500"], [class*="bg-cyan-600"], [class*="bg-cyan-700"],
+        [class*="bg-sky-300"], [class*="bg-sky-400"], [class*="bg-sky-500"], [class*="bg-sky-600"], [class*="bg-sky-700"],
+        [class*="bg-violet-300"], [class*="bg-violet-400"], [class*="bg-violet-500"], [class*="bg-violet-600"], [class*="bg-violet-700"],
+        [class*="bg-purple-300"], [class*="bg-purple-400"], [class*="bg-purple-500"], [class*="bg-purple-600"], [class*="bg-purple-700"]
+    ) {
+        background-color: var(--simpeg-primary) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    :is(
+        [class*="border-blue-"], [class*="border-indigo-"], [class*="border-cyan-"],
+        [class*="border-sky-"], [class*="border-violet-"], [class*="border-purple-"]
+    ) {
+        border-color: var(--simpeg-primary-border) !important;
+    }
+
+    :is(
+        [class*="hover:bg-blue-50"], [class*="hover:bg-blue-100"], [class*="hover:bg-indigo-50"],
+        [class*="hover:bg-indigo-100"], [class*="hover:bg-cyan-50"], [class*="hover:bg-sky-50"],
+        [class*="hover:bg-violet-50"], [class*="hover:bg-purple-50"]
+    ):hover {
+        background-color: var(--simpeg-primary-soft) !important;
+        color: var(--simpeg-primary) !important;
+    }
+
+    :is(
+        [class*="hover:bg-blue-300"], [class*="hover:bg-blue-400"], [class*="hover:bg-blue-500"], [class*="hover:bg-blue-600"], [class*="hover:bg-blue-700"],
+        [class*="hover:bg-indigo-300"], [class*="hover:bg-indigo-400"], [class*="hover:bg-indigo-500"], [class*="hover:bg-indigo-600"], [class*="hover:bg-indigo-700"],
+        [class*="hover:bg-cyan-300"], [class*="hover:bg-cyan-400"], [class*="hover:bg-cyan-500"], [class*="hover:bg-cyan-600"], [class*="hover:bg-cyan-700"],
+        [class*="hover:bg-sky-300"], [class*="hover:bg-sky-400"], [class*="hover:bg-sky-500"], [class*="hover:bg-sky-600"], [class*="hover:bg-sky-700"],
+        [class*="hover:bg-violet-300"], [class*="hover:bg-violet-400"], [class*="hover:bg-violet-500"], [class*="hover:bg-violet-600"], [class*="hover:bg-violet-700"],
+        [class*="hover:bg-purple-300"], [class*="hover:bg-purple-400"], [class*="hover:bg-purple-500"], [class*="hover:bg-purple-600"], [class*="hover:bg-purple-700"]
+    ):hover {
+        background-color: var(--simpeg-primary-hover) !important;
+        color: var(--simpeg-primary-foreground) !important;
+    }
+
+    :is(
+        [class*="hover:text-blue-"], [class*="hover:text-indigo-"], [class*="hover:text-cyan-"],
+        [class*="hover:text-sky-"], [class*="hover:text-violet-"], [class*="hover:text-purple-"]
+    ):hover {
+        color: var(--simpeg-primary) !important;
+    }
+
+    :is(
+        [class*="hover:border-blue-"], [class*="hover:border-indigo-"], [class*="hover:border-cyan-"],
+        [class*="hover:border-sky-"], [class*="hover:border-violet-"], [class*="hover:border-purple-"],
+        [class*="focus:border-blue-"], [class*="focus:border-indigo-"], [class*="focus:border-cyan-"],
+        [class*="focus:border-sky-"], [class*="focus:border-violet-"], [class*="focus:border-purple-"]
+    ):is(:hover, :focus) {
+        border-color: var(--simpeg-primary) !important;
+    }
+
+    :is(
+        [class*="ring-blue-"], [class*="ring-indigo-"], [class*="ring-cyan-"],
+        [class*="ring-sky-"], [class*="ring-violet-"], [class*="ring-purple-"],
+        [class*="focus:ring-blue-"], [class*="focus:ring-indigo-"], [class*="focus:ring-cyan-"],
+        [class*="focus:ring-sky-"], [class*="focus:ring-violet-"], [class*="focus:ring-purple-"],
+        [class*="focus-visible:ring-blue-"], [class*="focus-visible:ring-indigo-"], [class*="focus-visible:ring-cyan-"],
+        [class*="focus-visible:ring-sky-"], [class*="focus-visible:ring-violet-"], [class*="focus-visible:ring-purple-"]
+    ):is(:focus, :focus-visible) {
+        --tw-ring-color: var(--simpeg-focus-ring) !important;
+    }
+
+    :is(
+        [class*="from-blue-"], [class*="from-indigo-"], [class*="from-cyan-"],
+        [class*="from-sky-"], [class*="from-violet-"], [class*="from-purple-"]
+    ) {
+        --tw-gradient-from: var(--simpeg-primary) var(--tw-gradient-from-position) !important;
+    }
+
+    :is(
+        [class*="to-blue-"], [class*="to-indigo-"], [class*="to-cyan-"],
+        [class*="to-sky-"], [class*="to-violet-"], [class*="to-purple-"]
+    ) {
+        --tw-gradient-to: var(--simpeg-primary-hover) var(--tw-gradient-to-position) !important;
     }
 }

@@ -817,45 +817,91 @@ class LegacyAccessTest extends TestCase
     public function test_admin_can_commit_a_new_employee_import_without_missing_id_error(): void
     {
         $id = 'TST-'.random_int(10000, 99999);
-        $rows = [[
-            'values' => [
-                $id,
-                '1990010120150110',
-                'Pegawai Import Test',
-                'Jakarta',
-                '20-11-1990',
-                'Islam',
-                'Laki-laki',
-                'O',
-                'Menikah',
-                'Tetap',
-                'Jl. Test',
-                '081234567890',
-                'import-test@example.test',
-                '',
-                '20-11-2015',
-                '20-11-2046',
-                '12345678901',
-                '00012345678',
-            ],
-            'status' => 'new',
-            'existing_id' => null,
-        ]];
+        $headers = [
+            'ID Pegawai (Wajib)', 'NIP', 'Nama Lengkap', 'Tempat Lahir', 'Tgl Lahir (DD-MM-YY)',
+            'Agama', 'Jenis Kelamin', 'Gol Darah', 'Status Nikah', 'Status Kepegawaian', 'Alamat',
+            'No Telp', 'Email', 'Nama File Foto', 'TMT Kerja (DD-MM-YY)', 'Tgl Pensiun (DD-MM-YY - Opsional)',
+            'No BPJS TK', 'No BPJS Kes',
+        ];
+        $xlsx = app(XlsxExportService::class)->make([$headers, [
+            $id, '1990010120150110', 'Pegawai Import Test', 'Jakarta', '20-11-1990', 'Islam', 'Laki-laki',
+            'O', 'Menikah', 'Tetap', 'Jl. Test', '081234567890', 'import-test@example.test', '', '20-11-2015',
+            '20-11-2046', '12345678901', '00012345678',
+        ]]);
 
         DB::beginTransaction();
 
         try {
-            $response = $this->withSession([
+            $session = [
                 'id_user' => 'admin-demo',
                 'hak_akses' => 'admin',
-            ])->post('/pegawai/import', [
-                'rows' => json_encode($rows, JSON_THROW_ON_ERROR),
+            ];
+            $preview = $this->withSession($session)->post('/pegawai/import/preview', [
+                'file_xlsx' => UploadedFile::fake()->createWithContent('pegawai.xlsx', $xlsx),
+            ]);
+            $preview->assertOk()->assertJsonPath('invalid_count', 0);
+
+            $response = $this->post('/pegawai/import', [
+                'preview_token' => $preview->json('token'),
             ]);
 
             $response->assertRedirectToRoute('employees.index');
             $this->assertDatabaseHas('tb_pegawai', [
                 'id_peg' => $id,
                 'nama' => 'Pegawai Import Test',
+            ]);
+        } finally {
+            DB::rollBack();
+        }
+    }
+
+    public function test_admin_quota_custom_crud_rejects_duplicate_names_per_office(): void
+    {
+        $branch = DB::table('tb_kantor')
+            ->whereNotNull('kode_cabang')
+            ->where('kode_cabang', '<>', '')
+            ->value('kode_cabang');
+
+        if ($branch === null) {
+            $this->markTestSkipped('Tidak ada kantor dengan kode cabang untuk menguji kuota custom.');
+        }
+
+        $name = 'Jabatan Custom Test '.random_int(10000, 99999);
+        $session = ['id_user' => 'admin-demo', 'hak_akses' => 'admin'];
+        DB::beginTransaction();
+
+        try {
+            $create = $this->withSession($session)->post('/config/kuota-jabatan', [
+                'kode_cabang' => $branch,
+                'nama_jabatan' => $name,
+                'kuota_pegawai' => 3,
+            ]);
+            $create->assertRedirectToRoute('config.quota.index');
+
+            $quotaId = DB::table('kuota_jabatan')
+                ->where('kode_cabang', $branch)
+                ->where('nama_jabatan', $name)
+                ->value('id');
+            $this->assertNotNull($quotaId);
+
+            $duplicate = $this->withSession($session)->post('/config/kuota-jabatan', [
+                'kode_cabang' => $branch,
+                'nama_jabatan' => $name,
+                'kuota_pegawai' => 4,
+            ]);
+            $duplicate->assertSessionHasErrors('nama_jabatan');
+
+            $update = $this->withSession($session)->put('/config/kuota-jabatan/'.$quotaId, [
+                'kode_cabang' => $branch,
+                'jabatan_id' => null,
+                'nama_jabatan' => $name.' Updated',
+                'kuota_pegawai' => 5,
+            ]);
+            $update->assertRedirectToRoute('config.quota.index');
+            $this->assertDatabaseHas('kuota_jabatan', [
+                'id' => $quotaId,
+                'nama_jabatan' => $name.' Updated',
+                'kuota_pegawai' => 5,
             ]);
         } finally {
             DB::rollBack();

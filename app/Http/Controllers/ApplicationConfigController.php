@@ -37,12 +37,18 @@ class ApplicationConfigController extends Controller
             'url_app' => ['nullable', 'url', 'max:64'],
             'anchor_app' => ['nullable', 'string', 'max:64'],
             'logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+            'logo_dark' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
         ]);
 
         unset($data['logo']);
+        unset($data['logo_dark']);
         if ($request->hasFile('logo')) {
-            $newLogo = $this->storeLogo($request, $config->logo);
+            $newLogo = $this->storeLogo($request, 'logo', $config->logo, 'app_logo_light');
             $data['logo'] = $newLogo;
+        }
+        if ($request->hasFile('logo_dark')) {
+            $newDarkLogo = $this->storeLogo($request, 'logo_dark', $config->logo_dark, 'app_logo_dark');
+            $data['logo_dark'] = $newDarkLogo;
         }
 
         $config->update($data);
@@ -83,16 +89,18 @@ class ApplicationConfigController extends Controller
             'anchor_app' => $config->anchor_app,
             'logo' => $config->logo,
             'logo_url' => app(ApplicationLogoService::class)->url($config->logo),
+            'logo_dark' => $config->logo_dark,
+            'logo_dark_url' => app(ApplicationLogoService::class)->darkUrl($config->logo_dark),
         ];
     }
 
-    private function storeLogo(Request $request, ?string $oldLogo): string
+    private function storeLogo(Request $request, string $field, ?string $oldLogo, string $prefix): string
     {
         $directory = public_path('uploads/config');
         File::ensureDirectoryExists($directory, 0755);
 
-        $file = $request->file('logo');
-        $name = 'app_logo_'.now()->format('YmdHisv').'_'.Str::lower(Str::random(8)).'.'.$file->extension();
+        $file = $request->file($field);
+        $name = $prefix.'_'.now()->format('YmdHisv').'_'.Str::lower(Str::random(8)).'.'.$file->extension();
         $file->move($directory, $name);
 
         if ($oldLogo && basename($oldLogo) === $oldLogo) {

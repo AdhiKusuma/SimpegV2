@@ -8,7 +8,17 @@ class ApplicationLogoService
 {
     public function url(?string $filename): string
     {
-        $fallback = asset('images/logo-simpeg-256.png');
+        return $this->resolve($filename, 'images/logo-simpeg-256.png');
+    }
+
+    public function darkUrl(?string $filename): string
+    {
+        return $this->resolve($filename, 'images/logo-simpeg-256-dark.png');
+    }
+
+    private function resolve(?string $filename, string $fallbackPath): string
+    {
+        $fallback = asset($fallbackPath);
 
         if (! $filename || basename($filename) !== $filename) {
             return $fallback;

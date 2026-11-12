@@ -1,3 +1,20 @@
+/* Brand assets can follow the app theme without changing the light-mode logo. */
+.simpeg-theme-logo-light {
+    display: block;
+}
+
+.simpeg-theme-logo-dark {
+    display: none;
+}
+
+html.dark .simpeg-theme-logo-light {
+    display: none;
+}
+
+html.dark .simpeg-theme-logo-dark {
+    display: block;
+}
+
 @layer utilities {
     .simpeg-header {
         background: var(--simpeg-header) !important;
@@ -15,6 +32,30 @@
     .simpeg-theme-toggle:hover {
         background-color: var(--simpeg-card) !important;
         color: var(--simpeg-text) !important;
+    }
+
+    .simpeg-menu-item {
+        color: var(--simpeg-text);
+    }
+
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible {
+        background-color: var(--simpeg-hover-surface) !important;
+        color: var(--simpeg-hover-ink) !important;
+    }
+
+    .simpeg-menu-item:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--simpeg-focus-ring) !important;
+    }
+
+    .simpeg-ghost {
+        color: var(--simpeg-text);
+    }
+
+    .simpeg-ghost:hover:not(:disabled) {
+        background-color: var(--simpeg-hover-surface) !important;
+        color: var(--simpeg-hover-ink) !important;
     }
 
     .simpeg-input {

@@ -322,6 +322,13 @@ class ReportController extends Controller
                 $row[] = $total;
                 $outputRows[] = $row;
             }
+
+            $subtotal = $data['subtotals'][$category['key']];
+            $outputRows[] = [
+                'SUBTOTAL '.$category['label'],
+                ...array_map(fn ($range) => $subtotal[$range], $data['ranges']),
+                $subtotal['total'],
+            ];
         }
 
         $content = $xlsxExport->make($outputRows, 'Laporan Keadaan Pegawai', true);
@@ -473,16 +480,35 @@ class ReportController extends Controller
         sort($positionList);
         sort($punishmentList);
 
+        $categories = [
+            ['label' => 'JENIS KELAMIN', 'key' => 'jk', 'sub' => ['Laki-laki', 'Perempuan']],
+            ['label' => 'JENIS PENDIDIKAN', 'key' => 'pend', 'sub' => ['SD', 'SMP', 'SMA', 'SMK', 'D1', 'D2/D3', 'S1', 'S2/S3', 'LAIN-LAIN']],
+            ['label' => 'STATUS KEPEGAWAIAN', 'key' => 'status', 'sub' => $statusList],
+            ['label' => 'JABATAN', 'key' => 'jabatan', 'sub' => $positionList],
+            ['label' => 'HUKUMAN DISIPLIN (Tahun '.$year.')', 'key' => 'hukuman', 'sub' => $punishmentList],
+        ];
+
+        // Satu perhitungan dipakai bersama oleh halaman, cetak/PDF, dan Excel.
+        $subtotals = [];
+
+        foreach ($categories as $category) {
+            $subtotal = array_fill_keys(self::AGE_RANGES, 0);
+
+            foreach ($category['sub'] as $sub) {
+                foreach (self::AGE_RANGES as $range) {
+                    $subtotal[$range] += (int) ($counts[$range][$category['key']][$sub] ?? 0);
+                }
+            }
+
+            $subtotal['total'] = array_sum($subtotal);
+            $subtotals[$category['key']] = $subtotal;
+        }
+
         return [
             'ranges' => self::AGE_RANGES,
             'counts' => $counts,
-            'categories' => [
-                ['label' => 'JENIS KELAMIN', 'key' => 'jk', 'sub' => ['Laki-laki', 'Perempuan']],
-                ['label' => 'JENIS PENDIDIKAN', 'key' => 'pend', 'sub' => ['SD', 'SMP', 'SMA', 'SMK', 'D1', 'D2/D3', 'S1', 'S2/S3', 'LAIN-LAIN']],
-                ['label' => 'STATUS KEPEGAWAIAN', 'key' => 'status', 'sub' => $statusList],
-                ['label' => 'JABATAN', 'key' => 'jabatan', 'sub' => $positionList],
-                ['label' => 'HUKUMAN DISIPLIN (Tahun '.$year.')', 'key' => 'hukuman', 'sub' => $punishmentList],
-            ],
+            'categories' => $categories,
+            'subtotals' => $subtotals,
             'offices' => $this->offices($request),
             'filters' => ['kantor' => $office, 'tahun' => $year],
             'year' => $year,

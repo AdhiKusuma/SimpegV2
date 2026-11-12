@@ -433,7 +433,7 @@ class DiklatController extends Controller
             'diklat' => ['required', 'string', 'max:255'],
             'penyelenggara' => ['nullable', 'string', 'max:255'],
             'tempat' => ['nullable', 'string', 'max:128'],
-            'biaya' => ['nullable', 'string', 'max:32'],
+            'biaya' => ['nullable', 'string', 'max:32', 'regex:/^\d+$/'],
             'angkatan' => ['nullable', 'string', 'max:64'],
             'tahun' => ['required', 'digits:4'],
             'date_reg' => ['required', 'date'],

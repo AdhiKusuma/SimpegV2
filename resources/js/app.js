@@ -11,7 +11,7 @@ createInertiaApp({
     title: (title) => `${title} | SIMPEG`,
     resolve: (name) => pages[`./Pages/${name}.jsx`](),
     progress: {
-        color: resolveTheme() === 'corporate' ? '#263285' : '#F5CE59',
+        color: resolveTheme() === 'dark' ? '#f5f5f5' : '#111111',
     },
     setup({ el, App, props }) {
         createRoot(el).render(createElement(App, props));

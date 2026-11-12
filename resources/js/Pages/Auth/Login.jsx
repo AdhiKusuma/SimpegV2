@@ -58,6 +58,7 @@ export default function Login({ appName, appConfig }) {
     const { data, setData, post, processing, errors } = useForm({
         id_user: '',
         password: '',
+        remember: false,
     });
     const loginRetryAt = Number(flash?.login_rate_limit?.retry_at) || null;
     const secondsUntilLoginRetry = loginRetryAt
@@ -217,7 +218,8 @@ export default function Login({ appName, appConfig }) {
     const resolvedAppName = appConfig?.name || appName || 'SIMPEG';
     const resolvedAppAlias = appConfig?.alias || 'SIMPEG';
     const resolvedAppDescription = appConfig?.description || 'Kepegawaian';
-    const resolvedAppLogoUrl = '/images/bkk-simpeg-blue-logo.png';
+    const resolvedAppLogoUrl = appConfig?.loginLogoUrl || '/images/bkk-simpeg-blue-logo.png';
+    const resolvedDarkAppLogoUrl = appConfig?.loginDarkLogoUrl || '/images/bkk-simpeg-dark-logo.png';
 
     return (
         <>
@@ -227,7 +229,8 @@ export default function Login({ appName, appConfig }) {
                     <header className="simpeg-login-topbar">
                         <div className="simpeg-login-brand">
                             <span className="simpeg-login-brand-mark">
-                                <img src={resolvedAppLogoUrl} alt={`Logo ${resolvedAppName}`} width="52" height="52" fetchPriority="high" decoding="async" className="h-full w-full object-contain" />
+                                <img src={resolvedAppLogoUrl} alt={`Logo ${resolvedAppName}`} width="52" height="52" fetchPriority="high" decoding="async" className="simpeg-theme-logo-light h-full w-full object-contain" />
+                                <img src={resolvedDarkAppLogoUrl} alt="" aria-hidden="true" width="52" height="52" fetchPriority="high" decoding="async" className="simpeg-theme-logo-dark h-full w-full object-contain" />
                             </span>
                             <div>
                                 <p className="simpeg-login-brand-name">{resolvedAppAlias || resolvedAppName}</p>
@@ -254,13 +257,15 @@ export default function Login({ appName, appConfig }) {
 
                             <Form onSubmit={submit} noValidate className="simpeg-login-form">
                                 <div>
-                                    <Label htmlFor="id_user" className="simpeg-login-label">ID Pegawai</Label>
+                                    <Label htmlFor="id_user" className="simpeg-login-label">
+                                        {loginAppearance === 'focus' ? 'ID pegawai atau nama pengguna' : 'ID Pegawai'}
+                                    </Label>
                                     <Input
                                         id="id_user"
                                         type="text"
                                         value={data.id_user}
                                         onChange={(event) => setData('id_user', event.target.value)}
-                                        placeholder="Masukkan ID Pegawai"
+                                        placeholder={loginAppearance === 'focus' ? 'Masukkan ID pegawai atau nama pengguna' : 'Masukkan ID Pegawai'}
                                         autoComplete="username"
                                         autoFocus
                                         required
@@ -268,17 +273,27 @@ export default function Login({ appName, appConfig }) {
                                         aria-describedby={errors.id_user ? 'login-id-error' : undefined}
                                     />
                                     {errors.id_user && <p id="login-id-error" className="mt-2 text-sm text-rose-700" role="alert">{errors.id_user}</p>}
+                                    {loginAppearance === 'focus' && (
+                                        <p className="simpeg-login-focus-help">Gunakan ID pegawai atau nama pengguna yang terdaftar.</p>
+                                    )}
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="password" className="simpeg-login-label">Password</Label>
+                                    <div className="simpeg-login-field-heading">
+                                        <Label htmlFor="password" className="simpeg-login-label">{loginAppearance === 'focus' ? 'Kata sandi' : 'Password'}</Label>
+                                        {loginAppearance === 'focus' && (
+                                            <button type="button" className="simpeg-login-forgot-link" onClick={() => setShowSupport(true)}>
+                                                Lupa kata sandi?
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="relative">
                                         <Input
                                             id="password"
                                             type={showPassword ? 'text' : 'password'}
                                             value={data.password}
                                             onChange={(event) => setData('password', event.target.value)}
-                                            placeholder="Masukkan password"
+                                            placeholder={loginAppearance === 'focus' ? 'Masukkan kata sandi' : 'Masukkan password'}
                                             autoComplete="current-password"
                                             required
                                             aria-invalid={Boolean(errors.password)}
@@ -297,8 +312,18 @@ export default function Login({ appName, appConfig }) {
                                     {errors.password && <p id="login-password-error" className="mt-2 text-sm text-rose-700" role="alert">{errors.password}</p>}
                                 </div>
 
+                                <label className="simpeg-login-remember">
+                                    <input
+                                        type="checkbox"
+                                        name="remember"
+                                        checked={Boolean(data.remember)}
+                                        onChange={(event) => setData('remember', event.target.checked)}
+                                    />
+                                    <span>Ingat saya</span>
+                                </label>
+
                                 <Button type="submit" disabled={processing || secondsUntilLoginRetry > 0} className="simpeg-login-submit w-full">
-                                    {processing ? 'Memproses...' : secondsUntilLoginRetry > 0 ? `Coba lagi dalam ${loginWaitLabel}` : 'Masuk ke SIMPEG'}
+                                    {processing ? 'Memproses...' : secondsUntilLoginRetry > 0 ? `Coba lagi dalam ${loginWaitLabel}` : loginAppearance === 'focus' ? 'Masuk' : 'Masuk ke SIMPEG'}
                                 </Button>
                                 {secondsUntilLoginRetry > 0 && (
                                     <p className="simpeg-login-rate-limit-inline">

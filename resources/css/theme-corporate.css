@@ -307,21 +307,21 @@ html[data-theme="corporate"] :is(
     [class*="from-[#FAD873]"], [class*="from-[#F1C5B6]"], [class*="from-[#D8C8E9]"],
     [class*="from-[#BBDCD2]"], [class*="from-[#90C6D6]"], [class*="from-[#E8A99B]"]
 ) {
-    --tw-gradient-from: #263285 var(--tw-gradient-from-position) !important;
+    --tw-gradient-from: var(--simpeg-primary) var(--tw-gradient-from-position) !important;
 }
 
 html[data-theme="corporate"] :is(
     [class*="to-[#F5CE59]"], [class*="to-[#E8A99B]"], [class*="to-[#E7B83F]"],
     [class*="to-[#C97165]"]
 ) {
-    --tw-gradient-to: #eb983c var(--tw-gradient-to-position) !important;
+    --tw-gradient-to: var(--simpeg-primary-hover) var(--tw-gradient-to-position) !important;
 }
 
 html[data-theme="corporate"] :is(
     [class*="to-[#B9A1D4]"], [class*="to-[#8FC7B8]"], [class*="to-[#65B29F]"],
     [class*="to-[#5A9FB6]"]
 ) {
-    --tw-gradient-to: #263285 var(--tw-gradient-to-position) !important;
+    --tw-gradient-to: var(--simpeg-primary) var(--tw-gradient-to-position) !important;
 }
 
 html[data-theme="corporate"] [class*="text-[#8A6820]"],

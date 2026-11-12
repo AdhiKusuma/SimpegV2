@@ -1,10 +1,12 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 
 export default function ApplicationConfig({ config }) {
     const { flash } = usePage().props;
-    const [preview, setPreview] = useState(config.logo_url);
+    const [lightPreview, setLightPreview] = useState(config.logo_url);
+    const [darkPreview, setDarkPreview] = useState(config.logo_dark_url);
+    const previewUrls = useRef(new Set());
     const form = useForm({
         nama_app: config.nama_app || '',
         desc_app: config.desc_app || '',
@@ -12,22 +14,31 @@ export default function ApplicationConfig({ config }) {
         url_app: config.url_app || '',
         anchor_app: config.anchor_app || '',
         logo: null,
+        logo_dark: null,
     });
 
     useEffect(() => () => {
-        if (preview?.startsWith('blob:')) {
-            URL.revokeObjectURL(preview);
-        }
-    }, [preview]);
+        previewUrls.current.forEach((preview) => URL.revokeObjectURL(preview));
+        previewUrls.current.clear();
+    }, []);
 
-    function chooseLogo(event) {
+    function chooseLogo(field, setPreview, event) {
         const file = event.target.files?.[0];
         if (!file) {
             return;
         }
 
-        form.setData('logo', file);
-        setPreview(URL.createObjectURL(file));
+        const nextPreview = URL.createObjectURL(file);
+        previewUrls.current.add(nextPreview);
+        setPreview((currentPreview) => {
+            if (currentPreview?.startsWith('blob:')) {
+                URL.revokeObjectURL(currentPreview);
+                previewUrls.current.delete(currentPreview);
+            }
+
+            return nextPreview;
+        });
+        form.setData(field, file);
     }
 
     function submit(event) {
@@ -60,26 +71,45 @@ export default function ApplicationConfig({ config }) {
 
                 <form onSubmit={submit} encType="multipart/form-data" className="simpeg-config-form">
                     <section className="simpeg-config-overview" aria-labelledby="logo-heading">
-                        <div className="simpeg-config-preview">
-                            <div className="simpeg-config-logo-frame">
-                                {preview ? <img src={preview} alt="Pratinjau logo aplikasi" className="max-h-full max-w-full object-contain p-2" /> : <span className="text-xs">Logo</span>}
+                        <div className="simpeg-config-preview simpeg-config-logo-previews">
+                            <div className="simpeg-config-logo-choice">
+                                <div className="simpeg-config-logo-frame">
+                                    {lightPreview ? <img src={lightPreview} alt="Pratinjau logo mode terang" className="max-h-full max-w-full object-contain p-2" /> : <span className="text-xs">Logo terang</span>}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="simpeg-config-preview-kicker">Light mode</p>
+                                    <h2 className="simpeg-config-preview-title">{form.data.nama_app || 'Nama aplikasi'}</h2>
+                                    <p className="simpeg-config-preview-alias">{form.data.alias_app || 'SIMPEG'}</p>
+                                    <p className="simpeg-config-preview-description">Logo untuk tampilan terang.</p>
+                                </div>
                             </div>
-                            <div className="min-w-0">
-                                <p className="simpeg-config-preview-kicker">Tampilan identitas</p>
-                                <h2 className="simpeg-config-preview-title">{form.data.nama_app || 'Nama aplikasi'}</h2>
-                                <p className="simpeg-config-preview-alias">{form.data.alias_app || 'SIMPEG'}</p>
-                                <p className="simpeg-config-preview-description">{form.data.desc_app || 'Deskripsi aplikasi'}</p>
+                            <div className="simpeg-config-logo-choice">
+                                <div className="simpeg-config-logo-frame simpeg-config-logo-frame-dark">
+                                    {darkPreview ? <img src={darkPreview} alt="Pratinjau logo mode gelap" className="max-h-full max-w-full object-contain p-2" /> : <span className="text-xs">Logo gelap</span>}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="simpeg-config-preview-kicker">Dark mode</p>
+                                    <h2 className="simpeg-config-preview-title">{form.data.nama_app || 'Nama aplikasi'}</h2>
+                                    <p className="simpeg-config-preview-alias">{form.data.alias_app || 'SIMPEG'}</p>
+                                    <p className="simpeg-config-preview-description">Logo untuk tampilan gelap.</p>
+                                </div>
                             </div>
                         </div>
 
                         <div className="simpeg-config-upload">
                             <p id="logo-heading" className="simpeg-config-section-kicker">Logo aplikasi</p>
-                            <p className="simpeg-config-upload-description">Gunakan logo yang mudah dikenali pada navigasi dan halaman masuk.</p>
-                            <label htmlFor="config-logo" className="simpeg-config-upload-button">Pilih gambar
-                                <input id="config-logo" name="logo" type="file" accept=".jpg,.jpeg,.png,.gif,image/*" onChange={chooseLogo} className="sr-only" />
-                            </label>
-                            <p className="simpeg-config-upload-note">JPG, PNG, atau GIF. Maksimal 2 MB.</p>
+                            <p className="simpeg-config-upload-description">Atur logo yang dipakai pada navigasi dan halaman masuk untuk setiap tema.</p>
+                            <div className="simpeg-config-upload-actions">
+                                <label htmlFor="config-logo" className="simpeg-config-upload-button">Logo light mode
+                                    <input id="config-logo" name="logo" type="file" accept=".jpg,.jpeg,.png,.gif,image/*" onChange={(event) => chooseLogo('logo', setLightPreview, event)} className="sr-only" />
+                                </label>
+                                <label htmlFor="config-logo-dark" className="simpeg-config-upload-button">Logo dark mode
+                                    <input id="config-logo-dark" name="logo_dark" type="file" accept=".jpg,.jpeg,.png,.gif,image/*" onChange={(event) => chooseLogo('logo_dark', setDarkPreview, event)} className="sr-only" />
+                                </label>
+                            </div>
+                            <p className="simpeg-config-upload-note">JPG, PNG, atau GIF. Maksimal 2 MB per logo.</p>
                             {form.errors.logo && <p className="mt-2 text-xs font-semibold text-red-600" role="alert">{form.errors.logo}</p>}
+                            {form.errors.logo_dark && <p className="mt-2 text-xs font-semibold text-red-600" role="alert">{form.errors.logo_dark}</p>}
                         </div>
                     </section>
 

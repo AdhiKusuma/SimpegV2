@@ -53,7 +53,7 @@ export default function PengangkatanForm({ mode, record, employees, types }) {
         <LegacyPageShell title={`${isEdit ? 'Edit' : 'Tambah'} Pengangkatan Pegawai`}>
             <Head title={`${isEdit ? 'Edit' : 'Tambah'} Pengangkatan Pegawai`} />
 
-            <div className="max-w-6xl">
+<div className="simpeg-form-page w-full">
                 <div className="mb-6">
                     <Link href="/pengangkatan" className="text-sm font-medium text-blue-600 hover:text-blue-700">← Kembali ke Pengangkatan</Link>
                     <p className="mt-4 text-sm font-medium text-blue-600">Referensi kepegawaian</p>
@@ -61,7 +61,7 @@ export default function PengangkatanForm({ mode, record, employees, types }) {
                     <p className="mt-2 max-w-2xl text-slate-500">Catat pengangkatan pegawai berdasarkan jenis, tanggal, dan dokumen keputusan.</p>
                 </div>
 
-                <form onSubmit={submit} encType="multipart/form-data" className="simpeg-form-card">
+<form onSubmit={submit} encType="multipart/form-data" className="simpeg-form-card simpeg-standard-form">
                     {isEdit ? (
                         <>
                             <div className="grid gap-4 sm:grid-cols-2">

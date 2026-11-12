@@ -10,7 +10,7 @@ export default function XlsxImport({ title, backUrl, previewUrl, storeUrl, templ
     const [preview, setPreview] = useState(initialPreview);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const saveForm = useForm({ data_rows: '' });
+    const saveForm = useForm({ preview_token: '' });
 
     async function previewFile(event) {
         event.preventDefault();
@@ -42,8 +42,8 @@ export default function XlsxImport({ title, backUrl, previewUrl, storeUrl, templ
     }
 
     function saveImport() {
-        if (!preview?.rows?.length || preview.invalid_count > 0) return;
-        saveForm.setData('data_rows', JSON.stringify(preview.rows));
+        if (!preview?.token || !preview?.rows?.length || preview.invalid_count > 0) return;
+        saveForm.setData('preview_token', preview.token);
         saveForm.post(storeUrl, { preserveScroll: true });
     }
 
@@ -61,7 +61,7 @@ export default function XlsxImport({ title, backUrl, previewUrl, storeUrl, templ
                 <section className="simpeg-form-card">
                     <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
                         <h2 className="font-extrabold">Format dan validasi</h2>
-                        <p className="mt-2 leading-6">Gunakan template resmi. Sistem memeriksa pegawai aktif, format tanggal, panjang kolom, angka, dan data ganda sebelum menyimpan. File hanya digunakan selama pemeriksaan dan tidak disimpan sebagai arsip.</p>
+                        <p className="mt-2 leading-6">Gunakan template resmi. Sistem memeriksa pegawai aktif, format tanggal, panjang kolom, angka, dan data ganda sebelum menyimpan. File disimpan sementara untuk memastikan data yang diproses sama dengan file yang diperiksa.</p>
                         <a href={templateUrl} download className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Unduh template XLSX</a>
                     </div>
 
@@ -81,9 +81,9 @@ export default function XlsxImport({ title, backUrl, previewUrl, storeUrl, templ
                                 <p className="mt-1 text-sm text-slate-500">Menampilkan {preview.preview?.length || 0} dari {preview.total || 0} baris.</p>
                                 {preview.invalid_count > 0 && <p className="mt-2 text-sm font-semibold text-red-600" role="alert">{preview.invalid_count} baris perlu diperbaiki. Import belum dapat disimpan.</p>}
                             </div>
-                            <button type="button" onClick={saveImport} disabled={saveForm.processing || !preview.rows?.length || preview.invalid_count > 0} className="inline-flex min-h-11 items-center rounded-xl bg-emerald-700 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">{saveForm.processing ? 'Menyimpan...' : 'Proses import'}</button>
+                            <button type="button" onClick={saveImport} disabled={saveForm.processing || !preview.token || !preview.rows?.length || preview.invalid_count > 0} className="inline-flex min-h-11 items-center rounded-xl bg-emerald-700 px-5 py-2 text-sm font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60">{saveForm.processing ? 'Menyimpan...' : 'Proses import'}</button>
                         </div>
-                        {saveForm.errors.data_rows && <p className="mb-3 text-sm font-semibold text-red-600" role="alert">{saveForm.errors.data_rows}</p>}
+                        {saveForm.errors.preview_token && <p className="mb-3 text-sm font-semibold text-red-600" role="alert">{saveForm.errors.preview_token}</p>}
                         <div className="overflow-x-auto rounded-xl border border-slate-200">
                             <table className="min-w-[1100px] w-full text-left text-xs">
                                 <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4">Status</th><th className="px-5 py-4">Validasi</th>{(preview.columns || columns).map((column, index) => <th key={`${column}-${index}`} className="px-5 py-4">{column}</th>)}</tr></thead>

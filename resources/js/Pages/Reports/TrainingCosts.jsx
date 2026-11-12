@@ -116,6 +116,7 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
 
     return (
         <LegacyPageShell title="Rekapitulasi Biaya Diklat">
+            <div className="simpeg-report-page">
             <Head title="Rekapitulasi Biaya Diklat" />
             <div className="mb-6">
                 <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Pengembangan Pegawai</p>
@@ -158,7 +159,7 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
             </section>
 
             {selectedRow && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" role="presentation">
-                <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="training-detail-title">
+                <div className="simpeg-report-dialog flex max-h-[calc(100dvh-2rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="training-detail-title">
                     <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-5">
                         <div><h2 id="training-detail-title" className="text-lg font-extrabold text-slate-900">Rincian peserta</h2><p className="mt-1 text-sm text-slate-500">{selectedRow.diklat} · {selectedRow.tahun}</p><p className="text-xs font-semibold uppercase text-slate-400">{selectedRow.penyelenggara}</p></div>
                         <button type="button" onClick={() => setSelectedRow(null)} className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600 hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600/30">Tutup</button>
@@ -174,6 +175,7 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
                     </div>
                 </div>
             </div>}
+            </div>
         </LegacyPageShell>
     );
 }

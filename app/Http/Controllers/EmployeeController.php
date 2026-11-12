@@ -14,6 +14,7 @@ use App\Models\Legacy\TbPenghargaan;
 use App\Models\Legacy\TbPenugasan;
 use App\Models\Legacy\TbSeminar;
 use App\Models\Legacy\TbUser;
+use App\Services\ImportPreviewService;
 use App\Services\XlsxExportService;
 use App\Support\SimpegFieldRules;
 use Carbon\Carbon;
@@ -395,7 +396,7 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function previewImport(Request $request): JsonResponse
+    public function previewImport(Request $request, ImportPreviewService $previewStore): JsonResponse
     {
         $this->ensureAdmin($request);
         $request->validate([
@@ -403,92 +404,48 @@ class EmployeeController extends Controller
         ]);
 
         $file = $request->file('file_xlsx');
-        $xlsx = SimpleXLSX::parse($file->getRealPath());
-        if ($xlsx === false) {
-            throw ValidationException::withMessages(['file_xlsx' => 'File XLSX tidak dapat dibaca. '.SimpleXLSX::parseError()]);
-        }
-
-        $rawRows = $xlsx->rows();
-        $header = array_map(fn ($value): string => trim((string) $value), array_shift($rawRows) ?: []);
-        if (isset($header[0])) {
-            $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]);
-        }
-
-        $normalisedHeader = array_map(fn (string $value): string => $this->normaliseImportHeader($value), array_slice($header, 0, count(self::IMPORT_HEADERS)));
-        $expectedHeader = array_map(fn (string $value): string => $this->normaliseImportHeader($value), self::IMPORT_HEADERS);
-        if ($normalisedHeader !== $expectedHeader) {
-            throw ValidationException::withMessages(['file_xlsx' => 'Header XLSX tidak sesuai Template_Import_Pegawai_V2.xlsx. Unduh template resmi lalu isi tanpa mengubah nama kolom.']);
-        }
-
-        $records = TbPegawai::query()->get(['id_peg', 'nama', 'nik']);
-        $byId = $records->keyBy('id_peg');
-        $byNameNik = $records->keyBy(fn (TbPegawai $employee): string => $this->importMatchKey($employee->nama, $employee->nik));
-        $rows = [];
-
-        foreach ($rawRows as $rowIndex => $row) {
-            $values = array_map(fn ($value): string => trim((string) $value), array_slice(array_pad($row, 18, ''), 0, 18));
-            if (count(array_filter($values, fn (string $value): bool => $value !== '')) === 0) {
-                continue;
-            }
-
-            $id = $values[0];
-            $match = $byId->get($id);
-            $status = $match ? 'update' : ($byNameNik->has($this->importMatchKey($values[2], $values[1])) ? 'rename' : 'new');
-            $errors = $this->importFieldErrors($values);
-            $rows[] = [
-                'values' => $values,
-                'status' => $errors === [] ? $status : 'invalid',
-                'errors' => $errors,
-                'row_number' => $rowIndex + 2,
-                'existing_id' => $match?->id_peg ?: ($status === 'rename' ? $byNameNik->get($this->importMatchKey($values[2], $values[1]))?->id_peg : null),
-            ];
-        }
+        $parsed = $this->parseEmployeeImport($file->getRealPath());
+        $rows = $this->prepareEmployeeImportRows($parsed['rows']);
 
         $invalidRows = array_values(array_map(
             fn (array $row): array => ['row_number' => $row['row_number'], 'errors' => $row['errors']],
             array_filter($rows, fn (array $row): bool => $row['status'] === 'invalid'),
         ));
 
-        return response()->json([
-            'columns' => $header,
+        $result = [
+            'columns' => $parsed['header'],
             'rows' => $rows,
             'preview' => array_slice($rows, 0, 15),
             'total' => count($rows),
             'invalid_count' => count($invalidRows),
             'invalid_rows' => $invalidRows,
-        ]);
+        ];
+
+        if ($result['total'] > 0 && $result['invalid_count'] === 0) {
+            $result['token'] = $previewStore->create(
+                $request,
+                'employee_import_previews',
+                'employee-import-previews',
+                $file,
+            );
+        }
+
+        return response()->json($result);
     }
 
-    public function importXlsx(Request $request): RedirectResponse
+    public function importXlsx(Request $request, ImportPreviewService $previewStore): RedirectResponse
     {
         $this->ensureAdmin($request);
-        $validated = $request->validate(['rows' => ['required', 'string', 'max:20480']]);
-        try {
-            $rows = json_decode($validated['rows'], true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            throw ValidationException::withMessages(['rows' => 'Data preview import tidak valid.']);
-        }
+        $validated = $request->validate(['preview_token' => ['required', 'uuid']]);
+        $preview = $previewStore->resolve($request, 'employee_import_previews', $validated['preview_token']);
+        abort_unless($preview !== null, 422, 'Preview import tidak berlaku. Unggah kembali file pegawai untuk melanjutkan.');
 
-        if (! is_array($rows)) {
-            throw ValidationException::withMessages(['rows' => 'Data preview import tidak valid.']);
-        }
-
-        $invalidRows = [];
-        foreach ($rows as $index => $item) {
-            if (! is_array($item) || ! is_array($item['values'] ?? null)) {
-                throw ValidationException::withMessages(['rows' => 'Data preview import tidak valid. Silakan unggah ulang file XLSX.']);
-            }
-
-            $values = array_map(fn ($value): string => trim((string) $value), array_slice(array_pad($item['values'], 18, ''), 0, 18));
-            $errors = $this->importFieldErrors($values);
-            if ($errors !== []) {
-                $invalidRows[] = (($item['row_number'] ?? $index + 2).': '.implode(', ', $errors));
-            }
-        }
-
-        if ($invalidRows !== []) {
+        $parsed = $this->parseEmployeeImport($preview['full_path']);
+        $rows = $this->prepareEmployeeImportRows($parsed['rows']);
+        $invalidRows = array_filter($rows, fn (array $row): bool => $row['status'] === 'invalid');
+        if ($rows === [] || $invalidRows !== []) {
             throw ValidationException::withMessages([
-                'rows' => 'Perbaiki data angka pada baris XLSX berikut sebelum mengimpor: '.implode('; ', array_slice($invalidRows, 0, 8)).(count($invalidRows) > 8 ? '; dan '.(count($invalidRows) - 8).' baris lainnya.' : '.'),
+                'preview_token' => 'Data pegawai berubah atau tidak lagi valid sejak preview. Unggah ulang dan periksa file.',
             ]);
         }
 
@@ -497,13 +454,8 @@ class EmployeeController extends Controller
 
         DB::transaction(function () use (&$summary, $rows, $actor): void {
             foreach ($rows as $item) {
-                $values = array_map(fn ($value): string => trim((string) $value), array_slice(array_pad($item['values'] ?? [], 18, ''), 0, 18));
+                $values = $item['values'];
                 $id = $values[0] ?? '';
-                if ($id === '' || ($values[2] ?? '') === '') {
-                    $summary['skipped']++;
-
-                    continue;
-                }
 
                 $payload = $this->importPayload($values);
                 $record = TbPegawai::query()->where('id_peg', $id)->first();
@@ -535,6 +487,8 @@ class EmployeeController extends Controller
                 $summary['inserted']++;
             }
         });
+
+        $previewStore->consume($request, 'employee_import_previews', $validated['preview_token']);
 
         return to_route('employees.index')->with('success', "Import pegawai selesai. Baru: {$summary['inserted']}, diperbarui: {$summary['updated']}, ganti ID: {$summary['renamed']}, dilewati: {$summary['skipped']}.");
     }
@@ -994,6 +948,76 @@ class EmployeeController extends Controller
         ];
     }
 
+    private function parseEmployeeImport(string $path): array
+    {
+        $xlsx = SimpleXLSX::parse($path);
+        if ($xlsx === false) {
+            throw ValidationException::withMessages(['file_xlsx' => 'File XLSX tidak dapat dibaca. '.SimpleXLSX::parseError()]);
+        }
+
+        $rawRows = $xlsx->rows();
+        $header = array_map(fn ($value): string => trim((string) $value), array_shift($rawRows) ?: []);
+        if (isset($header[0])) {
+            $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]);
+        }
+
+        while ($header !== [] && end($header) === '') {
+            array_pop($header);
+        }
+
+        $normalisedHeader = array_map(fn (string $value): string => $this->normaliseImportHeader($value), $header);
+        $expectedHeader = array_map(fn (string $value): string => $this->normaliseImportHeader($value), self::IMPORT_HEADERS);
+        if ($normalisedHeader !== $expectedHeader) {
+            throw ValidationException::withMessages(['file_xlsx' => 'Header XLSX tidak sesuai Template_Import_Pegawai_V2.xlsx. Unduh template resmi lalu isi tanpa mengubah nama kolom.']);
+        }
+
+        return ['header' => $header, 'rows' => $rawRows];
+    }
+
+    private function prepareEmployeeImportRows(array $rawRows): array
+    {
+        $records = TbPegawai::query()->get(['id_peg', 'nama', 'nik']);
+        $byId = $records->keyBy('id_peg');
+        $byNameNik = $records->keyBy(fn (TbPegawai $employee): string => $this->importMatchKey($employee->nama, $employee->nik));
+        $rows = [];
+        $seenIds = [];
+        $seenMatchKeys = [];
+
+        foreach ($rawRows as $rowIndex => $row) {
+            $values = array_map(fn ($value): string => trim((string) $value), array_slice(array_pad($row, 18, ''), 0, 18));
+            if (count(array_filter($values, fn (string $value): bool => $value !== '')) === 0) {
+                continue;
+            }
+
+            $id = $values[0];
+            $matchKey = $this->importMatchKey($values[2], $values[1]);
+            $match = $byId->get($id);
+            $status = $match ? 'update' : ($byNameNik->has($matchKey) ? 'rename' : 'new');
+            $errors = $this->importFieldErrors($values);
+
+            if ($id !== '' && isset($seenIds[$id])) {
+                $errors[] = 'ID Pegawai duplikat dengan baris '.$seenIds[$id].'.';
+            } elseif ($id !== '') {
+                $seenIds[$id] = $rowIndex + 2;
+            }
+            if ($matchKey !== '|' && isset($seenMatchKeys[$matchKey]) && ! $match) {
+                $errors[] = 'Kombinasi nama dan NIK duplikat dengan baris '.$seenMatchKeys[$matchKey].'.';
+            } elseif ($matchKey !== '|') {
+                $seenMatchKeys[$matchKey] = $rowIndex + 2;
+            }
+
+            $rows[] = [
+                'values' => $values,
+                'status' => $errors === [] ? $status : 'invalid',
+                'errors' => array_values(array_unique($errors)),
+                'row_number' => $rowIndex + 2,
+                'existing_id' => $match?->id_peg ?: ($status === 'rename' ? $byNameNik->get($matchKey)?->id_peg : null),
+            ];
+        }
+
+        return $rows;
+    }
+
     private function importPayload(array $values): array
     {
         $birthDate = $this->parseImportDate($values[4] ?? '');
@@ -1036,20 +1060,59 @@ class EmployeeController extends Controller
     {
         $errors = [];
         foreach ([
-            1 => ['NIK', 16],
-            11 => ['No. telepon / WA', 13],
-            16 => ['No. BPJS Ketenagakerjaan', 12],
-            17 => ['No. BPJS Kesehatan', 12],
-        ] as $index => [$label, $maxLength]) {
+            0 => ['ID Pegawai', 12, true],
+            1 => ['NIK', 16, true],
+            2 => ['Nama lengkap', 64, true],
+            3 => ['Tempat lahir', 64, true],
+            5 => ['Agama', 16, true],
+            6 => ['Jenis kelamin', 12, true],
+            8 => ['Status nikah', 18, false],
+            9 => ['Status kepegawaian', 24, true],
+            10 => ['Alamat', 255, true],
+            11 => ['No. telepon / WA', 13, true],
+            12 => ['Email', 64, true],
+            13 => ['Nama file foto', 255, false],
+            16 => ['No. BPJS Ketenagakerjaan', 12, false],
+            17 => ['No. BPJS Kesehatan', 12, false],
+        ] as $index => [$label, $maxLength, $required]) {
             $value = trim((string) ($values[$index] ?? ''));
             if ($value === '' || $value === '-') {
+                if ($required) {
+                    $errors[] = "{$label} wajib diisi";
+                }
                 continue;
             }
-            if (preg_match('/\A[0-9]+\z/', $value) !== 1) {
+
+            if (mb_strlen($value) > $maxLength) {
+                $errors[] = "{$label} maksimal {$maxLength} karakter";
+            }
+
+            if (in_array($index, [1, 11, 16, 17], true) && preg_match('/\A[0-9]+\z/', $value) !== 1) {
                 $errors[] = "{$label} hanya boleh berisi angka";
-            } elseif (mb_strlen($value) > $maxLength) {
+            }
+            if (in_array($index, [1, 11, 16, 17], true) && mb_strlen($value) > $maxLength) {
                 $errors[] = "{$label} maksimal {$maxLength} digit";
             }
+        }
+
+        foreach ([
+            4 => ['Tgl lahir', true],
+            14 => ['TMT kerja', false],
+            15 => ['Tgl pensiun', false],
+        ] as $index => [$label, $required]) {
+            $value = trim((string) ($values[$index] ?? ''));
+            if ($value === '' || $value === '-') {
+                if ($required) {
+                    $errors[] = "{$label} wajib diisi";
+                }
+            } elseif ($this->parseImportDate($value) === null) {
+                $errors[] = "{$label} tidak valid";
+            }
+        }
+
+        $email = trim((string) ($values[12] ?? ''));
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            $errors[] = 'Email tidak valid';
         }
 
         return $errors;

@@ -17,7 +17,7 @@ function formatRupiah(value) {
     return `Rp ${currency.format(Number(value || 0))}`;
 }
 
-export default function BiayaPendidikanIndex({ items, years, filters, canManage }) {
+export default function BiayaPendidikanIndex({ items, years, categories = [], parties = [], filters, canManage }) {
     const { flash, errors } = usePage().props;
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [detail, setDetail] = useState(null);
@@ -95,10 +95,12 @@ export default function BiayaPendidikanIndex({ items, years, filters, canManage 
             {errors?.delete && <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{errors.delete}</div>}
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <form onSubmit={submitFilters} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[150px_190px_1fr_auto] lg:items-end">
-                    <MobileFilterGroup id="training-cost-mobile-filters" activeCount={Number(Boolean(filters.tahun && filters.tahun !== 'Semua')) + Number(Boolean(filters.kuartal && filters.kuartal !== 'Semua'))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
+                <form onSubmit={submitFilters} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 xl:grid-cols-[minmax(140px,0.8fr)_minmax(160px,1fr)_minmax(180px,1.2fr)_minmax(180px,1.2fr)_minmax(220px,1.6fr)_auto] xl:items-end">
+                    <MobileFilterGroup id="training-cost-mobile-filters" activeCount={Number(Boolean(filters.tahun && filters.tahun !== 'Semua')) + Number(Boolean(filters.kuartal && filters.kuartal !== 'Semua')) + Number(Boolean(filters.kode_pengembangan)) + Number(Boolean(filters.kode_pihak))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
                         <SelectCombobox id="biaya-year" name="tahun" label="Tahun" value={filters.tahun} options={years} emptyLabel="Semua tahun" />
                         <SelectCombobox id="biaya-quarter" name="kuartal" label="Kuartal" value={filters.kuartal} options={quarterOptions.map(([value, label]) => ({ value, label }))} emptyLabel="Semua kuartal" />
+                        <SelectCombobox id="biaya-category" name="kode_pengembangan" label="Kategori pengembangan" value={filters.kode_pengembangan || ''} options={categories} optionValue={(option) => option.code} optionLabel={(option) => `${option.code} - ${option.name}`} emptyLabel="Semua kategori" />
+                        <SelectCombobox id="biaya-party" name="kode_pihak" label="Jenis pihak pelaksana" value={filters.kode_pihak || ''} options={parties} optionValue={(option) => option.code} optionLabel={(option) => `${option.code} - ${option.name}`} emptyLabel="Semua jenis pihak" />
                         <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
                     </MobileFilterGroup>
                     <div className="simpeg-mobile-filter-search"><label htmlFor="biaya-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Pencarian</label><input id="biaya-search" name="search" defaultValue={filters.search} placeholder="Nama kegiatan, pelaksana, atau kategori" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>

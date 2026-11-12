@@ -296,6 +296,7 @@ export default function LegacyPageShell({ title, children }) {
     const appAlias = appConfig?.alias || 'SIMPEG';
     const appDescription = appConfig?.description || 'Kepegawaian';
     const appLogoUrl = appConfig?.logoUrl || '/images/logo-simpeg-256.png';
+    const darkAppLogoUrl = appConfig?.darkLogoUrl || '/images/logo-simpeg-256-dark.png';
     const profileHref = '/profile';
     const profileLabel = 'Profil Saya';
     const pageLabel = useMemo(() => title || 'SIMPEG', [title]);
@@ -399,7 +400,8 @@ export default function LegacyPageShell({ title, children }) {
                 <div className="simpeg-sidebar-brand relative flex items-center gap-2">
                     <Link href={homeHref} onClick={() => setMobileNavOpen(false)} className="simpeg-sidebar-brand-link flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-2 py-2 pr-12 text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 lg:pr-2">
                         <span className="simpeg-sidebar-logo flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[16px]">
-                            <img src={appLogoUrl} alt={`Logo ${appName}`} width="44" height="44" decoding="async" className="h-full w-full object-contain" />
+                            <img src={appLogoUrl} alt={`Logo ${appName}`} width="44" height="44" decoding="async" className="simpeg-theme-logo-light h-full w-full object-contain" />
+                            <img src={darkAppLogoUrl} alt="" aria-hidden="true" width="44" height="44" decoding="async" className="simpeg-theme-logo-dark h-full w-full object-contain" />
                         </span>
                         <span className="simpeg-sidebar-brand-details min-w-0">
                             <span className="block truncate text-base font-medium">{appAlias || appName}</span>

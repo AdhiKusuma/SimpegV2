@@ -6,6 +6,7 @@
  * queries, and page behaviour remain unchanged.
  */
 :root {
+    --simpeg-ui-scale: 0.8;
     --simpeg-canvas: #f6f6f5;
     --simpeg-canvas-mid: #f6f6f5;
     --simpeg-canvas-end: #fafafa;
@@ -98,8 +99,20 @@ html[data-theme="corporate"] {
 
 /* Shared application frame */
 .simpeg-app-canvas {
+    zoom: var(--simpeg-ui-scale);
+    min-height: calc(100dvh / var(--simpeg-ui-scale)) !important;
     background: var(--simpeg-canvas) !important;
     color: var(--simpeg-text) !important;
+}
+
+/* CSS zoom scales viewport units as well. Compensate the shared shell and
+ * sidebar height so the navigation still fills the visible viewport. */
+.simpeg-app-canvas > .simpeg-shell-frame {
+    min-height: calc(100dvh / var(--simpeg-ui-scale)) !important;
+}
+
+.simpeg-app-canvas .simpeg-sidebar {
+    height: calc(100dvh / var(--simpeg-ui-scale)) !important;
 }
 
 .simpeg-shell-frame,
@@ -475,8 +488,8 @@ select:focus {
     .max-w-6xl:not(.mx-auto)
 ):has(.simpeg-form-card) {
     width: 100%;
-    max-width: 64rem !important;
-    margin-inline: auto !important;
+    max-width: none !important;
+    margin-inline: 0 !important;
 }
 
 /*
@@ -501,9 +514,9 @@ select:focus {
  * create/edit/import form. Form names, routes, events, validation, and
  * business logic remain unchanged. */
 .simpeg-shell-content > main > div:has(.simpeg-form-card) {
-  width: min(100%, 72rem);
-  max-width: 72rem !important;
-  margin-inline: auto !important;
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0 !important;
 }
 
 .simpeg-shell-content .simpeg-form-card {
@@ -571,48 +584,46 @@ select:focus {
   }
 }
 
-/* Form card geometry follows the payroll edit form: every section and
- * action row gets the same breathing room without changing the form markup,
- * fields, routes, events, validation, or submit flow. */
+/* Form card geometry follows the payroll edit form. Keep this as the single
+ * padding source for legacy create/edit forms; broad selectors here can lose
+ * to the utility classes used by payroll or style future nested wrappers. */
 .simpeg-shell-content .simpeg-form-card {
   overflow: hidden;
   padding: 0 !important;
 }
 
-.simpeg-shell-content .simpeg-form-card > :is(.grid, section) {
+.simpeg-shell-content .simpeg-form-card > :is(section, div.grid) {
   gap: 1rem !important;
   padding: 1.5rem !important;
 }
 
-.simpeg-shell-content .simpeg-form-card > :is(.grid, section) + :is(.grid, section) {
+.simpeg-shell-content .simpeg-form-card > :is(section, div.grid) + :is(section, div.grid) {
   border-top: 1px solid var(--simpeg-border) !important;
 }
 
-.simpeg-shell-content .simpeg-form-card > div[class*="mt-8"]:not([class*="flex"]),
-.simpeg-shell-content .simpeg-form-card > div[class*="my-8"]:not([class*="flex"]) {
-  margin-top: 0 !important;
-  padding: 1.5rem !important;
-}
-
-.simpeg-shell-content .simpeg-form-card > div.flex[class*="justify-end"] {
+.simpeg-shell-content .simpeg-form-card > div.flex.justify-end {
   margin-top: 0 !important;
   border-top: 1px solid var(--simpeg-border) !important;
-  padding: 1.25rem 1.5rem !important;
+  padding: 1.25rem !important;
 }
 
-.simpeg-shell-content .simpeg-form-card > div.flex[class*="justify-end"] :is(a, button) {
+.simpeg-shell-content .simpeg-form-card > div.flex.justify-end :is(a, button) {
   min-height: 2.75rem;
 }
 
+.simpeg-shell-content .simpeg-form-card > p {
+  margin: 0 !important;
+  padding: 0 1.5rem 1rem !important;
+}
+
 @media (max-width: 639px) {
-  .simpeg-shell-content .simpeg-form-card > :is(.grid, section),
-  .simpeg-shell-content .simpeg-form-card > div[class*="mt-8"]:not([class*="flex"]),
-  .simpeg-shell-content .simpeg-form-card > div[class*="my-8"]:not([class*="flex"]) {
+  .simpeg-shell-content .simpeg-form-card > :is(section, div.grid),
+  .simpeg-shell-content .simpeg-form-card > div.flex.justify-end {
     padding: 1rem !important;
   }
 
-  .simpeg-shell-content .simpeg-form-card > div.flex[class*="justify-end"] {
-    padding: 1rem !important;
+  .simpeg-shell-content .simpeg-form-card > p {
+    padding: 0 1rem 1rem !important;
   }
 }
 
@@ -1297,57 +1308,4 @@ html.dark .simpeg-sidebar .simpeg-nav-group-active {
 html[data-theme="corporate"] .simpeg-sidebar .simpeg-nav-group-active *,
 html.dark .simpeg-sidebar .simpeg-nav-group-active * {
     color: #ffb81c !important;
-}
-
-/* MIGRASI UI: samakan geometri semua form tambah/edit dengan form payroll.
- * Hanya mengubah presentasi; field, route, validasi, event, dan submit tetap. */
-form.simpeg-form-card {
-    box-sizing: border-box;
-    width: 100%;
-    max-width: none !important;
-    overflow: hidden;
-    padding: 0 !important;
-    border: 1px solid var(--simpeg-border) !important;
-    border-radius: 0.875rem !important;
-    background: var(--simpeg-card) !important;
-    box-shadow: none !important;
-}
-
-form.simpeg-form-card > :is(section, div:not(.flex)) {
-    box-sizing: border-box;
-    width: 100%;
-    margin: 0 !important;
-    padding: 1.5rem !important;
-}
-
-form.simpeg-form-card > :is(section, div:not(.flex)) + :is(section, div:not(.flex)) {
-    border-top: 1px solid var(--simpeg-border) !important;
-}
-
-form.simpeg-form-card > div.flex.justify-end {
-    box-sizing: border-box;
-    margin: 0 !important;
-    border-top: 1px solid var(--simpeg-border) !important;
-    padding: 1.25rem 1.5rem !important;
-}
-
-form.simpeg-form-card > p {
-    box-sizing: border-box;
-    margin: 0 !important;
-    padding: 0 1.5rem 1.5rem !important;
-}
-
-form.simpeg-form-card > :is(section, div:not(.flex)) > .grid {
-    gap: 1.25rem !important;
-}
-
-@media (max-width: 639px) {
-    form.simpeg-form-card > :is(section, div:not(.flex)),
-    form.simpeg-form-card > p {
-        padding: 1rem !important;
-    }
-
-    form.simpeg-form-card > div.flex.justify-end {
-        padding: 1rem !important;
-    }
 }
