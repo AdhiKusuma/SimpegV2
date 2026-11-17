@@ -268,8 +268,14 @@ function TrendChart({ data }) {
     const path = points.map(({ x, y }, index) => `${index === 0 ? 'M' : 'L'} ${x} ${y}`).join(' ');
 
     return (
-        <div>
-            <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" role="img" aria-label={`Tren pelanggaran tahun ${data?.year || ''}`}>
+        <div className="simpeg-violation-trend">
+            <svg
+                viewBox={`0 0 ${width} ${height}`}
+                className="simpeg-violation-trend-plot block w-full"
+                preserveAspectRatio="none"
+                role="img"
+                aria-label={`Tren pelanggaran tahun ${data?.year || ''}`}
+            >
                 {[0, 0.5, 1].map((ratio) => {
                     const y = padding.top + plotHeight * ratio;
                     const gridValue = Math.round(maximum * (1 - ratio));
