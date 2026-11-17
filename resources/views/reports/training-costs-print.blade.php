@@ -22,7 +22,9 @@
 <body>
     <h1>Rekapitulasi Biaya Diklat</h1>
     <p>Tahun: {{ $filters['tahun'] === 'Semua' ? 'Semua tahun' : $filters['tahun'] }}</p>
-    <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @if (!($pdf ?? false))
+        <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @endif
     <table>
         <thead>
         <tr>

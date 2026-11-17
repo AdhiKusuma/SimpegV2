@@ -25,9 +25,10 @@ class ApplicationLogoService
         }
 
         if (File::isFile(public_path('uploads/config/'.$filename))) {
-            return asset('uploads/config/'.rawurlencode($filename));
+            return route('config.application.logo', ['filename' => $filename], false);
         }
 
         return $fallback;
     }
+
 }

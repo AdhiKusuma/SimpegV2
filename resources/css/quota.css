@@ -548,6 +548,78 @@
     flex-wrap: wrap;
 }
 
+.simpeg-quota-position-filter {
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--simpeg-border);
+    background: color-mix(in srgb, var(--simpeg-card-soft) 70%, transparent);
+}
+
+.simpeg-quota-position-search-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 42rem;
+}
+
+.simpeg-quota-position-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.8rem;
+    z-index: 1;
+    width: 1rem;
+    height: 1rem;
+    color: var(--simpeg-muted);
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.simpeg-quota-position-search {
+    width: 100%;
+    min-height: 2.65rem;
+    border: 1px solid var(--simpeg-border-strong, var(--simpeg-border)) !important;
+    border-radius: 0.75rem;
+    background: var(--simpeg-input) !important;
+    color: var(--simpeg-text) !important;
+    padding-left: 2.45rem;
+    padding-right: 2.45rem;
+}
+
+.simpeg-quota-position-search:focus {
+    border-color: var(--simpeg-primary) !important;
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--simpeg-primary) 18%, transparent);
+}
+
+.simpeg-quota-position-search::placeholder {
+    color: var(--simpeg-muted) !important;
+    opacity: 1;
+}
+
+.simpeg-quota-position-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 0.45rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    border: 0;
+    border-radius: 0.5rem;
+    color: var(--simpeg-muted);
+    background: transparent;
+    transform: translateY(-50%);
+}
+
+.simpeg-quota-position-search-clear:hover {
+    color: var(--simpeg-text);
+    background: var(--simpeg-card-soft);
+}
+
+.simpeg-quota-position-search-clear svg {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
 .simpeg-quota-add-toggle,
 .simpeg-quota-create-button {
     display: inline-flex;
@@ -604,13 +676,60 @@
 
 .simpeg-quota-create-form {
     display: grid;
-    grid-template-columns: minmax(16rem, 1.5fr) minmax(9rem, 0.7fr) auto;
-    align-items: end;
+    grid-template-columns: minmax(14rem, 1.35fr) minmax(13rem, 1fr) minmax(10rem, 0.8fr) minmax(8rem, 0.65fr) auto;
+    align-items: start;
     gap: 1rem;
+}
+
+.simpeg-quota-create-form > div,
+.simpeg-quota-create-form > .simpeg-quota-create-group {
+    min-width: 0;
+}
+
+.simpeg-quota-create-form > div > .simpeg-quota-label,
+.simpeg-quota-create-form .simpeg-quota-create-group > label {
+    min-height: 1.1rem;
+    line-height: 1.1rem;
+}
+
+.simpeg-quota-create-code,
+.simpeg-quota-create-group {
+    min-width: 0;
+}
+
+.simpeg-quota-create-code .simpeg-input,
+.simpeg-quota-create-group .simpeg-input {
+    height: 2.65rem !important;
+    min-height: 2.65rem;
+}
+
+.simpeg-quota-create-form .simpeg-quota-create-group > label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--simpeg-text) !important;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.simpeg-quota-group-picker {
+    flex: 0 0 8rem;
+    min-width: 8rem;
+}
+
+.simpeg-quota-group-picker .simpeg-input {
+    min-height: 2.35rem;
+    height: 2.35rem;
+    padding-inline: 0.65rem;
 }
 
 .simpeg-quota-create-button {
     min-height: 2.75rem;
+    height: 2.75rem;
+    align-self: start;
+    margin-top: 1.6rem;
     white-space: nowrap;
 }
 
@@ -660,6 +779,13 @@
     flex: 1 1 auto;
     min-height: 2.35rem;
     padding: 0.5rem 0.7rem;
+}
+
+.simpeg-quota-position-name-edit .simpeg-quota-code-input {
+    flex: 0 0 7rem;
+    min-width: 5rem;
+    min-height: 2.35rem;
+    padding: 0.5rem 0.65rem;
 }
 
 .simpeg-quota-name-save,
@@ -800,6 +926,15 @@
 
     .simpeg-quota-create-form {
         grid-template-columns: 1fr;
+    }
+
+    .simpeg-quota-create-button {
+        margin-top: 0;
+    }
+
+    .simpeg-quota-group-picker {
+        flex-basis: 7rem;
+        min-width: 7rem;
     }
 
     .simpeg-quota-position-row {

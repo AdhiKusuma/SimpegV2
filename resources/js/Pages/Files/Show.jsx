@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Download, FileText } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 
 function formatRupiah(value) {
@@ -21,7 +22,7 @@ export default function FilesShow({ slip, templateAvailable = false, backHref = 
             <Head title={`Slip Gaji ${slip.period}`} />
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                 <div><Link href={backHref} className="simpeg-muted mb-3 inline-flex items-center gap-2 text-sm font-semibold"><ArrowLeft className="h-4 w-4" />{backLabel}</Link><p className="simpeg-muted mb-2 text-sm font-semibold uppercase tracking-[0.18em]">{sectionLabel}</p><h1 className="simpeg-text text-3xl font-extrabold tracking-tight">Periode {slip.period}</h1><p className="simpeg-muted mt-2">{slip.employee_name} · {slip.employee_id}</p></div>
-                {templateAvailable ? <a href={`/files/${slip.payroll_import_id}/slip/${encodeURIComponent(slip.employee_id)}/download`} className="simpeg-primary inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold"><Download className="h-4 w-4" />Export PDF</a> : <span className="simpeg-utility inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold" title="Template PDF belum tersedia"><Download className="h-4 w-4" />PDF belum tersedia</span>}
+                <ExportDropdown items={[{ href: `/files/${slip.payroll_import_id}/slip/${encodeURIComponent(slip.employee_id)}/download`, label: 'Export PDF' }]} disabled={!templateAvailable} label={templateAvailable ? 'Export' : 'PDF belum tersedia'} />
             </div>
 
             {!templateAvailable && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">Data payroll sudah tersedia untuk preview. Referensi template PDF slip gaji perlu disediakan kembali agar preview final dan export mengikuti tata letak yang disetujui.</div>}

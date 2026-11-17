@@ -1,9 +1,10 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import SearchableCombobox from '../../Components/SearchableCombobox';
 import SelectCombobox from '../../Components/SelectCombobox';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import MobileFilterGroup from '../../Components/MobileFilterGroup';
 
 const emptyForm = {
     kode_cabang: '',
@@ -20,14 +21,17 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
     const { flash } = usePage().props;
     const [selectedBranchCode, setSelectedBranchCode] = useState('');
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [positionSearch, setPositionSearch] = useState('');
     const [createPositionName, setCreatePositionName] = useState('');
     const [createQuota, setCreateQuota] = useState('');
     const [editingPositionKey, setEditingPositionKey] = useState(null);
+    const [editingPositionCode, setEditingPositionCode] = useState('');
     const [editingPositionName, setEditingPositionName] = useState('');
+    const [editingPositionGroup, setEditingPositionGroup] = useState('');
     const [savingPositionKey, setSavingPositionKey] = useState(null);
     const [deletingPositionId, setDeletingPositionId] = useState(null);
     const form = useForm({ kode_cabang: '', quotas: [] });
-    const createForm = useForm({ kode_cabang: '', jabatan_id: '', nama_jabatan: '', kuota_pegawai: '' });
+    const createForm = useForm({ kode_cabang: '', jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
 
     const selectedBranch = useMemo(
         () => branchOptions.find((branch) => String(branch.kode_cabang) === selectedBranchCode),
@@ -84,15 +88,32 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
             positions.set('custom:'+quota.id, {
                 custom_id: quota.id,
                 kode_jabatan: null,
+                kode_custom: quota.kode_custom || '',
                 nama_jabatan: quota.nama_jabatan,
-                group_jabatan: 'Custom',
-                lingkup: '-',
+                group_jabatan: quota.group_jabatan || '',
+                lingkup: quota.lingkup || selectedBranch?.level || '-',
                 saved_quota: quota,
             });
         });
 
         return Array.from(positions.values());
-    }, [branchPositionsForOffice, customQuotas, effectiveQuotas, positionOptions]);
+    }, [branchPositionsForOffice, customQuotas, effectiveQuotas, positionOptions, selectedBranch?.level]);
+
+    const filteredPositionEntries = useMemo(() => {
+        const query = positionSearch.trim().toLowerCase();
+
+        return selectedBranchPositions
+            .map((position, index) => ({ position, index }))
+            .filter(({ position }) => {
+                if (!query) return true;
+
+                return [
+                    position.nama_jabatan,
+                    position.kode_jabatan,
+                    position.kode_custom,
+                ].some((value) => String(value || '').toLowerCase().includes(query));
+            });
+    }, [positionSearch, selectedBranchPositions]);
 
     useEffect(() => {
         form.setData('quotas', selectedBranchPositions.map((position) => {
@@ -101,7 +122,9 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
             return {
                 id: savedQuota?.id ?? null,
                 jabatan_id: position.kode_jabatan === null ? null : String(position.kode_jabatan),
+                kode_jabatan: savedQuota?.kode_custom || (position.custom_id ? position.kode_custom : null),
                 nama_jabatan: savedQuota?.nama_jabatan || (position.custom_id ? position.nama_jabatan : null),
+                group_jabatan: savedQuota?.group_jabatan || (position.custom_id ? position.group_jabatan : null),
                 kuota_pegawai: savedQuota?.kuota_pegawai ?? 0,
             };
         }));
@@ -113,12 +136,15 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
 
         setSelectedBranchCode(branchCode);
         form.setData('kode_cabang', branchCode);
-        createForm.setData({ kode_cabang: branchCode, jabatan_id: '', nama_jabatan: '', kuota_pegawai: '' });
+        createForm.setData({ kode_cabang: branchCode, jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
         setShowCreateForm(false);
+        setPositionSearch('');
         setCreatePositionName('');
         setCreateQuota('');
         setEditingPositionKey(null);
+        setEditingPositionCode('');
         setEditingPositionName('');
+        setEditingPositionGroup('');
         form.clearErrors();
         createForm.clearErrors();
     }
@@ -143,7 +169,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                 setShowCreateForm(false);
                 setCreatePositionName('');
                 setCreateQuota('');
-                createForm.setData({ kode_cabang: selectedBranchCode, jabatan_id: '', nama_jabatan: '', kuota_pegawai: '' });
+                createForm.setData({ kode_cabang: selectedBranchCode, jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
             },
         });
     }
@@ -152,24 +178,32 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
         const positionKey = position.custom_id ? 'custom:'+position.custom_id : String(position.kode_jabatan);
 
         setEditingPositionKey(positionKey);
+        setEditingPositionCode(position.custom_id ? (position.kode_custom || '') : '');
         setEditingPositionName(position.nama_jabatan);
+        setEditingPositionGroup(position.custom_id ? (position.group_jabatan || '') : '');
     }
 
     function cancelEditPosition() {
         setEditingPositionKey(null);
+        setEditingPositionCode('');
         setEditingPositionName('');
+        setEditingPositionGroup('');
     }
 
     function savePositionName(position, index) {
         const nextName = editingPositionName.trim();
         if (!nextName) return;
+        if (position.custom_id && !['PE', 'PS'].includes(editingPositionGroup)) return;
+        if (position.custom_id && !editingPositionCode.trim()) return;
 
         const savedQuota = position.saved_quota || existingQuotaByPosition.get(String(position.kode_jabatan));
         const positionKey = position.custom_id ? 'custom:'+position.custom_id : String(position.kode_jabatan);
         const payload = {
             kode_cabang: selectedBranchCode,
             jabatan_id: position.custom_id ? null : position.kode_jabatan,
+            kode_jabatan: position.custom_id ? editingPositionCode.trim() : null,
             nama_jabatan: nextName,
+            group_jabatan: position.custom_id ? editingPositionGroup : null,
             kuota_pegawai: form.data.quotas[index]?.kuota_pegawai ?? savedQuota?.kuota_pegawai ?? 0,
         };
         const options = {
@@ -178,7 +212,9 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
             onFinish: () => setSavingPositionKey(null),
             onSuccess: () => {
                 setEditingPositionKey(null);
+                setEditingPositionCode('');
                 setEditingPositionName('');
+                setEditingPositionGroup('');
             },
         };
 
@@ -280,7 +316,9 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                         </h3>
                                     </div>
                                     <div className="simpeg-quota-position-panel-tools">
-                                        <span className="simpeg-quota-count">{selectedBranchPositions.length} jabatan</span>
+                                        <span className="simpeg-quota-count">
+                                            {positionSearch ? `${filteredPositionEntries.length} dari ${selectedBranchPositions.length} jabatan` : `${selectedBranchPositions.length} jabatan`}
+                                        </span>
                                         <button
                                             type="button"
                                             className="simpeg-quota-add-toggle"
@@ -293,6 +331,32 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                     </div>
                                 </div>
 
+                                <div className="simpeg-quota-position-filter">
+                                    <label htmlFor="quota-position-search" className="simpeg-quota-label">Cari jabatan</label>
+                                    <div className="simpeg-quota-position-search-wrap">
+                                        <Search aria-hidden="true" className="simpeg-quota-position-search-icon" />
+                                        <input
+                                            id="quota-position-search"
+                                            type="search"
+                                            value={positionSearch}
+                                            onChange={(event) => setPositionSearch(event.target.value)}
+                                            className="simpeg-input simpeg-quota-position-search"
+                                            placeholder="Cari nama atau kode"
+                                            autoComplete="off"
+                                        />
+                                        {positionSearch && (
+                                            <button
+                                                type="button"
+                                                className="simpeg-quota-position-search-clear"
+                                                onClick={() => setPositionSearch('')}
+                                                aria-label="Hapus pencarian jabatan"
+                                            >
+                                                <X aria-hidden="true" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
                                 {showCreateForm && (
                                     <div className="simpeg-quota-create-box">
                                         <div>
@@ -302,7 +366,15 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                                 Masukkan nama jabatan bebas, tanpa mengubah data master jabatan.
                                             </p>
                                         </div>
-                                        <form onSubmit={submitCreate} className="simpeg-quota-create-form">
+                                        <div
+                                            className="simpeg-quota-create-form"
+                                            onKeyDown={(event) => {
+                                                if (event.key === 'Enter') {
+                                                    event.preventDefault();
+                                                    submitCreate(event);
+                                                }
+                                            }}
+                                        >
                                             <div>
                                                 <label htmlFor="quota-create-name" className="simpeg-quota-label">Nama jabatan</label>
                                                 <input
@@ -320,6 +392,36 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                                 />
                                                 {createForm.errors.nama_jabatan && <p className="simpeg-quota-error" role="alert">{createForm.errors.nama_jabatan}</p>}
                                             </div>
+                                            <div className="simpeg-quota-create-code">
+                                                <label htmlFor="quota-create-code" className="simpeg-quota-label">Kode jabatan custom</label>
+                                                <input
+                                                    id="quota-create-code"
+                                                    type="text"
+                                                    maxLength="50"
+                                                    value={createForm.data.kode_jabatan}
+                                                    onChange={(event) => createForm.setData('kode_jabatan', event.target.value)}
+                                                    placeholder="Contoh: KCU-001"
+                                                    className="simpeg-input simpeg-quota-number"
+                                                    required
+                                                />
+                                                {createForm.errors.kode_jabatan && <p className="simpeg-quota-error" role="alert">{createForm.errors.kode_jabatan}</p>}
+                                            </div>
+                                            <SelectCombobox
+                                                id="quota-create-group"
+                                                name="group_jabatan"
+                                                label="Label jabatan"
+                                                value={createForm.data.group_jabatan}
+                                                options={[{ value: 'PE', label: 'PE' }, { value: 'PS', label: 'PS' }]}
+                                                optionValue={(option) => option.value}
+                                                optionLabel={(option) => option.label}
+                                                onChange={(value) => createForm.setData('group_jabatan', value)}
+                                                placeholder="Pilih PE atau PS"
+                                                emptyMessage="Label tidak ditemukan."
+                                                required
+                                                error={createForm.errors.group_jabatan}
+                                                description={`Kantor otomatis: ${selectedBranch?.level || '-'}`}
+                                                className="simpeg-quota-create-group"
+                                            />
                                             <div>
                                                 <label htmlFor="quota-create-count" className="simpeg-quota-label">Kuota pegawai</label>
                                                 <input
@@ -337,11 +439,16 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                                 />
                                                 {createForm.errors.kuota_pegawai && <p className="simpeg-quota-error" role="alert">{createForm.errors.kuota_pegawai}</p>}
                                             </div>
-                                            <button type="submit" className="simpeg-primary simpeg-quota-create-button" disabled={createForm.processing}>
+                                            <button
+                                                type="button"
+                                                className="simpeg-primary simpeg-quota-create-button"
+                                                onClick={submitCreate}
+                                                disabled={createForm.processing}
+                                            >
                                                 <Plus aria-hidden="true" />
                                                 {createForm.processing ? 'Menambahkan...' : 'Tambah kuota'}
                                             </button>
-                                        </form>
+                                        </div>
                                     </div>
                                 )}
 
@@ -349,9 +456,13 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                     <p className="simpeg-quota-empty">
                                         Belum ada jabatan aktif atau custom yang terhubung dengan kantor ini.
                                     </p>
+                                ) : filteredPositionEntries.length === 0 ? (
+                                    <p className="simpeg-quota-empty">
+                                        Jabatan dengan kata kunci “{positionSearch}” tidak ditemukan.
+                                    </p>
                                 ) : (
                                     <div className="simpeg-quota-position-list">
-                                        {selectedBranchPositions.map((position, index) => {
+                                        {filteredPositionEntries.map(({ position, index }) => {
                                             const quotaError = errorForBatchQuota(form.errors, index);
                                             const savedQuota = position.saved_quota || existingQuotaByPosition.get(String(position.kode_jabatan));
                                             const positionKey = position.custom_id ? 'custom:'+position.custom_id : String(position.kode_jabatan);
@@ -364,6 +475,17 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                                     <div className="simpeg-quota-position-detail">
                                                         {isEditing ? (
                                                             <div className="simpeg-quota-position-name-edit">
+                                                                {position.custom_id && (
+                                                                    <input
+                                                                        type="text"
+                                                                        maxLength="50"
+                                                                        value={editingPositionCode}
+                                                                        onChange={(event) => setEditingPositionCode(event.target.value)}
+                                                                        className="simpeg-input simpeg-quota-code-input"
+                                                                        placeholder="Kode"
+                                                                        aria-label="Kode jabatan custom"
+                                                                    />
+                                                                )}
                                                                 <input
                                                                     type="text"
                                                                     maxLength="100"
@@ -372,11 +494,24 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                                                     className="simpeg-input simpeg-quota-name-input"
                                                                     autoFocus
                                                                 />
+                                                                {position.custom_id && (
+                                                                    <SelectCombobox
+                                                                        id={'quota-group-edit-' + positionKey}
+                                                                        value={editingPositionGroup}
+                                                                        options={[{ value: 'PE', label: 'PE' }, { value: 'PS', label: 'PS' }]}
+                                                                        optionValue={(option) => option.value}
+                                                                        optionLabel={(option) => option.label}
+                                                                        onChange={setEditingPositionGroup}
+                                                                        placeholder="Pilih PE/PS"
+                                                                        emptyMessage="Label tidak ditemukan."
+                                                                        className="simpeg-quota-group-picker"
+                                                                    />
+                                                                )}
                                                                 <button
                                                                     type="button"
                                                                     className="simpeg-quota-name-save"
                                                                     onClick={() => savePositionName(position, index)}
-                                                                    disabled={isSaving || !editingPositionName.trim()}
+                                                                    disabled={isSaving || !editingPositionName.trim() || (position.custom_id && (!editingPositionCode.trim() || !['PE', 'PS'].includes(editingPositionGroup)))}
                                                                     title="Simpan nama jabatan"
                                                                 >
                                                                     <Check aria-hidden="true" />
@@ -407,7 +542,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                                             </div>
                                                         )}
                                                         <span>
-                                                            {position.custom_id ? 'Jabatan custom' : `Kode ${position.kode_jabatan}`} · {position.lingkup || '-'} · {position.group_jabatan || '-'}
+                                                            {position.custom_id ? `Kode ${position.kode_custom || '-'}` : `Kode ${position.kode_jabatan}`} · {position.lingkup || selectedBranch?.level || '-'} · {position.group_jabatan || 'Pilih PE/PS'}
                                                         </span>
                                                         <em className={savedQuota ? 'is-configured' : ''}>
                                                             {savedQuota?.source === 'master'
@@ -550,15 +685,6 @@ export default function QuotaJabatan({ branchOptions = [], branchPositionOptions
         });
     }
 
-    function resetFilters() {
-        setFilterForm({ search: '', kode_cabang: '', jabatan_id: '' });
-        router.get('/config/kuota-jabatan', {}, {
-            preserveScroll: true,
-            preserveState: true,
-            replace: true,
-        });
-    }
-
     function deleteQuota(quota) {
         const confirmed = window.confirm(
             `Set kuota ${quota.nama_jabatan} untuk ${quota.nama_cabang} (${quota.kode_cabang}) menjadi 0? Data jabatan master tidak dihapus.`,
@@ -685,55 +811,54 @@ export default function QuotaJabatan({ branchOptions = [], branchPositionOptions
                         <p className="simpeg-quota-filter-help">Jabatan tidak wajib dipilih untuk menampilkan semua kuota.</p>
                     </div>
 
-                    <form onSubmit={applyFilters} className="simpeg-quota-filter-form">
-                        <div>
-                            <label htmlFor="quota-filter-search" className="simpeg-quota-label">Pencarian</label>
-                            <input
-                                id="quota-filter-search"
-                                type="search"
-                                value={filterForm.search}
-                                onChange={(event) => setFilterForm((current) => ({ ...current, search: event.target.value }))}
-                                placeholder="Kode/nama cabang atau jabatan"
-                                className="simpeg-input simpeg-quota-filter-input"
+                    <form onSubmit={applyFilters} className="simpeg-quota-filter-form simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel">
+                        <MobileFilterGroup id="quota-mobile-filters" activeCount={Number(Boolean(filterForm.search)) + Number(Boolean(filterForm.kode_cabang)) + Number(Boolean(filterForm.jabatan_id))}>
+                            <div>
+                                <label htmlFor="quota-filter-search" className="simpeg-quota-label">Pencarian</label>
+                                <input
+                                    id="quota-filter-search"
+                                    type="search"
+                                    value={filterForm.search}
+                                    onChange={(event) => setFilterForm((current) => ({ ...current, search: event.target.value }))}
+                                    placeholder="Kode/nama cabang atau jabatan"
+                                    className="simpeg-input simpeg-quota-filter-input"
+                                />
+                            </div>
+                            <SearchableCombobox
+                                id="quota-filter-branch"
+                                name="kode_cabang"
+                                label="Cabang"
+                                value={filterForm.kode_cabang}
+                                options={[{ kode_cabang: '', label: 'Semua cabang' }, ...branchOptions]}
+                                optionValue={(option) => option.kode_cabang}
+                                optionLabel={(option) => option.label}
+                                onChange={(value) => setFilterForm((current) => ({ ...current, kode_cabang: String(value ?? '') }))}
+                                placeholder="Semua cabang"
+                                emptyMessage="Cabang tidak ditemukan."
                             />
-                        </div>
-                        <SearchableCombobox
-                            id="quota-filter-branch"
-                            name="kode_cabang"
-                            label="Cabang"
-                            value={filterForm.kode_cabang}
-                            options={[{ kode_cabang: '', label: 'Semua cabang' }, ...branchOptions]}
-                            optionValue={(option) => option.kode_cabang}
-                            optionLabel={(option) => option.label}
-                            onChange={(value) => setFilterForm((current) => ({ ...current, kode_cabang: String(value ?? '') }))}
-                            placeholder="Semua cabang"
-                            emptyMessage="Cabang tidak ditemukan."
-                        />
-                        <SearchableCombobox
-                            id="quota-filter-position"
-                            name="jabatan_id"
-                            label="Jabatan (opsional)"
-                            value={filterForm.jabatan_id}
-                            options={[{ kode_jabatan: '', nama_jabatan: 'Semua jabatan', group_jabatan: '', lingkup: '' }, ...positionOptions]}
-                            optionValue={(option) => option.kode_jabatan}
-                            optionLabel={(option) => option.nama_jabatan}
-                            optionDescription={(option) => option.kode_jabatan ? [
-                                `Kode ${option.kode_jabatan}`,
-                                `Lingkup ${option.lingkup || '-'}`,
-                                option.group_jabatan || 'Kelompok tidak tercatat',
-                            ].join(' · ') : 'Tampilkan semua jabatan'}
-                            onChange={(value) => setFilterForm((current) => ({ ...current, jabatan_id: String(value ?? '') }))}
-                            placeholder="Semua jabatan"
-                            emptyMessage="Jabatan tidak ditemukan."
-                        />
-                        <div className="simpeg-quota-filter-actions">
-                            <button type="submit" className="simpeg-primary simpeg-quota-filter-apply">
-                                Terapkan
-                            </button>
-                            <button type="button" className="simpeg-quota-filter-reset" onClick={resetFilters}>
-                                Reset
-                            </button>
-                        </div>
+                            <SearchableCombobox
+                                id="quota-filter-position"
+                                name="jabatan_id"
+                                label="Jabatan (opsional)"
+                                value={filterForm.jabatan_id}
+                                options={[{ kode_jabatan: '', nama_jabatan: 'Semua jabatan', group_jabatan: '', lingkup: '' }, ...positionOptions]}
+                                optionValue={(option) => option.kode_jabatan}
+                                optionLabel={(option) => option.nama_jabatan}
+                                optionDescription={(option) => option.kode_jabatan ? [
+                                    `Kode ${option.kode_jabatan}`,
+                                    `Lingkup ${option.lingkup || '-'}`,
+                                    option.group_jabatan || 'Kelompok tidak tercatat',
+                                ].join(' · ') : 'Tampilkan semua jabatan'}
+                                onChange={(value) => setFilterForm((current) => ({ ...current, jabatan_id: String(value ?? '') }))}
+                                placeholder="Semua jabatan"
+                                emptyMessage="Jabatan tidak ditemukan."
+                            />
+                            <div className="simpeg-quota-filter-actions">
+                                <button type="submit" className="simpeg-primary simpeg-quota-filter-apply simpeg-mobile-filter-apply">
+                                    Terapkan
+                                </button>
+                            </div>
+                        </MobileFilterGroup>
                     </form>
                 </section>
 

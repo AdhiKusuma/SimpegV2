@@ -1,6 +1,8 @@
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SelectCombobox from '../../Components/SelectCombobox';
 
 const currency = new Intl.NumberFormat('id-ID');
@@ -118,19 +120,23 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
         <LegacyPageShell title="Rekapitulasi Biaya Diklat">
             <div className="simpeg-report-page">
             <Head title="Rekapitulasi Biaya Diklat" />
-            <div className="mb-6">
-                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Pengembangan Pegawai</p>
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Rekapitulasi biaya diklat</h1>
-                <p className="mt-2 text-slate-500">Ringkasan kegiatan, jumlah peserta, dan realisasi biaya berdasarkan periode sistem.</p>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Pengembangan Pegawai</p>
+                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Rekapitulasi biaya diklat</h1>
+                    <p className="mt-2 text-slate-500">Ringkasan kegiatan, jumlah peserta, dan realisasi biaya berdasarkan periode sistem.</p>
+                </div>
+                <ExportDropdown items={[{ href: `/laporan/rekap-diklat/export?${exportQuery.toString()}`, label: 'Export XLSX' }, { href: `/laporan/rekap-diklat/export?type=pdf&${exportQuery.toString()}`, label: 'Cetak / simpan PDF', target: '_blank' }]} />
             </div>
 
-            <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <form onSubmit={submit} className="simpeg-filter-toolbar grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-                    <SelectCombobox id="training-cost-year" name="tahun" label="Periode" value={filters.tahun} options={years} emptyLabel="Semua tahun" emptyValue="Semua" />
-                    <div className="flex flex-wrap gap-2">
-                        <button type="submit" className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
-                        <a href={`/laporan/rekap-diklat/export?${exportQuery.toString()}`} className="inline-flex min-h-11 items-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">Export XLSX</a>
-                        <a href={`/laporan/rekap-diklat/export?type=pdf&${exportQuery.toString()}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Cetak / Simpan PDF</a>
+            <section className="simpeg-filter-only-shell mb-6">
+                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 lg:items-end">
+                    <MobileFilterGroup id="training-cost-mobile-filters" activeCount={Number(Boolean(filters.tahun && filters.tahun !== 'Semua'))}>
+                        <SelectCombobox id="training-cost-year" name="tahun" label="Periode" value={filters.tahun} options={years} emptyLabel="Semua tahun" emptyValue="Semua" />
+                        <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
+                    </MobileFilterGroup>
+                    <div className="simpeg-mobile-filter-actions--top flex flex-wrap gap-2">
+                        <button type="submit" className="simpeg-desktop-filter-apply h-11 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
                     </div>
                 </form>
             </section>
@@ -147,7 +153,7 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
                                 <td className="px-5 py-4 font-semibold text-slate-800">{row.diklat}</td>
                                 <td className="px-5 py-4 text-sm font-semibold uppercase text-slate-600">{row.penyelenggara}</td>
                                 <td className="px-5 py-4 text-center"><span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">{row.tahun}</span></td>
-                                <td className="px-5 py-4 text-center"><button type="button" onClick={() => { setDetail(null); setSelectedRow(row); }} className="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-4 focus:ring-blue-600/20">{row.jumlah_peserta}</button></td>
+                                <td className="px-5 py-4 text-center"><button type="button" aria-label={`Lihat ${row.jumlah_peserta} peserta`} onClick={() => { setDetail(null); setSelectedRow(row); }} className="simpeg-table-inline-action">{row.jumlah_peserta}</button></td>
                                 <td className="px-5 py-4 text-right font-mono text-sm font-bold text-slate-800">Rp {currency.format(row.total_biaya_kegiatan)}</td>
                             </tr>)}
                         </tbody>

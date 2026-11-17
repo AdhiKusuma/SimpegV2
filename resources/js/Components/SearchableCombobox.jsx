@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Search } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 export default function SearchableCombobox({
     id,
@@ -25,6 +26,8 @@ export default function SearchableCombobox({
     const [query, setQuery] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
+    const anchorRef = useRef(null);
+    const [menuPosition, setMenuPosition] = useState(null);
     const isControlled = onChange !== undefined;
     const selectedValue = String(isControlled ? value ?? '' : internalValue);
     const selected = options.find((option) => String(optionValue(option)) === selectedValue);
@@ -32,6 +35,41 @@ export default function SearchableCombobox({
         const text = `${optionLabel(option)} ${optionValue(option)} ${optionDescription ? optionDescription(option) : ''}`.toLowerCase();
         return text.includes(query.trim().toLowerCase());
     }).slice(0, maxOptions), [options, optionLabel, optionValue, query, maxOptions]);
+
+    useEffect(() => {
+        if (!isOpen || !anchorRef.current) {
+            setMenuPosition(null);
+            return undefined;
+        }
+
+        function updateMenuPosition() {
+            const rect = anchorRef.current?.getBoundingClientRect();
+            if (!rect) return;
+
+            const viewportPadding = 12;
+            const menuGap = 8;
+            const menuMaxHeight = Math.min(256, Math.max(128, window.innerHeight - (viewportPadding * 2)));
+            const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+            const spaceAbove = rect.top - viewportPadding;
+            const showAbove = spaceBelow < menuMaxHeight && spaceAbove > spaceBelow;
+            const top = showAbove
+                ? Math.max(viewportPadding, rect.top - menuGap - menuMaxHeight)
+                : Math.min(window.innerHeight - viewportPadding - menuMaxHeight, rect.bottom + menuGap);
+            const width = Math.min(rect.width, window.innerWidth - (viewportPadding * 2));
+            const left = Math.min(Math.max(viewportPadding, rect.left), window.innerWidth - viewportPadding - width);
+
+            setMenuPosition({ position: 'fixed', top, left, width, maxHeight: menuMaxHeight, zIndex: 1000 });
+        }
+
+        updateMenuPosition();
+        window.addEventListener('resize', updateMenuPosition);
+        window.addEventListener('scroll', updateMenuPosition, true);
+
+        return () => {
+            window.removeEventListener('resize', updateMenuPosition);
+            window.removeEventListener('scroll', updateMenuPosition, true);
+        };
+    }, [isOpen, filteredOptions.length]);
 
     function setSelectedValue(nextValue) {
         if (!isControlled) {
@@ -90,7 +128,7 @@ export default function SearchableCombobox({
                 {label}{required && <span className="text-red-600"> *</span>}
                 {error && <span className="ml-2 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-red-700">Perlu diperiksa</span>}
             </label>}
-            <div className="relative">
+            <div ref={anchorRef} className="relative">
                 {searchable ? <>
                     <Search aria-hidden="true" className="simpeg-subtle pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2" />
                     <input
@@ -109,7 +147,7 @@ export default function SearchableCombobox({
                         onKeyDown={handleKeyDown}
                         onBlur={() => window.setTimeout(() => setIsOpen(false), 150)}
                         placeholder={placeholder}
-                        className={`simpeg-input h-11 w-full rounded-xl border pl-10 pr-10 text-sm outline-none transition focus:border-[#F5CE59] focus:ring-4 focus:ring-[#F5CE59]/20 disabled:cursor-not-allowed disabled:opacity-60 ${error ? 'simpeg-input-error border-red-500 focus:border-red-600 focus:ring-red-600/20' : ''}`}
+                        className={`simpeg-input h-11 w-full rounded-xl border pl-10 pr-10 text-sm font-normal outline-none transition focus:border-[#F5CE59] focus:ring-4 focus:ring-[#F5CE59]/20 disabled:cursor-not-allowed disabled:opacity-60 ${error ? 'simpeg-input-error border-red-500 focus:border-red-600 focus:ring-red-600/20' : ''}`}
                     />
                     <button type="button" aria-label={`Buka daftar ${label || 'pilihan'}`} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => (isOpen ? setIsOpen(false) : openList())} className="simpeg-utility absolute right-1 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg border-0 shadow-none focus:outline-none focus:ring-2 focus:ring-[#F5CE59]/30 disabled:cursor-not-allowed disabled:opacity-50">
                         <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -133,22 +171,25 @@ export default function SearchableCombobox({
                         }
                     }}
                     onBlur={() => window.setTimeout(() => setIsOpen(false), 150)}
-                    className={`simpeg-input flex h-11 w-full items-center justify-between rounded-xl border px-3 text-left text-sm outline-none transition focus:border-[#F5CE59] focus:ring-4 focus:ring-[#F5CE59]/20 disabled:cursor-not-allowed disabled:opacity-60 ${error ? 'simpeg-input-error border-red-500 focus:border-red-600 focus:ring-red-600/20' : ''}`}
+                    className={`simpeg-input flex h-11 w-full items-center justify-between rounded-xl border px-3 text-left text-sm font-normal outline-none transition focus:border-[#F5CE59] focus:ring-4 focus:ring-[#F5CE59]/20 disabled:cursor-not-allowed disabled:opacity-60 ${error ? 'simpeg-input-error border-red-500 focus:border-red-600 focus:ring-red-600/20' : ''}`}
                 >
-                    <span className={`truncate ${selected ? 'simpeg-text' : 'simpeg-subtle'}`}>{selected ? String(optionLabel(selected)) : placeholder}</span>
+                    <span className={`truncate font-normal ${selected ? 'simpeg-text' : 'simpeg-subtle'}`}>{selected ? String(optionLabel(selected)) : placeholder}</span>
                     <ChevronDown aria-hidden="true" className={`simpeg-subtle h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>}
-                {isOpen && <div id={`${id}-options`} role="listbox" className="simpeg-combobox-menu absolute z-30 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border p-1 shadow-xl" onMouseDown={(event) => event.preventDefault()}>
-                    {filteredOptions.length > 0 ? filteredOptions.map((option, index) => {
-                        const optionId = String(optionValue(option));
-                        const optionName = String(optionLabel(option));
+                {isOpen && menuPosition && createPortal(
+                    <div id={`${id}-options`} role="listbox" style={menuPosition} className="simpeg-combobox-menu max-h-64 overflow-y-auto rounded-xl border p-1 shadow-xl" onMouseDown={(event) => event.preventDefault()}>
+                        {filteredOptions.length > 0 ? filteredOptions.map((option, index) => {
+                            const optionId = String(optionValue(option));
+                            const optionName = String(optionLabel(option));
 
-                        return <button key={optionId} type="button" role="option" aria-selected={optionId === selectedValue} onClick={() => chooseOption(option)} className={`simpeg-combobox-option flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition ${index === activeIndex ? 'simpeg-combobox-option-active' : ''}`}>
-                            <span className="min-w-0 flex-1"><span className="simpeg-text block truncate font-semibold">{optionName}</span>{optionDescription && <span className="simpeg-muted mt-0.5 block truncate text-xs">{optionDescription(option)}</span>}</span>
-                            {optionId === selectedValue && <Check aria-hidden="true" className="simpeg-text mt-0.5 h-4 w-4 shrink-0" />}
-                        </button>;
-                    }) : <p className="simpeg-muted px-3 py-3 text-sm">{emptyMessage}</p>}
-                </div>}
+                            return <button key={optionId} type="button" role="option" aria-selected={optionId === selectedValue} onClick={() => chooseOption(option)} className={`simpeg-combobox-option flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-normal transition ${index === activeIndex ? 'simpeg-combobox-option-active' : ''}`}>
+                                <span className="min-w-0 flex-1"><span className="simpeg-text block truncate font-normal">{optionName}</span>{optionDescription && <span className="simpeg-muted mt-0.5 block truncate text-xs font-normal">{optionDescription(option)}</span>}</span>
+                                {optionId === selectedValue && <Check aria-hidden="true" className="simpeg-text mt-0.5 h-4 w-4 shrink-0" />}
+                            </button>;
+                        }) : <p className="simpeg-muted px-3 py-3 text-sm">{emptyMessage}</p>}
+                    </div>,
+                    document.body,
+                )}
             </div>
             {name && <input type="hidden" name={name} value={selectedValue} disabled={disabled} />}
             {description && <p className="mt-1 text-xs text-slate-500">{description}</p>}

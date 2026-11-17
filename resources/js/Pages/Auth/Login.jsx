@@ -7,7 +7,7 @@ import { Label } from '../../Components/ui/label';
 import { Form } from '../../Components/ui/form';
 import { Input } from '../../Components/ui/input';
 import LoginAppearanceToggle, { resolveLoginAppearance } from '../../Components/LoginAppearanceToggle';
-import ThemeToggle from '../../Components/ThemeToggle';
+import ThemeToggle, { applyAppearancePreferences, applyConfiguredTheme } from '../../Components/ThemeToggle';
 
 const slides = [
     {
@@ -60,6 +60,21 @@ export default function Login({ appName, appConfig }) {
         password: '',
         remember: false,
     });
+
+    useEffect(() => {
+        applyConfiguredTheme(appConfig, { isLogin: true });
+        applyAppearancePreferences(appConfig);
+        if (typeof document !== 'undefined') {
+            if (!appConfig?.fontSize || appConfig.fontSize === 'normal') {
+                delete document.documentElement.dataset.simpegFontSize;
+            } else {
+                document.documentElement.dataset.simpegFontSize = appConfig.fontSize;
+            }
+            document.documentElement.dataset.simpegDensity = ['compact', 'comfortable', 'spacious'].includes(appConfig?.density)
+                ? appConfig.density
+                : 'comfortable';
+        }
+    }, [appConfig?.applyLoginTheme, appConfig?.allowUserTheme, appConfig?.defaultTheme, appConfig?.reduceMotion, appConfig?.fontSize, appConfig?.density]);
     const loginRetryAt = Number(flash?.login_rate_limit?.retry_at) || null;
     const secondsUntilLoginRetry = loginRetryAt
         ? Math.max(0, loginRetryAt - Math.floor(currentTime / 1000))
@@ -88,7 +103,7 @@ export default function Login({ appName, appConfig }) {
     }, [loginRetryAt, setData]);
 
     useEffect(() => {
-        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const reducedMotion = appConfig?.reduceMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const mobileViewport = window.matchMedia('(max-width: 767px)').matches;
 
         if (reducedMotion || mobileViewport) {
@@ -100,7 +115,7 @@ export default function Login({ appName, appConfig }) {
         }, 5000);
 
         return () => window.clearInterval(timer);
-    }, []);
+    }, [appConfig?.reduceMotion]);
 
     useEffect(() => {
         if (!showSupport) {
@@ -229,8 +244,8 @@ export default function Login({ appName, appConfig }) {
                     <header className="simpeg-login-topbar">
                         <div className="simpeg-login-brand">
                             <span className="simpeg-login-brand-mark">
-                                <img src={resolvedAppLogoUrl} alt={`Logo ${resolvedAppName}`} width="52" height="52" fetchPriority="high" decoding="async" className="simpeg-theme-logo-light h-full w-full object-contain" />
-                                <img src={resolvedDarkAppLogoUrl} alt="" aria-hidden="true" width="52" height="52" fetchPriority="high" decoding="async" className="simpeg-theme-logo-dark h-full w-full object-contain" />
+                                <img src={resolvedAppLogoUrl} alt={`Logo ${resolvedAppName}`} width="52" height="52" fetchPriority="high" decoding="async" className="simpeg-login-logo-image simpeg-login-logo-image--light h-full w-full object-contain" />
+                                <img src={resolvedDarkAppLogoUrl} alt="" aria-hidden="true" width="52" height="52" decoding="async" className="simpeg-login-logo-image simpeg-login-logo-image--dark h-full w-full object-contain" />
                             </span>
                             <div>
                                 <p className="simpeg-login-brand-name">{resolvedAppAlias || resolvedAppName}</p>
@@ -243,7 +258,10 @@ export default function Login({ appName, appConfig }) {
                                 <span>Akses aman</span>
                             </div>
                             <LoginAppearanceToggle appearance={loginAppearance} onChange={setLoginAppearance} />
-                            <ThemeToggle />
+                            <ThemeToggle
+                                defaultTheme={appConfig?.defaultTheme}
+                                allowUserTheme={appConfig?.allowUserTheme !== false && appConfig?.applyLoginTheme !== false}
+                            />
                         </div>
                     </header>
 

@@ -21,7 +21,9 @@
 <body>
     <h1>Rekapitulasi Biaya Pendidikan</h1>
     <p>Tahun: {{ $filters['tahun'] === 'Semua' ? 'Semua tahun' : $filters['tahun'] }} | Kuartal: {{ $filters['kuartal'] === 'Semua' ? 'Semua kuartal' : $filters['kuartal'] }}</p>
-    <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @if (!($pdf ?? false))
+        <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @endif
     <table>
         <thead>
         <tr>

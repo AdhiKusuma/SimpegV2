@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SelectCombobox from '../../Components/SelectCombobox';
 
 const statusStyles = {
@@ -31,13 +32,12 @@ export default function AuthorizationHistory({ requests, filters }) {
                 <p className="mt-2 max-w-2xl text-slate-500">Pantau status perubahan data yang Anda ajukan dan hasil pemeriksaannya.</p>
             </div>
 
-            <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <form onSubmit={submit} className="simpeg-filter-toolbar flex flex-col gap-3 sm:flex-row sm:items-end">
-                    <div className="w-full sm:max-w-xs">
-                        <SelectCombobox id="submission-status" name="status" label="Status pengajuan" value={filters.status} options={statusOptions} />
-                    </div>
-                    <button type="submit" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
-                    <Link href="/pengajuan" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-5 py-2 text-sm font-bold text-slate-700 transition hover:border-blue-600 hover:text-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Reset</Link>
+            <section className="simpeg-filter-only-shell mb-6">
+                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-3">
+                    <MobileFilterGroup id="submission-mobile-filters" activeCount={Number(Boolean(filters.status && filters.status !== 'Semua'))}>
+                        <div className="w-full sm:max-w-xs"><SelectCombobox id="submission-status" name="status" label="Status pengajuan" value={filters.status} options={statusOptions} /></div>
+                        <div className="flex flex-wrap items-end gap-2"><button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button></div>
+                    </MobileFilterGroup>
                 </form>
             </section>
 

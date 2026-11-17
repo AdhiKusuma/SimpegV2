@@ -67,7 +67,7 @@ class FamilyController extends Controller
         $type = $this->canonicalType($type);
         $definition = $this->definition($type);
         $role = strtolower((string) $request->session()->get('hak_akses'));
-        abort_unless(in_array($role, ['admin', 'superadmin', 'kepala', 'user'], true), 403);
+        abort_unless(in_array($role, ['admin', 'superadmin', 'kepala', 'user', 'it_admin'], true), 403);
 
         $uid = $request->string('uid')->trim()->value();
         if ($role === 'user') {
@@ -97,7 +97,7 @@ class FamilyController extends Controller
 
         $employee = $uid !== '' ? $this->employeeForScope($request, $uid) : null;
 
-        $canManage = $role === 'admin' && app(RbacService::class)->can($request, 'family.manage');
+        $canManage = in_array($role, ['admin', 'it_admin'], true) && app(RbacService::class)->can($request, 'family.manage');
         $canRequest = $role === 'user' && app(RbacService::class)->can($request, 'family.request');
 
         return Inertia::render('Family/Index', [
@@ -467,9 +467,9 @@ class FamilyController extends Controller
     private function ensureCanSubmit(Request $request): void
     {
         $role = strtolower((string) $request->session()->get('hak_akses'));
-        $permission = $role === 'admin' ? 'family.manage' : 'family.request';
+        $permission = in_array($role, ['admin', 'it_admin'], true) ? 'family.manage' : 'family.request';
 
-        abort_unless(in_array($role, ['admin', 'user'], true) && app(RbacService::class)->can($request, $permission), 403);
+        abort_unless(in_array($role, ['admin', 'it_admin', 'user'], true) && app(RbacService::class)->can($request, $permission), 403);
     }
 
     private function isRequest(Request $request): bool

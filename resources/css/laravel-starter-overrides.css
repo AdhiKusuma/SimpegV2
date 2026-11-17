@@ -2,9 +2,8 @@
  * Shared visual migration layer.
  *
  * Existing pages keep their class names, selectors, forms, and interactions.
- * These rules only normalize the presentation to the Laravel starter-kit
- * visual language: neutral surfaces, monochrome actions, compact radii, and
- * predictable focus states.
+ * These rules keep legacy utility classes compatible with the active SIMPEG
+ * tokens while preserving compact radii and predictable focus states.
  */
 @layer utilities {
     .simpeg-primary {
@@ -148,66 +147,6 @@
     html[data-theme="corporate"] .simpeg-header .simpeg-muted {
         color: var(--simpeg-muted) !important;
     }
-}
-
-/* Neutral theme compatibility: legacy blue/indigo utility classes follow the
- * active black/white theme tokens. Semantic success, warning, and error
- * colors remain available for clear feedback. */
-:root,
-html[data-theme="corporate"] {
-    --simpeg-canvas: #f6f6f6;
-    --simpeg-canvas-mid: #eeeeee;
-    --simpeg-canvas-end: #fafafa;
-    --simpeg-surface: #ffffff;
-    --simpeg-card: #ffffff;
-    --simpeg-card-soft: rgb(250 250 250 / 0.92);
-    --simpeg-header: rgb(255 255 255 / 0.96);
-    --simpeg-input: #ffffff;
-    --simpeg-text: #111111;
-    --simpeg-muted: #525252;
-    --simpeg-subtle: #737373;
-    --simpeg-border: #e5e5e5;
-    --simpeg-track: #e5e5e5;
-    --simpeg-sidebar: #ffffff;
-    --simpeg-form-shell: #f6f6f6;
-    --simpeg-form-section: #ffffff;
-    --simpeg-hover-surface: #f0f0f0;
-    --simpeg-hover-ink: #111111;
-    --simpeg-hover-border: #bdbdbd;
-    --simpeg-primary: #111111;
-    --simpeg-primary-hover: #000000;
-    --simpeg-primary-foreground: #ffffff;
-    --simpeg-primary-soft: rgb(17 17 17 / 0.08);
-    --simpeg-primary-border: rgb(17 17 17 / 0.22);
-    --simpeg-focus-ring: rgb(17 17 17 / 0.18);
-}
-
-html.dark {
-    --simpeg-canvas: #080808;
-    --simpeg-canvas-mid: #080808;
-    --simpeg-canvas-end: #080808;
-    --simpeg-surface: #0f0f0f;
-    --simpeg-card: #151515;
-    --simpeg-card-soft: rgb(21 21 21 / 0.94);
-    --simpeg-header: rgb(8 8 8 / 0.96);
-    --simpeg-input: #111111;
-    --simpeg-text: #f5f5f5;
-    --simpeg-muted: #c4c4c4;
-    --simpeg-subtle: #a3a3a3;
-    --simpeg-border: #2b2b2b;
-    --simpeg-track: #2b2b2b;
-    --simpeg-sidebar: #0b0b0b;
-    --simpeg-form-shell: #0f0f0f;
-    --simpeg-form-section: #151515;
-    --simpeg-hover-surface: #242424;
-    --simpeg-hover-ink: #ffffff;
-    --simpeg-hover-border: #666666;
-    --simpeg-primary: #f5f5f5;
-    --simpeg-primary-hover: #ffffff;
-    --simpeg-primary-foreground: #0a0a0a;
-    --simpeg-primary-soft: rgb(255 255 255 / 0.1);
-    --simpeg-primary-border: rgb(255 255 255 / 0.28);
-    --simpeg-focus-ring: rgb(255 255 255 / 0.2);
 }
 
 @layer utilities {

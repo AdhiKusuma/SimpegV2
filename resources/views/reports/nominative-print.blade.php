@@ -26,7 +26,9 @@
         Status: {{ $filters['status_kepeg'] ?: 'Semua status' }}
         @if ($filters['search']) | Pencarian: {{ $filters['search'] }} @endif
     </p>
-    <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @if (!($pdf ?? false))
+        <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @endif
     <table>
         <thead>
         <tr>

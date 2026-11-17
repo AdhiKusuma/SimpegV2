@@ -3,6 +3,36 @@
     gap: 1rem;
 }
 
+/* Result cards own the table. The filter row is intentionally a sibling
+ * toolbar, so a closed disclosure never paints a long empty surface. */
+.simpeg-filter-list-shell {
+    box-sizing: border-box;
+    min-height: 0 !important;
+    margin: 0 0 1rem;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.simpeg-filter-list-shell > .simpeg-filter-toolbar--mobile-panel {
+    box-sizing: border-box;
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1rem;
+    min-height: 0 !important;
+    margin: 0 0 0.75rem;
+    padding: 0 !important;
+    overflow: visible;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
 .simpeg-filter-toolbar > * {
     min-width: 0;
 }
@@ -115,11 +145,42 @@
 }
 
 .simpeg-mobile-filter-toggle {
-    display: none;
+    display: inline-flex;
+    min-height: 3rem;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding-inline: 0.875rem;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 0.75rem;
+    background: var(--simpeg-card);
+    color: var(--simpeg-text);
+    cursor: pointer;
+    white-space: nowrap;
 }
 
 .simpeg-mobile-filter-fields {
-    display: contents;
+    display: none;
+    min-width: 0;
+}
+
+/* A closed filter must not participate in the list layout. The old desktop
+ * `display: contents` rule flattened the disclosure panel into the toolbar,
+ * which left an empty card-sized strip on pages that still use the legacy
+ * section wrapper. */
+.simpeg-filter-toolbar--mobile-panel > .simpeg-mobile-filter-fields.is-open {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    align-items: end;
+    gap: 1rem;
+    flex: 1 0 100%;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 0.9rem;
+    background: var(--simpeg-card-soft);
 }
 
 .simpeg-mobile-filter-apply {
@@ -146,15 +207,6 @@
 
     .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-toggle {
         display: inline-flex;
-        min-height: 3rem;
-        width: fit-content;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding-inline: 0.875rem;
-        border: 1px solid var(--simpeg-border);
-        border-radius: 0.75rem;
-        cursor: pointer;
     }
 
     .simpeg-filter-toolbar--mobile-panel .simpeg-mobile-filter-toggle--after-search {
@@ -171,6 +223,8 @@
         grid-column: 1 / -1;
         grid-template-columns: minmax(0, 1fr);
         gap: 1rem;
+        flex: initial;
+        width: auto;
         padding-top: 1rem;
         border-top: 1px solid var(--simpeg-border);
     }

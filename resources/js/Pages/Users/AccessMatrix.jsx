@@ -1,6 +1,6 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Edit3, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import SearchableCombobox from '../../Components/SearchableCombobox';
 import SelectCombobox from '../../Components/SelectCombobox';
@@ -23,13 +23,315 @@ function groupedPermissions(permissions) {
     }, {});
 }
 
-export default function AccessMatrix({ available, metrics, subjects, selected, matrix }) {
+function formatCount(value) {
+    return Number(value || 0).toLocaleString('id-ID');
+}
+
+function PermissionSelectAll({ codes, selectedCodes, onChange, label = 'Pilih semua', className = '' }) {
+    const checkboxRef = useRef(null);
+    const selectedCount = codes.filter((code) => selectedCodes.includes(code)).length;
+    const allSelected = codes.length > 0 && selectedCount === codes.length;
+    const partiallySelected = selectedCount > 0 && !allSelected;
+
+    useEffect(() => {
+        if (checkboxRef.current) {
+            checkboxRef.current.indeterminate = partiallySelected;
+        }
+    }, [partiallySelected]);
+
+    if (codes.length === 0) {
+        return null;
+    }
+
+    return (
+        <label className={'simpeg-permission-select-all ' + className}>
+            <input
+                ref={checkboxRef}
+                type="checkbox"
+                checked={allSelected}
+                onChange={(event) => onChange(codes, event.target.checked)}
+            />
+            <span>
+                <strong>{label}</strong>
+                <small>{selectedCount}/{codes.length}</small>
+            </span>
+        </label>
+    );
+}
+
+function RoleModal({ editingRole, permissionCatalog, form, permissionSearch, setPermissionSearch, close }) {
+    const groups = useMemo(() => groupedPermissions(permissionCatalog), [permissionCatalog]);
+    const term = permissionSearch.trim().toLocaleLowerCase('id');
+    const visibleGroups = Object.entries(groups)
+        .map(([group, permissions]) => [
+            group,
+            permissions.filter((permission) => !term
+                || group.toLocaleLowerCase('id').includes(term)
+                || permission.label.toLocaleLowerCase('id').includes(term)
+                || permission.code.toLocaleLowerCase('id').includes(term)),
+        ])
+        .filter(([, permissions]) => permissions.length > 0);
+    const visiblePermissionCodes = visibleGroups.flatMap(([, permissions]) => permissions.map((permission) => permission.code));
+
+    function togglePermission(code, checked) {
+        const permissions = new Set(form.data.permissions);
+        checked ? permissions.add(code) : permissions.delete(code);
+        form.setData('permissions', [...permissions]);
+    }
+
+    function togglePermissions(codes, checked) {
+        const permissions = new Set(form.data.permissions);
+        codes.forEach((code) => (checked ? permissions.add(code) : permissions.delete(code)));
+        form.setData('permissions', [...permissions]);
+    }
+
+    function submit(event) {
+        event.preventDefault();
+        const options = { preserveScroll: true, onSuccess: close };
+        if (editingRole) {
+            form.put('/users/access/roles/' + encodeURIComponent(editingRole.code), options);
+        } else {
+            form.post('/users/access/roles', options);
+        }
+    }
+
+    return (
+        <div className="simpeg-role-modal-backdrop">
+            <div className="simpeg-role-modal" role="dialog" aria-modal="true" aria-labelledby="role-modal-title">
+                <div className="simpeg-role-modal__header">
+                    <div>
+                        <h2 id="role-modal-title">{editingRole ? 'Edit role' : 'Tambah role'}</h2>
+                        <p>Atur identitas role dan permission yang dapat digunakan.</p>
+                    </div>
+                    <button type="button" className="simpeg-role-modal__close" onClick={close} aria-label="Tutup modal">
+                        <X className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                </div>
+
+                <form onSubmit={submit}>
+                    <div className="simpeg-role-modal__fields">
+                        <label>
+                            <span>Kode</span>
+                            <input
+                                value={form.data.code}
+                                onChange={(event) => form.setData('code', event.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
+                                placeholder="contoh: supervisor"
+                                readOnly={Boolean(editingRole)}
+                                required
+                            />
+                            {editingRole && <small>Kode role sistem tidak dapat diubah.</small>}
+                            {form.errors.code && <em>{form.errors.code}</em>}
+                        </label>
+                        <label>
+                            <span>Nama role</span>
+                            <input value={form.data.name} onChange={(event) => form.setData('name', event.target.value)} required />
+                            {form.errors.name && <em>{form.errors.name}</em>}
+                        </label>
+                        <label>
+                            <span>Deskripsi</span>
+                            <textarea value={form.data.description} onChange={(event) => form.setData('description', event.target.value)} rows="2" />
+                            {form.errors.description && <em>{form.errors.description}</em>}
+                        </label>
+                    </div>
+
+                    <div className="simpeg-role-modal__permission-heading">
+                        <div>
+                            <h3>Permission</h3>
+                            <p>{form.data.permissions.length} permission dipilih</p>
+                        </div>
+                        <div className="simpeg-role-modal__permission-tools">
+                            <PermissionSelectAll
+                                codes={visiblePermissionCodes}
+                                selectedCodes={form.data.permissions}
+                                onChange={togglePermissions}
+                                label={term ? 'Pilih hasil' : 'Pilih semua'}
+                            />
+                            <label className="simpeg-role-modal__search">
+                                <Search className="h-4 w-4" aria-hidden="true" />
+                                <input value={permissionSearch} onChange={(event) => setPermissionSearch(event.target.value)} placeholder="Cari permission" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="simpeg-role-modal__permissions">
+                        {visibleGroups.map(([group, permissions]) => (
+                            <section key={group} className="simpeg-role-modal__permission-group">
+                                <div className="simpeg-role-modal__permission-group-heading">
+                                    <h4>{group}</h4>
+                                    <PermissionSelectAll
+                                        codes={permissions.map((permission) => permission.code)}
+                                        selectedCodes={form.data.permissions}
+                                        onChange={togglePermissions}
+                                        label="Pilih kategori"
+                                    />
+                                </div>
+                                <div className="simpeg-role-modal__permission-options">
+                                    {permissions.map((permission) => {
+                                        const checked = form.data.permissions.includes(permission.code);
+
+                                        return (
+                                            <label key={permission.code} className={checked ? 'is-checked' : ''}>
+                                                <input type="checkbox" checked={checked} onChange={(event) => togglePermission(permission.code, event.target.checked)} />
+                                                <span>
+                                                    <strong>{permission.label}</strong>
+                                                    <small>{permission.code}</small>
+                                                </span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        ))}
+                    </div>
+
+                    <div className="simpeg-role-modal__footer">
+                        <button type="button" className="simpeg-role-button simpeg-role-button--secondary" onClick={close}>Batal</button>
+                        <button type="submit" className="simpeg-role-button simpeg-role-button--primary" disabled={form.processing}>
+                            {form.processing ? 'Menyimpan...' : editingRole ? 'Simpan perubahan' : 'Tambah role'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+function RoleManagement({ roles, permissionCatalog }) {
+    const { flash = {} } = usePage().props;
+    const [search, setSearch] = useState('');
+    const [editingRole, setEditingRole] = useState(null);
+    const [permissionSearch, setPermissionSearch] = useState('');
+    const form = useForm({ code: '', name: '', description: '', permissions: [] });
+    const term = search.trim().toLocaleLowerCase('id');
+    const visibleRoles = roles.filter((role) => !term
+        || role.name.toLocaleLowerCase('id').includes(term)
+        || role.code.toLocaleLowerCase('id').includes(term)
+        || String(role.description || '').toLocaleLowerCase('id').includes(term));
+
+    function closeModal() {
+        setEditingRole(null);
+        setPermissionSearch('');
+        form.reset();
+        form.clearErrors();
+    }
+
+    function openCreate() {
+        form.setData({ code: '', name: '', description: '', permissions: [] });
+        form.clearErrors();
+        setPermissionSearch('');
+        setEditingRole(false);
+    }
+
+    function openEdit(role) {
+        form.setData({
+            code: role.code,
+            name: role.name,
+            description: role.description || '',
+            permissions: role.permissions.map((permission) => permission.code),
+        });
+        form.clearErrors();
+        setPermissionSearch('');
+        setEditingRole(role);
+    }
+
+    return (
+        <LegacyPageShell title="Manajemen Role">
+            <Head title="Manajemen Role" />
+            <div className="simpeg-role-page">
+                <div className="simpeg-role-page__heading">
+                    <div>
+                        <p className="simpeg-role-page__kicker">Administrasi akses</p>
+                        <h1>Manajemen Role</h1>
+                        <p>Tentukan kelompok akses berdasarkan kebutuhan kerja.</p>
+                    </div>
+                    <div className="simpeg-role-page__actions">
+                        <Link href="/users/access?mode=special" className="simpeg-role-button simpeg-role-button--secondary">
+                            <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                            Aturan khusus
+                        </Link>
+                        <button type="button" className="simpeg-role-button simpeg-role-button--primary" onClick={openCreate}>
+                            <Plus className="h-4 w-4" aria-hidden="true" />
+                            Tambah role
+                        </button>
+                    </div>
+                </div>
+
+                {flash.success && <div className="simpeg-role-alert simpeg-role-alert--success" role="status">{flash.success}</div>}
+                {flash.error && <div className="simpeg-role-alert simpeg-role-alert--error" role="alert">{flash.error}</div>}
+
+                <section className="simpeg-role-table-card">
+                    <div className="simpeg-role-toolbar">
+                        <label className="simpeg-role-search">
+                            <Search className="h-4 w-4" aria-hidden="true" />
+                            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari role atau deskripsi" aria-label="Cari role" />
+                        </label>
+                        <span>{formatCount(roles.length)} role terdaftar</span>
+                    </div>
+                    <div className="simpeg-role-table-scroll">
+                        <table className="simpeg-role-table">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Deskripsi</th>
+                                    <th>Permission</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {visibleRoles.length === 0 ? (
+                                    <tr><td colSpan="4" className="simpeg-role-empty">Role tidak ditemukan.</td></tr>
+                                ) : visibleRoles.map((role) => (
+                                    <tr key={role.code}>
+                                        <td>
+                                            <strong>{role.name}</strong>
+                                            <small>{role.code}</small>
+                                            <em>{formatCount(role.user_count)} pengguna</em>
+                                        </td>
+                                        <td className="simpeg-role-description">{role.description || '—'}</td>
+                                        <td>
+                                            <div className="simpeg-role-permission-list">
+                                                {role.permissions.length === 0 ? <span className="simpeg-role-no-permission">Belum ada permission</span> : role.permissions.map((permission) => (
+                                                    <span key={permission.code} title={permission.label}>{permission.code}</span>
+                                                ))}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button type="button" className="simpeg-role-edit-button" onClick={() => openEdit(role)}>
+                                                <Edit3 className="h-4 w-4" aria-hidden="true" />
+                                                Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            {editingRole !== null && (
+                <RoleModal
+                    editingRole={editingRole || null}
+                    permissionCatalog={permissionCatalog}
+                    form={form}
+                    permissionSearch={permissionSearch}
+                    setPermissionSearch={setPermissionSearch}
+                    close={closeModal}
+                />
+            )}
+        </LegacyPageShell>
+    );
+}
+
+function SpecialAccessMatrix({ available, subjects, selected, matrix }) {
     const { flash } = usePage().props;
     const form = useForm({
         subject_type: selected.type,
         subject_value: selected.value,
         permissions: matrix.permissions.filter((permission) => permission.enabled).map((permission) => permission.code),
     });
+    const [activeGroup, setActiveGroup] = useState('');
+    const [permissionSearch, setPermissionSearch] = useState('');
 
     useEffect(() => {
         form.setData({
@@ -40,40 +342,34 @@ export default function AccessMatrix({ available, metrics, subjects, selected, m
     }, [selected.type, selected.value, matrix.permissions]);
 
     const groups = useMemo(() => groupedPermissions(matrix.permissions), [matrix.permissions]);
-    const [activeGroup, setActiveGroup] = useState('');
-    const [permissionSearch, setPermissionSearch] = useState('');
     const activeGroupName = groups[activeGroup] ? activeGroup : Object.keys(groups)[0] || '';
     const searchTerm = permissionSearch.trim().toLocaleLowerCase('id');
     const visibleGroups = searchTerm
-        ? Object.entries(groups)
-            .map(([group, permissions]) => [
-                group,
-                permissions.filter((permission) => (
-                    group.toLocaleLowerCase('id').includes(searchTerm)
-                    || permission.label.toLocaleLowerCase('id').includes(searchTerm)
-                )),
-            ])
-            .filter(([, permissions]) => permissions.length > 0)
-        : activeGroupName
-            ? [[activeGroupName, groups[activeGroupName]]]
-            : [];
+        ? Object.entries(groups).map(([group, permissions]) => [
+            group,
+            permissions.filter((permission) => group.toLocaleLowerCase('id').includes(searchTerm) || permission.label.toLocaleLowerCase('id').includes(searchTerm)),
+        ]).filter(([, permissions]) => permissions.length > 0)
+        : activeGroupName ? [[activeGroupName, groups[activeGroupName]]] : [];
+    const visiblePermissionCodes = visibleGroups.flatMap(([, permissions]) => permissions.map((permission) => permission.code));
     const selectedSubject = (subjects[selected.type] || []).find((subject) => subject.value === selected.value);
 
     function changeSubjectType(type) {
-        router.get('/users/access', { subject_type: type }, { preserveState: false, replace: true });
+        router.get('/users/access', { mode: 'special', subject_type: type }, { preserveState: false, replace: true });
     }
 
     function changeSubject(value) {
-        router.get('/users/access', { subject_type: selected.type, subject_value: value }, { preserveState: false, replace: true });
+        router.get('/users/access', { mode: 'special', subject_type: selected.type, subject_value: value }, { preserveState: false, replace: true });
     }
 
     function togglePermission(code, checked) {
         const permissions = new Set(form.data.permissions);
-        if (checked) {
-            permissions.add(code);
-        } else {
-            permissions.delete(code);
-        }
+        checked ? permissions.add(code) : permissions.delete(code);
+        form.setData('permissions', [...permissions]);
+    }
+
+    function togglePermissions(codes, checked) {
+        const permissions = new Set(form.data.permissions);
+        codes.forEach((code) => (checked ? permissions.add(code) : permissions.delete(code)));
         form.setData('permissions', [...permissions]);
     }
 
@@ -83,177 +379,75 @@ export default function AccessMatrix({ available, metrics, subjects, selected, m
     }
 
     return (
-        <LegacyPageShell title="Matriks akses">
-            <Head title="Matriks akses" />
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="min-w-0">
-                    <p className="mb-2 text-sm font-semibold text-blue-600">Administrasi akses</p>
-                    <h1 className="text-2xl font-medium tracking-tight text-slate-900 sm:text-3xl">Matriks akses</h1>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">Atur menu yang dapat dibuka berdasarkan role, jabatan, atau ID pegawai. Aturan yang lebih spesifik mengalahkan aturan role.</p>
-                </div>
-                <Link href="/users" className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-600 hover:text-blue-600 sm:w-auto">Kembali ke user</Link>
-            </div>
-
-            {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">{flash.success}</div>}
-
-            <section className="mb-5 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 xl:grid-cols-4" aria-label="Ringkasan akses">
-                <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 sm:p-5"><p className="break-words text-xs leading-5 text-slate-500 sm:text-sm">Total user</p><p className="mt-1 text-xl font-medium text-slate-900 sm:mt-2 sm:text-2xl">{metrics.users}</p></div>
-                <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 sm:p-5"><p className="break-words text-xs leading-5 text-slate-500 sm:text-sm">Role terdaftar</p><p className="mt-1 text-xl font-medium text-slate-900 sm:mt-2 sm:text-2xl">{metrics.roles.length}</p></div>
-                <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 sm:p-5"><p className="break-words text-xs leading-5 text-slate-500 sm:text-sm">Jabatan terpetakan</p><p className="mt-1 text-xl font-medium text-slate-900 sm:mt-2 sm:text-2xl">{metrics.positions}</p></div>
-                <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 sm:p-5"><p className="break-words text-xs leading-5 text-slate-500 sm:text-sm">Aturan khusus</p><p className="mt-1 text-xl font-medium text-slate-900 sm:mt-2 sm:text-2xl">{metrics.directRules}</p></div>
-            </section>
-
-            {!available ? (
-                <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 sm:p-5" role="alert">
-                    <h2 className="font-medium">Matriks belum diaktifkan</h2>
-                    <p className="mt-1">Pengaturan akses belum siap digunakan. Silakan hubungi administrator sistem.</p>
-                </section>
-            ) : (
-                <form onSubmit={submit} className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                    <div className="grid gap-4 border-b border-slate-100 p-4 sm:p-5 md:grid-cols-[220px_minmax(0,1fr)_auto] md:items-end">
-                        <div>
-                            <label htmlFor="access-subject-type" className="mb-2 block text-xs font-medium text-slate-600">Dasar akses</label>
-                            <SelectCombobox id="access-subject-type" label="Dasar akses" value={selected.type} options={subjectTypeOptions} onChange={changeSubjectType} />
-                        </div>
-                        {selected.type === 'role' ? (
-                            <div>
-                                <label htmlFor="access-subject" className="mb-2 block text-xs font-medium text-slate-600">Pilih role</label>
-                                <SelectCombobox id="access-subject" label="Pilih role" value={selected.value} options={subjects.role || []} onChange={changeSubject} />
-                            </div>
-                        ) : (
-                            <SearchableCombobox
-                                id="access-subject"
-                                label={`Pilih ${subjectLabels[selected.type].toLowerCase()}`}
-                                value={selected.value}
-                                options={subjects[selected.type] || []}
-                                placeholder={`Cari ${subjectLabels[selected.type].toLowerCase()}`}
-                                emptyMessage={`${subjectLabels[selected.type]} tidak ditemukan.`}
-                                onChange={changeSubject}
-                            />
-                        )}
-                        <div className="min-w-0 truncate text-sm text-slate-500 md:text-right" title={selectedSubject?.label || 'Belum ada pilihan'}>{selectedSubject?.label || 'Belum ada pilihan'}</div>
+        <LegacyPageShell title="Aturan Khusus Akses">
+            <Head title="Aturan Khusus Akses" />
+            <div className="simpeg-role-page">
+                <div className="simpeg-role-page__heading">
+                    <div>
+                        <p className="simpeg-role-page__kicker">Administrasi akses</p>
+                        <h1>Aturan khusus akses</h1>
+                        <p>Aturan berdasarkan jabatan atau ID pegawai akan mengalahkan permission pada role.</p>
                     </div>
+                    <Link href="/users/access" className="simpeg-role-button simpeg-role-button--secondary">
+                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                        Kembali ke role
+                    </Link>
+                </div>
 
-                    <div className="simpeg-access-matrix">
-                        <div className="simpeg-access-matrix__heading">
-                            <div className="min-w-0">
-                                <h2 className="simpeg-access-matrix__title">Menu yang diizinkan</h2>
-                                <p className="simpeg-access-matrix__description">Centang akses yang ingin diberikan pada tingkat ini.</p>
+                {flash?.success && <div className="simpeg-role-alert simpeg-role-alert--success" role="status">{flash.success}</div>}
+                {!available ? (
+                    <section className="simpeg-role-empty-card">Matriks akses belum tersedia. Jalankan migration RBAC terlebih dahulu.</section>
+                ) : (
+                    <form onSubmit={submit} className="simpeg-special-card">
+                        <div className="simpeg-special-toolbar">
+                            <div>
+                                <label htmlFor="access-subject-type">Dasar akses</label>
+                                <SelectCombobox id="access-subject-type" label="Dasar akses" value={selected.type} options={subjectTypeOptions} onChange={changeSubjectType} />
                             </div>
-                            <p className="simpeg-access-matrix__summary" aria-live="polite">
-                                <strong>{form.data.permissions.length}</strong>
-                                <span>dari {matrix.permissions.length} menu dipilih</span>
-                            </p>
+                            {selected.type === 'role' ? (
+                                <div>
+                                    <label htmlFor="access-subject">Pilih role</label>
+                                    <SelectCombobox id="access-subject" label="Pilih role" value={selected.value} options={subjects.role || []} onChange={changeSubject} />
+                                </div>
+                            ) : (
+                                <SearchableCombobox id="access-subject" label={'Pilih ' + subjectLabels[selected.type].toLowerCase()} value={selected.value} options={subjects[selected.type] || []} placeholder={'Cari ' + subjectLabels[selected.type].toLowerCase()} emptyMessage={subjectLabels[selected.type] + ' tidak ditemukan.'} onChange={changeSubject} />
+                            )}
+                            <p>{selectedSubject?.label || 'Belum ada pilihan'}</p>
                         </div>
-                        {Object.keys(groups).length > 0 ? (
-                            <div className={`simpeg-access-matrix__layout${searchTerm ? ' is-searching' : ''}`}>
-                                {!searchTerm && (
-                                    <aside className="simpeg-access-matrix__sidebar" aria-label="Kategori izin">
-                                        <p className="simpeg-access-matrix__sidebar-title">Kategori menu</p>
-                                        <div className="simpeg-access-matrix__categories" role="group" aria-label="Kategori menu">
-                                            {Object.entries(groups).map(([group, permissions]) => {
-                                                const selectedCount = permissions.filter((permission) => form.data.permissions.includes(permission.code)).length;
-
-                                                return (
-                                                    <button
-                                                        key={group}
-                                                        type="button"
-                                                        className={`simpeg-access-matrix__category${group === activeGroupName ? ' is-active' : ''}`}
-                                                        aria-pressed={group === activeGroupName}
-                                                        onClick={() => setActiveGroup(group)}
-                                                    >
-                                                        <span>{group}</span>
-                                                        <span className="simpeg-access-matrix__category-count">{selectedCount}/{permissions.length}</span>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </aside>
-                                )}
-
-                                <div className="simpeg-access-matrix__content">
-                                    <div className="simpeg-access-matrix__tools">
-                                        <label className="simpeg-access-matrix__search-field">
-                                            <span>Cari menu</span>
-                                            <span className="simpeg-access-matrix__search-control">
-                                                <Search className="simpeg-access-matrix__search-icon" aria-hidden="true" />
-                                                <input
-                                                    type="search"
-                                                    value={permissionSearch}
-                                                    onChange={(event) => setPermissionSearch(event.target.value)}
-                                                    placeholder="Nama menu atau kategori"
-                                                    aria-label="Cari menu akses"
-                                                />
-                                            </span>
-                                        </label>
-                                        {searchTerm && (
-                                            <p className="simpeg-access-matrix__result-count" role="status">
-                                                {visibleGroups.reduce((count, [, permissions]) => count + permissions.length, 0)} menu ditemukan
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {visibleGroups.length > 0 ? (
-                                        <div className="simpeg-access-matrix__table-scroll" role="region" aria-label="Daftar izin menu" tabIndex="0">
-                                            <table className="simpeg-access-matrix__table">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Menu</th>
-                                                        <th scope="col">Akses</th>
-                                                    </tr>
-                                                </thead>
-                                                {visibleGroups.map(([group, permissions]) => {
-                                                    const selectedCount = permissions.filter((permission) => form.data.permissions.includes(permission.code)).length;
-
-                                                    return (
-                                                        <tbody key={group}>
-                                                            <tr className="simpeg-access-matrix__table-group">
-                                                                <th scope="rowgroup" colSpan="2">
-                                                                    <span>{group}</span>
-                                                                    <span>{selectedCount}/{permissions.length} diizinkan</span>
-                                                                </th>
-                                                            </tr>
-                                                            {permissions.map((permission) => {
-                                                                const checked = form.data.permissions.includes(permission.code);
-
-                                                                return (
-                                                                    <tr key={permission.code} className={checked ? 'is-checked' : ''}>
-                                                                        <th scope="row">{permission.label}</th>
-                                                                        <td>
-                                                                            <label className="simpeg-access-matrix__check-target">
-                                                                                <span className="sr-only">{checked ? 'Cabut' : 'Berikan'} akses {permission.label}</span>
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={checked}
-                                                                                    onChange={(event) => togglePermission(permission.code, event.target.checked)}
-                                                                                    className="simpeg-access-matrix__checkbox"
-                                                                                />
-                                                                            </label>
-                                                                        </td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                        </tbody>
-                                                    );
-                                                })}
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <p className="simpeg-access-matrix__empty">Tidak ada menu yang cocok dengan pencarian.</p>
-                                    )}
+                        <div className="simpeg-access-matrix">
+                            <div className="simpeg-access-matrix__heading">
+                                <div>
+                                    <h2 className="simpeg-access-matrix__title">Permission khusus</h2>
+                                    <p className="simpeg-access-matrix__description">Centang akses yang ingin diberikan pada tingkat ini.</p>
+                                </div>
+                                <div className="simpeg-access-matrix__heading-actions">
+                                    <PermissionSelectAll
+                                        codes={visiblePermissionCodes}
+                                        selectedCodes={form.data.permissions}
+                                        onChange={togglePermissions}
+                                        label={searchTerm ? 'Pilih hasil' : 'Pilih kategori'}
+                                    />
+                                    <p className="simpeg-access-matrix__summary"><strong>{form.data.permissions.length}</strong><span>dari {matrix.permissions.length} dipilih</span></p>
                                 </div>
                             </div>
-                        ) : (
-                            <p className="simpeg-access-matrix__empty">Tidak ada menu akses yang tersedia.</p>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col gap-3 border-t border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-end sm:p-5">
-                        {form.errors.permissions && <p className="text-sm text-red-600 sm:mr-auto" role="alert">{form.errors.permissions}</p>}
-                        <button type="submit" disabled={form.processing} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">{form.processing ? 'Menyimpan...' : 'Simpan matriks akses'}</button>
-                    </div>
-                </form>
-            )}
+                            <div className={'simpeg-access-matrix__layout' + (searchTerm ? ' is-searching' : '')}>
+                                {!searchTerm && <aside className="simpeg-access-matrix__sidebar"><p className="simpeg-access-matrix__sidebar-title">Kategori menu</p><div className="simpeg-access-matrix__categories">{Object.entries(groups).map(([group, permissions]) => <button key={group} type="button" className={'simpeg-access-matrix__category' + (group === activeGroupName ? ' is-active' : '')} onClick={() => setActiveGroup(group)}><span>{group}</span><span className="simpeg-access-matrix__category-count">{permissions.filter((permission) => form.data.permissions.includes(permission.code)).length}/{permissions.length}</span></button>)}</div></aside>}
+                                <div className="simpeg-access-matrix__content">
+                                    <div className="simpeg-access-matrix__tools"><label className="simpeg-access-matrix__search-field"><span>Cari menu</span><span className="simpeg-access-matrix__search-control"><Search className="simpeg-access-matrix__search-icon" aria-hidden="true" /><input type="search" value={permissionSearch} onChange={(event) => setPermissionSearch(event.target.value)} placeholder="Nama menu atau kategori" /></span></label></div>
+                                    <div className="simpeg-access-matrix__table-scroll"><table className="simpeg-access-matrix__table"><thead><tr><th>Menu</th><th>Akses</th></tr></thead>{visibleGroups.map(([group, permissions]) => <tbody key={group}><tr className="simpeg-access-matrix__table-group"><th colSpan="2"><span>{group}</span></th></tr>{permissions.map((permission) => { const checked = form.data.permissions.includes(permission.code); return <tr key={permission.code} className={checked ? 'is-checked' : ''}><th>{permission.label}</th><td><input type="checkbox" checked={checked} onChange={(event) => togglePermission(permission.code, event.target.checked)} className="simpeg-access-matrix__checkbox" /></td></tr>; })}</tbody>)}</table></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="simpeg-special-footer"><button type="submit" disabled={form.processing} className="simpeg-role-button simpeg-role-button--primary">{form.processing ? 'Menyimpan...' : 'Simpan aturan khusus'}</button></div>
+                    </form>
+                )}
+            </div>
         </LegacyPageShell>
     );
+}
+
+export default function AccessMatrix(props) {
+    return props.mode === 'special'
+        ? <SpecialAccessMatrix {...props} />
+        : <RoleManagement roles={props.roles || []} permissionCatalog={props.permissionCatalog || []} />;
 }

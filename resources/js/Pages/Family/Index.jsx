@@ -1,12 +1,8 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
-
-const familyTypes = [
-    ['children', 'Data Anak'],
-    ['spouses', 'Suami/Istri'],
-    ['parents', 'Orang Tua'],
-];
+import MobileFilterGroup from '../../Components/MobileFilterGroup';
 
 const familyUrlTypes = { children: 'anak', spouses: 'suami-istri', parents: 'orang-tua' };
 
@@ -54,14 +50,10 @@ export default function FamilyIndex({ type, label, items, employee, filters, can
                     {employee && <p className="mt-3 inline-flex rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700">Pegawai: {employee.nama} ({employee.id_peg})</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <a href={withFilters(`/keluarga/${familyPath}/export`)} className="rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">Export XLSX</a>
+                    <ExportDropdown items={[{ href: withFilters(`/keluarga/${familyPath}/export`), label: 'Export XLSX' }]} />
                     {canManage && <Link href={withUid(`/keluarga/${familyPath}/import`)} className="rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Import XLSX</Link>}
-                    {canEdit && <Link href={withUid(`/keluarga/${familyPath}/create`)} className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">{canRequest ? 'Ajukan data' : '+ Tambah Data'}</Link>}
+                    {canEdit && <Link href={withUid(`/keluarga/${familyPath}/create`)} className="simpeg-action-primary rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">{canRequest ? 'Ajukan data' : '+ Tambah Data'}</Link>}
                 </div>
-            </div>
-
-            <div className="mb-5 flex flex-wrap gap-2" aria-label="Jenis data keluarga">
-                {familyTypes.map(([value, text]) => <Link key={value} href={withUid(`/keluarga/${familyUrlTypes[value] || value}`)} className={`rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-600/30 ${type === value ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50'}`}>{text}</Link>)}
             </div>
 
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}
@@ -91,12 +83,15 @@ export default function FamilyIndex({ type, label, items, employee, filters, can
                 </div>
             </section>}
 
-            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <form method="get" className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-search flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row" action={withUid(`/keluarga/${familyPath}`)}>
-                    <label htmlFor="family-search" className="sr-only">Cari data keluarga</label>
-                    <input id="family-search" name="search" defaultValue={filters.search} placeholder="Cari nama, NIK, hubungan, atau pegawai" className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" />
-                    <button type="submit" className="h-11 rounded-xl border border-slate-300 px-5 text-sm font-bold text-slate-700 transition hover:border-blue-600 hover:text-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Cari</button>
+            <div className="simpeg-table-controls" aria-label="Kontrol data keluarga">
+                <form method="get" className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel simpeg-table-filter-form" action={withUid(`/keluarga/${familyPath}`)}>
+                    <MobileFilterGroup id="family-mobile-filters" activeCount={Number(Boolean(filters.search))}>
+                        <div className="min-w-0"><label htmlFor="family-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari data keluarga</label><input id="family-search" name="search" defaultValue={filters.search} placeholder="Cari nama, NIK, hubungan, atau pegawai" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
+                        <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
+                    </MobileFilterGroup>
                 </form>
+            </div>
+            <section className="simpeg-table-surface overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-left">
                         <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4">Pegawai</th><th className="px-5 py-4">Nama</th><th className="px-5 py-4">TTL</th><th className="px-5 py-4">Hubungan</th><th className="px-5 py-4">Pendidikan / Pekerjaan</th>{canEdit && <th className="px-5 py-4 text-right">Aksi</th>}</tr></thead>

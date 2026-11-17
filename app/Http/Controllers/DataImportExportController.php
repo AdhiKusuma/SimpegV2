@@ -13,6 +13,7 @@ use App\Models\Legacy\TbPendidikan;
 use App\Models\Legacy\TbSertifikasi;
 use App\Models\Legacy\TbSuamiIstri;
 use App\Services\ImportPreviewService;
+use App\Services\EmployeePdfService;
 use App\Services\XlsxExportService;
 use App\Services\XlsxImportService;
 use Carbon\Carbon;
@@ -557,7 +558,7 @@ class DataImportExportController extends Controller
         return $this->download($xlsxExport->make($rows, 'Detail Pegawai', true), 'Export_Detail_Pegawai_'.now()->format('Ymd_His').'.xlsx');
     }
 
-    public function exportEmployeesPdf(Request $request)
+    public function exportEmployeesPdf(Request $request, EmployeePdfService $employeePdf)
     {
         $this->ensureStaff($request);
         $employeeRows = $this->employeeExportQuery($request)->get()->map(function ($item): array {
@@ -581,7 +582,7 @@ class DataImportExportController extends Controller
             default => 'Aktif',
         };
 
-        return response()->view('reports.employees-print', [
+        return $employeePdf->download([
             'employees' => $employeeRows,
             'total' => count($employeeRows),
             'filters' => [
@@ -593,7 +594,7 @@ class DataImportExportController extends Controller
                 'year' => $request->string('year')->trim()->value(),
             ],
             'generatedAt' => now('Asia/Jakarta')->format('d-m-Y H:i'),
-        ]);
+        ], 'data-pegawai-'.now()->format('Ymd_His').'.pdf');
     }
 
     private function employeeExportQuery(Request $request): Builder
@@ -1112,11 +1113,11 @@ class DataImportExportController extends Controller
 
     private function ensureAdmin(Request $request): void
     {
-        abort_unless(strtolower((string) $request->session()->get('hak_akses')) === 'admin', 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'it_admin'], true), 403);
     }
 
     private function ensureStaff(Request $request): void
     {
-        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala', 'user'], true), 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala', 'user', 'it_admin'], true), 403);
     }
 }

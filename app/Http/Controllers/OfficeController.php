@@ -124,6 +124,6 @@ class OfficeController extends Controller
 
     private function ensureStaffAccess(Request $request): void
     {
-        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala'], true), 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala', 'it_admin'], true), 403);
     }
 }

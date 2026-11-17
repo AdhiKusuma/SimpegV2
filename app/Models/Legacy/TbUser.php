@@ -17,4 +17,8 @@ class TbUser extends Authenticatable
     public $timestamps = false;
 
     protected $guarded = [];
+
+    protected $casts = [
+        'local_login_enabled' => 'boolean',
+    ];
 }

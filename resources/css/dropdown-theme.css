@@ -1,0 +1,374 @@
+/* Final contrast contract for every floating menu and combobox. */
+html body .simpeg-app-canvas :is(
+    .simpeg-combobox-menu,
+    .simpeg-account-menu,
+    .simpeg-notification-popover,
+    .simpeg-theme-menu,
+    .simpeg-export-menu
+) {
+    background: var(--simpeg-card) !important;
+    background-color: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+html body .simpeg-app-canvas :is(
+    .simpeg-combobox-option,
+    .simpeg-combobox-option *,
+    .simpeg-menu-item,
+    .simpeg-menu-item *,
+    .simpeg-theme-option,
+    .simpeg-theme-option *,
+    .simpeg-export-menu-title
+) {
+    color: var(--simpeg-text) !important;
+    -webkit-text-fill-color: var(--simpeg-text) !important;
+}
+
+html body .simpeg-app-canvas :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+) {
+    background: var(--simpeg-hover-surface) !important;
+    background-color: var(--simpeg-hover-surface) !important;
+    color: var(--simpeg-hover-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-hover-ink) !important;
+}
+
+html body .simpeg-app-canvas :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+) :where(*) {
+    color: var(--simpeg-hover-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-hover-ink) !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-combobox-menu,
+    .simpeg-account-menu,
+    .simpeg-notification-popover,
+    .simpeg-theme-menu,
+    .simpeg-export-menu
+),
+.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+    .simpeg-combobox-menu,
+    .simpeg-account-menu,
+    .simpeg-notification-popover,
+    .simpeg-theme-menu,
+    .simpeg-export-menu
+) {
+    background: var(--simpeg-floating-surface, #1B2A4A) !important;
+    background-color: var(--simpeg-floating-surface, #1B2A4A) !important;
+    border-color: var(--simpeg-floating-border, #2A426C) !important;
+    color: var(--simpeg-floating-ink, #F1F5F9) !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-combobox-option,
+    .simpeg-combobox-option *,
+    .simpeg-menu-item,
+    .simpeg-menu-item *,
+    .simpeg-theme-option,
+    .simpeg-theme-option *,
+    .simpeg-export-menu-title
+),
+.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+    .simpeg-combobox-option,
+    .simpeg-combobox-option *,
+    .simpeg-menu-item,
+    .simpeg-menu-item *,
+    .simpeg-theme-option,
+    .simpeg-theme-option *,
+    .simpeg-export-menu-title
+) {
+    color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    -webkit-text-fill-color: var(--simpeg-floating-ink, #F1F5F9) !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+),
+.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+) {
+    background: var(--simpeg-floating-hover, #2A426C) !important;
+    background-color: var(--simpeg-floating-hover, #2A426C) !important;
+    color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    -webkit-text-fill-color: var(--simpeg-floating-ink, #F1F5F9) !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+) :where(*),
+.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+) :where(*) {
+    color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    -webkit-text-fill-color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-combobox-option .simpeg-muted,
+    .simpeg-account-menu .simpeg-muted,
+    .simpeg-notification-popover .simpeg-muted
+),
+.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+    .simpeg-combobox-option .simpeg-muted,
+    .simpeg-account-menu .simpeg-muted,
+    .simpeg-notification-popover .simpeg-muted
+) {
+    color: var(--simpeg-floating-muted, #A5B2C2) !important;
+    -webkit-text-fill-color: var(--simpeg-floating-muted, #A5B2C2) !important;
+}
+
+/* The shared visual-polish rules also style `.simpeg-text` inside a menu.
+ * Target the actual option text with higher specificity so the active/hover
+ * state cannot fall back to black/navy text on the dark floating surface. */
+html body .simpeg-app-canvas :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+) :is(.simpeg-text, .simpeg-muted, .simpeg-menu-item, .simpeg-theme-option, .simpeg-export-menu-title, svg, svg *) {
+    color: var(--simpeg-hover-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-hover-ink) !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+) :is(.simpeg-text, .simpeg-muted, .simpeg-menu-item, .simpeg-theme-option, .simpeg-export-menu-title, svg, svg *),
+.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+    .simpeg-combobox-option:hover,
+    .simpeg-combobox-option:focus-visible,
+    .simpeg-combobox-option-active,
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-theme-option:hover,
+    .simpeg-theme-option:focus-visible,
+    .simpeg-theme-option-active
+) :is(.simpeg-text, .simpeg-muted, .simpeg-menu-item, .simpeg-theme-option, .simpeg-export-menu-title, svg, svg *) {
+    color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    -webkit-text-fill-color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    stroke: currentColor !important;
+}
+
+/* SearchableCombobox renders its menu through a body portal. Keep a global
+ * portal contract as well as the shell-scoped contract above; otherwise the
+ * active row is styled by the legacy dark hover rule but its text is left
+ * with the light-theme navy value. */
+html body .simpeg-combobox-menu {
+    background: var(--simpeg-card) !important;
+    background-color: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+html body .simpeg-combobox-menu .simpeg-combobox-option {
+    color: var(--simpeg-text) !important;
+    -webkit-text-fill-color: var(--simpeg-text) !important;
+}
+
+html body .simpeg-combobox-menu .simpeg-combobox-option :is(.simpeg-text, .simpeg-muted, svg, svg *) {
+    color: var(--simpeg-text) !important;
+    -webkit-text-fill-color: var(--simpeg-text) !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-visible, .simpeg-combobox-option-active) {
+    background: var(--simpeg-hover-surface) !important;
+    background-color: var(--simpeg-hover-surface) !important;
+    color: var(--simpeg-hover-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-hover-ink) !important;
+}
+
+html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-visible, .simpeg-combobox-option-active) :is(.simpeg-text, .simpeg-muted, svg, svg *) {
+    color: var(--simpeg-hover-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-hover-ink) !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-combobox-menu {
+    background: var(--simpeg-floating-surface, #1B2A4A) !important;
+    background-color: var(--simpeg-floating-surface, #1B2A4A) !important;
+    border-color: var(--simpeg-floating-border, #2A426C) !important;
+    color: var(--simpeg-floating-ink, #F1F5F9) !important;
+}
+
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option,
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option :is(.simpeg-text, .simpeg-muted, svg, svg *) {
+    color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    -webkit-text-fill-color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-visible, .simpeg-combobox-option-active),
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-visible, .simpeg-combobox-option-active) :is(.simpeg-text, .simpeg-muted, svg, svg *) {
+    background: var(--simpeg-floating-hover, #2A426C) !important;
+    background-color: var(--simpeg-floating-hover, #2A426C) !important;
+    color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    -webkit-text-fill-color: var(--simpeg-floating-ink, #F1F5F9) !important;
+    stroke: currentColor !important;
+}
+
+/* AccountMenu intentionally remains a light popover even while the shell
+ * header/sidebar use the dark theme. Its menu items must therefore use the
+ * light-popover foreground, not the dark rail's pale ink. */
+html body .simpeg-app-canvas .simpeg-account-menu {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-account-menu :is(.simpeg-menu-item, .simpeg-menu-item *, .simpeg-text) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-muted {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-menu-item svg,
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-menu-item svg * {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-menu-item:is(:hover, :focus-visible) {
+    background: #E8F0FD !important;
+    background-color: #E8F0FD !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-menu-item:is(:hover, :focus-visible) :is(*, svg *) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-account-menu-logout,
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-account-menu-logout * {
+    color: #B91C1C !important;
+    -webkit-text-fill-color: #B91C1C !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-account-menu-logout:is(:hover, :focus-visible),
+html body .simpeg-app-canvas .simpeg-account-menu .simpeg-account-menu-logout:is(:hover, :focus-visible) * {
+    background: #FEF2F2 !important;
+    background-color: #FEF2F2 !important;
+    color: #991B1B !important;
+    -webkit-text-fill-color: #991B1B !important;
+    stroke: currentColor !important;
+}
+
+/* Final combobox palette: the workspace uses a light floating panel in both
+ * shell themes. Keep every idle option dark on white, and reserve white ink
+ * for the dark active/hover row. */
+html body .simpeg-combobox-menu {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html body .simpeg-combobox-menu .simpeg-combobox-option:not(:hover):not(:focus-visible):not(.simpeg-combobox-option-active),
+html body .simpeg-combobox-menu .simpeg-combobox-option:not(:hover):not(:focus-visible):not(.simpeg-combobox-option-active) :is(.simpeg-text, .simpeg-muted, svg, svg *) {
+    background: transparent !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-visible, .simpeg-combobox-option-active),
+html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-visible, .simpeg-combobox-option-active) :is(.simpeg-text, .simpeg-muted, svg, svg *) {
+    background: #E8F0FD !important;
+    background-color: #E8F0FD !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+/* Dark mode changes only the active/hover contrast; light mode keeps the
+ * original pale-blue interaction surface. */
+html.dark body .simpeg-combobox-menu {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option:not(:hover):not(:focus-visible):not(.simpeg-combobox-option-active),
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option:not(:hover):not(:focus-visible):not(.simpeg-combobox-option-active) :is(.simpeg-text, .simpeg-muted, svg, svg *) {
+    background: transparent !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-visible, .simpeg-combobox-option-active),
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-visible, .simpeg-combobox-option-active) :is(.simpeg-text, .simpeg-muted, svg, svg *) {
+    background: #2A426C !important;
+    background-color: #2A426C !important;
+    color: #F1F5F9 !important;
+    -webkit-text-fill-color: #F1F5F9 !important;
+    stroke: currentColor !important;
+}

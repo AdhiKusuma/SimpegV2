@@ -37,9 +37,11 @@
     </style>
 </head>
 <body>
-    <div class="print-actions">
-        <button type="button" onclick="window.print()">🖨 Cetak / Simpan PDF</button>
-    </div>
+    @if (!($pdf ?? false))
+        <div class="print-actions">
+            <button type="button" onclick="window.print()">🖨 Cetak / Simpan PDF</button>
+        </div>
+    @endif
 
     <h1>Laporan Data Pegawai</h1>
     <p class="subtitle">Daftar pegawai sesuai filter yang dipilih di menu Data Pegawai.</p>

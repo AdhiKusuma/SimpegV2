@@ -1047,16 +1047,6 @@ html.dark .simpeg-login-resource-overlay {
     display: none;
 }
 
-html.dark .simpeg-login-page {
-    background: #080808;
-    color: #fafafa;
-}
-
-html[data-theme="corporate"] .simpeg-login-page {
-    background: #f8fafc;
-    color: #18181b;
-}
-
 .simpeg-login-shell {
     max-width: 32rem;
     min-height: calc(100dvh / var(--simpeg-ui-scale, 0.8)) !important;
@@ -1104,11 +1094,11 @@ html[data-theme="corporate"] .simpeg-login-page {
 }
 
 html.dark .simpeg-login-topbar .simpeg-login-brand-name {
-    color: #fafafa;
+    color: var(--simpeg-text);
 }
 
 html.dark .simpeg-login-topbar .simpeg-login-brand-caption {
-    color: #a1a1aa;
+    color: var(--simpeg-muted);
 }
 
 .simpeg-login-topbar-actions {
@@ -1163,11 +1153,11 @@ html.dark .simpeg-login-topbar .simpeg-login-brand-caption {
 }
 
 html.dark .simpeg-login-clean-form .simpeg-login-form-heading h2 {
-    color: #fafafa;
+    color: var(--simpeg-text);
 }
 
 html.dark .simpeg-login-clean-form .simpeg-login-form-heading > p:last-child {
-    color: #a1a1aa;
+    color: var(--simpeg-muted);
 }
 
 .simpeg-login-form {
@@ -1184,7 +1174,7 @@ html.dark .simpeg-login-clean-form .simpeg-login-form-heading > p:last-child {
 }
 
 html.dark .simpeg-login-label {
-    color: #f4f4f5;
+    color: var(--simpeg-text);
 }
 
 .simpeg-login-clean-form .simpeg-input {
@@ -1202,8 +1192,8 @@ html.dark .simpeg-login-label {
 }
 
 html.dark .simpeg-login-clean-form .simpeg-input {
-    border-color: #27272a !important;
-    color: #fafafa !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
 }
 
 html.dark .simpeg-login-clean-form .simpeg-input:focus {
@@ -1352,6 +1342,20 @@ html.dark .simpeg-login-context .simpeg-login-access-note {
     width: 100%;
     height: auto;
     object-fit: contain;
+}
+
+/* Pick the asset from the same html.dark flag that controls the page palette.
+ * This prevents a theme-state race from showing the white wordmark on light. */
+.simpeg-login-brand-mark .simpeg-login-logo-image--dark {
+    display: none;
+}
+
+html.dark .simpeg-login-brand-mark .simpeg-login-logo-image--light {
+    display: none;
+}
+
+html.dark .simpeg-login-brand-mark .simpeg-login-logo-image--dark {
+    display: block;
 }
 
 .simpeg-login-stage {
@@ -1645,67 +1649,6 @@ html.dark .simpeg-login-page .simpeg-background-grid {
         width: 100%;
         max-width: 32rem;
     }
-}
-
-/* Neutral login theme: light uses white/black, dark uses black/white. */
-.simpeg-login-page {
-    --simpeg-canvas: #f6f6f6;
-    --simpeg-card: #ffffff;
-    --simpeg-card-soft: #fafafa;
-    --simpeg-input: #ffffff;
-    --simpeg-text: #111111;
-    --simpeg-muted: #555555;
-    --simpeg-subtle: #737373;
-    --simpeg-border: #e5e5e5;
-    --simpeg-track: #e5e5e5;
-    --simpeg-primary: #111111;
-    --simpeg-primary-hover: #000000;
-    --simpeg-primary-foreground: #ffffff;
-    --simpeg-primary-soft: #f0f0f0;
-    --simpeg-primary-border: #d4d4d4;
-    --simpeg-focus-ring: rgb(17 17 17 / 0.16);
-    background: var(--simpeg-canvas);
-    color: var(--simpeg-text);
-}
-
-html.dark .simpeg-login-page {
-    --simpeg-canvas: #080808;
-    --simpeg-card: #121212;
-    --simpeg-card-soft: #181818;
-    --simpeg-input: #0b0b0b;
-    --simpeg-text: #f5f5f5;
-    --simpeg-muted: #c4c4c4;
-    --simpeg-subtle: #a3a3a3;
-    --simpeg-border: #2b2b2b;
-    --simpeg-track: #2b2b2b;
-    --simpeg-primary: #f5f5f5;
-    --simpeg-primary-hover: #ffffff;
-    --simpeg-primary-foreground: #0a0a0a;
-    --simpeg-primary-soft: #242424;
-    --simpeg-primary-border: #444444;
-    --simpeg-focus-ring: rgb(255 255 255 / 0.18);
-    background: var(--simpeg-canvas);
-    color: var(--simpeg-text);
-}
-
-html[data-theme="corporate"] .simpeg-login-page {
-    --simpeg-canvas: #f6f6f6;
-    --simpeg-card: #ffffff;
-    --simpeg-card-soft: #fafafa;
-    --simpeg-input: #ffffff;
-    --simpeg-text: #111111;
-    --simpeg-muted: #555555;
-    --simpeg-subtle: #737373;
-    --simpeg-border: #e5e5e5;
-    --simpeg-track: #e5e5e5;
-    --simpeg-primary: #111111;
-    --simpeg-primary-hover: #000000;
-    --simpeg-primary-foreground: #ffffff;
-    --simpeg-primary-soft: #f0f0f0;
-    --simpeg-primary-border: #d4d4d4;
-    --simpeg-focus-ring: rgb(17 17 17 / 0.16);
-    background: var(--simpeg-canvas);
-    color: var(--simpeg-text);
 }
 
 .simpeg-login-page .simpeg-login-clean-form {
@@ -2178,4 +2121,20 @@ html.dark .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-submit
 .simpeg-login-page[data-login-appearance="split"] .simpeg-login-support-trigger span,
 .simpeg-login-page[data-login-appearance="split"] .simpeg-login-context .simpeg-login-slide-meta span:first-child {
     font-weight: 400;
+}
+
+/* Keep the minimalist composition optically compact. The stage inherits
+ * justify-content:center from the desktop layout; that centers the whole
+ * form in the remaining viewport and creates an oversized gap below the
+ * logo. Start the stage at a controlled offset instead. */
+.simpeg-login-page[data-login-appearance="focus"] .simpeg-login-stage {
+    justify-content: flex-start;
+    padding-top: clamp(16rem, 24vh, 22rem);
+}
+
+@media (max-width: 767px) {
+    .simpeg-login-page[data-login-appearance="focus"] .simpeg-login-stage {
+        justify-content: flex-start;
+        padding-top: 8rem;
+    }
 }

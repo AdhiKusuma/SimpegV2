@@ -53,7 +53,7 @@ class ProfileController extends Controller
             ] : ['spouses' => [], 'children' => [], 'parents' => []],
             'familyRequests' => $employee ? $this->familyRequests($request, $employee->id_peg) : [],
             'canRequestFamily' => $role === 'user' && app(RbacService::class)->can($request, 'family.request'),
-            'canManageFamily' => $role === 'admin' && app(RbacService::class)->can($request, 'family.manage'),
+            'canManageFamily' => in_array($role, ['admin', 'it_admin'], true) && app(RbacService::class)->can($request, 'family.manage'),
             'history' => $employee ? [
                 'appointment' => $this->records(TbAngkat::class, 'id_peg_baru', $employee->id_peg, ['id_angkat', 'jns_mutasi', 'tgl_mutasi', 'no_mutasi', 'tmt', 'sk_mutasi'], 'tgl_mutasi'),
                 'mutation' => $this->records(TbMutasi::class, 'id_peg', $employee->id_peg, ['id_mutasi', 'jns_mutasi', 'tgl_mutasi', 'no_mutasi', 'jabatan'], 'tgl_mutasi'),

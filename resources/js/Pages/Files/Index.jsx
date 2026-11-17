@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowRight, FileText, LockKeyhole } from 'lucide-react';
 import SelectCombobox from '../../Components/SelectCombobox';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import MobileFilterGroup from '../../Components/MobileFilterGroup';
 
 const monthNames = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -45,15 +46,17 @@ export default function FilesIndex({ slips, periods = [], filters = {}, isAdmini
                 Daftar slip tersedia. Referensi template PDF belum tersedia, sehingga preview/PDF belum dapat dipublikasikan.
             </div>}
 
-            <section className="simpeg-card mb-5 rounded-2xl border p-4 shadow-sm sm:p-5">
-                <form onSubmit={submit} className="grid gap-3 md:grid-cols-4 md:items-end">
-                    <SelectCombobox id="files-year" label="Tahun" value={form.data.tahun} options={yearOptions} emptyLabel="Semua tahun" placeholder="Pilih tahun" onChange={(value) => form.setData('tahun', value)} />
-                    <SelectCombobox id="files-month" label="Bulan" value={form.data.bulan} options={monthOptions} emptyLabel="Semua bulan" placeholder="Pilih bulan" onChange={(value) => form.setData('bulan', value)} />
-                    {isAdministrative && <label className="block text-sm font-semibold">
-                        <span className="simpeg-muted mb-2 block text-xs uppercase tracking-wide">Nama / ID pegawai</span>
-                        <input value={form.data.employee_id} onChange={(event) => form.setData('employee_id', event.target.value)} className="simpeg-input h-11 w-full rounded-xl border px-3 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]" placeholder="Cari nama atau ID pegawai" maxLength={150} />
-                    </label>}
-                    <button type="submit" className="simpeg-primary inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]">Terapkan</button>
+            <section className="simpeg-filter-shell mb-5" aria-label="Filter slip gaji">
+                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-3">
+                    <MobileFilterGroup id="files-mobile-filters" activeCount={Number(Boolean(form.data.tahun)) + Number(Boolean(form.data.bulan)) + Number(Boolean(isAdministrative && form.data.employee_id))}>
+                        <SelectCombobox id="files-year" label="Tahun" value={form.data.tahun} options={yearOptions} emptyLabel="Semua tahun" placeholder="Pilih tahun" onChange={(value) => form.setData('tahun', value)} />
+                        <SelectCombobox id="files-month" label="Bulan" value={form.data.bulan} options={monthOptions} emptyLabel="Semua bulan" placeholder="Pilih bulan" onChange={(value) => form.setData('bulan', value)} />
+                        {isAdministrative && <label className="block text-sm font-semibold">
+                            <span className="simpeg-muted mb-2 block text-xs uppercase tracking-wide">Nama / ID pegawai</span>
+                            <input value={form.data.employee_id} onChange={(event) => form.setData('employee_id', event.target.value)} className="simpeg-input h-11 w-full rounded-xl border px-3 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]" placeholder="Cari nama atau ID pegawai" maxLength={150} />
+                        </label>}
+                        <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
+                    </MobileFilterGroup>
                 </form>
             </section>
 

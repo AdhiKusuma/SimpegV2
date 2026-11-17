@@ -15,7 +15,8 @@ class AccessMatrixController extends Controller
 
     public function index(Request $request): Response
     {
-        $this->ensureAdmin($request);
+        $this->ensurePermission($request, 'users.manage');
+        $mode = $request->string('mode')->trim()->lower()->value() ?: 'roles';
 
         $subjectType = $request->string('subject_type')->trim()->lower()->value() ?: 'role';
         if (! in_array($subjectType, ['role', 'position', 'employee'], true)) {
@@ -30,6 +31,9 @@ class AccessMatrixController extends Controller
         }
 
         return Inertia::render('Users/AccessMatrix', [
+            'mode' => $mode === 'special' ? 'special' : 'roles',
+            'roles' => $this->rbac->managedRoles(),
+            'permissionCatalog' => $this->rbac->permissionCatalog(),
             'available' => $this->rbac->available(),
             'metrics' => $this->rbac->metrics(),
             'subjects' => $subjects,
@@ -40,9 +44,55 @@ class AccessMatrixController extends Controller
         ]);
     }
 
+    public function storeRole(Request $request): RedirectResponse
+    {
+        $this->ensurePermission($request, 'users.roles.manage');
+        abort_unless($this->rbac->available(), 503, 'Tabel RBAC belum tersedia. Jalankan migrasi database terlebih dahulu.');
+
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:80', 'regex:/^[a-z][a-z0-9._-]*$/', Rule::unique('rbac_roles', 'code')],
+            'name' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::in(array_keys(config('rbac.permissions', [])))],
+        ]);
+
+        $this->rbac->createRole(
+            strtolower($validated['code']),
+            $validated['name'],
+            $validated['description'] ?? null,
+            $validated['permissions'] ?? [],
+        );
+
+        return to_route('users.access')->with('success', 'Role berhasil ditambahkan.');
+    }
+
+    public function updateRole(Request $request, string $role): RedirectResponse
+    {
+        $this->ensurePermission($request, 'users.roles.manage');
+        abort_unless($this->rbac->available(), 503, 'Tabel RBAC belum tersedia. Jalankan migrasi database terlebih dahulu.');
+        abort_unless(collect($this->rbac->roleDefinitions())->contains('code', strtolower($role)), 404);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::in(array_keys(config('rbac.permissions', [])))],
+        ]);
+
+        $this->rbac->updateRole(
+            strtolower($role),
+            $validated['name'],
+            $validated['description'] ?? null,
+            $validated['permissions'] ?? [],
+        );
+
+        return to_route('users.access')->with('success', 'Role dan permission berhasil diperbarui.');
+    }
+
     public function update(Request $request): RedirectResponse
     {
-        $this->ensureAdmin($request);
+        $this->ensurePermission($request, 'users.manage');
         abort_unless($this->rbac->available(), 503, 'Tabel RBAC belum tersedia. Jalankan migrasi database terlebih dahulu.');
 
         $validated = $request->validate([
@@ -64,8 +114,8 @@ class AccessMatrixController extends Controller
         ])->with('success', 'Matriks akses berhasil diperbarui.');
     }
 
-    private function ensureAdmin(Request $request): void
+    private function ensurePermission(Request $request, string $permission): void
     {
-        abort_unless(strtolower((string) $request->session()->get('hak_akses')) === 'admin', 403);
+        abort_unless($this->rbac->can($request, $permission), 403);
     }
 }

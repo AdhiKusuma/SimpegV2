@@ -1,4 +1,39 @@
 @layer utilities {
+    .simpeg-history-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.1rem;
+        border: 1px solid var(--simpeg-border);
+        border-radius: 999px;
+        background: var(--simpeg-card-soft);
+        padding: 0.2rem;
+    }
+
+    .simpeg-history-control {
+        display: inline-flex;
+        height: 2.15rem;
+        width: 2.15rem;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--simpeg-muted);
+        cursor: pointer;
+        transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .simpeg-history-control:hover,
+    .simpeg-history-control:focus-visible {
+        background: var(--simpeg-hover-surface);
+        color: var(--simpeg-text);
+        outline: none;
+    }
+
+    .simpeg-history-control:active {
+        transform: scale(0.94);
+    }
+
     .simpeg-app-canvas {
         background: var(--simpeg-canvas) !important;
         color: var(--simpeg-text);

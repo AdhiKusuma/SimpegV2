@@ -1,7 +1,9 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowUpRight, Banknote, CalendarClock, FileSpreadsheet, Search, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SelectCombobox from '../../Components/SelectCombobox';
 import { formatRupiah } from '../../lib/payrollMoney';
 
@@ -109,7 +111,7 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
                     {scopeLabel && <p className="simpeg-muted mt-2 text-sm">Cakupan: {scopeLabel}</p>}
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
-                    <a href={exportHref} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Export XLSX</a>
+                    <ExportDropdown items={[{ href: exportHref, label: 'Export XLSX' }]} />
                     {canTransfer && <button type="button" onClick={openTransfer} disabled={!Number(masters.total || 0)} className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"><ArrowUpRight aria-hidden="true" className="h-4 w-4" />Transfer ke Payroll</button>}
                     {canImport && <Link href="/payroll/import" className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Import XLSX</Link>}
                 </div>
@@ -118,13 +120,16 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
             {flash.error && <div role="alert" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">{flash.error}</div>}
 
             <section className="simpeg-card mb-5 rounded-2xl border p-4 shadow-sm sm:p-5">
-                <form onSubmit={search} className="flex flex-col gap-3 sm:flex-row">
-                    <label className="simpeg-input flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border px-3">
-                        <Search aria-hidden="true" className="simpeg-subtle h-4 w-4 shrink-0" />
-                        <span className="sr-only">Cari pegawai</span>
-                        <input name="search" defaultValue={filters.search || ''} placeholder="Cari nama atau ID pegawai" className="simpeg-text min-w-0 flex-1 bg-transparent text-sm outline-none" />
-                    </label>
-                    <button type="submit" className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold">Cari</button>
+                <form onSubmit={search} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid min-w-0 gap-4">
+                    <MobileFilterGroup id="payroll-master-mobile-filters" activeCount={Number(Boolean(filters.search))}>
+                        <label className="simpeg-mobile-filter-search simpeg-input flex min-h-11 min-w-0 items-center gap-2 rounded-xl border px-3">
+                            <Search aria-hidden="true" className="simpeg-subtle h-4 w-4 shrink-0" />
+                            <span className="sr-only">Cari pegawai</span>
+                            <input name="search" defaultValue={filters.search || ''} placeholder="Cari nama atau ID pegawai" className="simpeg-text min-w-0 flex-1 bg-transparent text-sm outline-none" />
+                        </label>
+                        <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold">Terapkan</button>
+                    </MobileFilterGroup>
+                    <button type="submit" className="simpeg-primary simpeg-desktop-filter-apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold">Terapkan</button>
                 </form>
             </section>
 

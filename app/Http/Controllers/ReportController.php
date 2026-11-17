@@ -10,6 +10,8 @@ use App\Models\Legacy\TbKantor;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbPendidikan;
 use App\Models\Legacy\TbRefJabatan;
+use App\Services\NominativePdfService;
+use App\Services\ReportPdfService;
 use App\Services\XlsxExportService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -56,7 +58,7 @@ class ReportController extends Controller
         ]);
     }
 
-    public function exportNominative(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
+    public function exportNominative(Request $request, XlsxExportService $xlsxExport, NominativePdfService $nominativePdf): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
@@ -76,10 +78,11 @@ class ReportController extends Controller
             ->orderBy('p.nama');
 
         if ($request->string('type')->lower()->value() === 'pdf') {
-            return response()->view('reports.nominative-print', [
-                'employees' => $query->get(),
-                'filters' => $filters,
-            ]);
+            return $nominativePdf->download(
+                $query->get(),
+                $filters,
+                'laporan-nominatif-'.now()->format('Ymd_His').'.pdf',
+            );
         }
 
         $rows = [['No', 'Nama Pegawai', 'ID Pegawai', 'Jabatan', 'TMT Jabatan', 'Unit Kerja', 'Status Kepegawaian', 'Jenjang Pendidikan', 'Sekolah/Universitas']];
@@ -109,14 +112,14 @@ class ReportController extends Controller
         return Inertia::render('Reports/Formation', $this->formationData($request));
     }
 
-    public function exportFormation(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
+    public function exportFormation(Request $request, XlsxExportService $xlsxExport, ReportPdfService $reportPdf): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
         $data = $this->formationData($request);
 
         if ($request->string('type')->lower()->value() === 'pdf') {
-            return response()->view('reports.formation-print', $data);
+            return $reportPdf->download('reports.formation-print', $data, 'laporan-formasi-'.now()->format('Ymd_His').'.pdf');
         }
 
         $rows = [['No', 'Jabatan', 'Kuota', 'Terisi', 'Sisa', 'Status']];
@@ -158,14 +161,14 @@ class ReportController extends Controller
         return Inertia::render('Reports/TrainingCosts', $data);
     }
 
-    public function exportTrainingCosts(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
+    public function exportTrainingCosts(Request $request, XlsxExportService $xlsxExport, ReportPdfService $reportPdf): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
         $data = $this->trainingCostData($request);
 
         if ($request->string('type')->lower()->value() === 'pdf') {
-            return response()->view('reports.training-costs-print', $data);
+            return $reportPdf->download('reports.training-costs-print', $data, 'rekap-biaya-diklat-'.now()->format('Ymd_His').'.pdf');
         }
 
         $rows = [['No', 'Nama Kegiatan', 'Penyelenggara', 'Tahun', 'Peserta', 'Total Biaya']];
@@ -250,14 +253,14 @@ class ReportController extends Controller
         return Inertia::render('Reports/EducationCosts', $this->educationCostData($request));
     }
 
-    public function exportEducationCosts(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
+    public function exportEducationCosts(Request $request, XlsxExportService $xlsxExport, ReportPdfService $reportPdf): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
         $data = $this->educationCostData($request);
 
         if ($request->string('type')->lower()->value() === 'pdf') {
-            return response()->view('reports.education-costs-print', $data);
+            return $reportPdf->download('reports.education-costs-print', $data, 'rekap-biaya-pendidikan-'.now()->format('Ymd_His').'.pdf');
         }
 
         $rows = [['No', 'Kategori Pengembangan', 'Detail Kegiatan', 'Penyelenggara', 'Tanggal', 'Tahun', 'Peserta', 'Total Biaya']];
@@ -294,14 +297,14 @@ class ReportController extends Controller
         return Inertia::render('Reports/Condition', $data);
     }
 
-    public function exportCondition(Request $request, XlsxExportService $xlsxExport): SymfonyResponse
+    public function exportCondition(Request $request, XlsxExportService $xlsxExport, ReportPdfService $reportPdf): SymfonyResponse
     {
         $this->ensureReportAccess($request);
 
         $data = $this->conditionData($request);
 
         if ($request->string('type')->lower()->value() === 'pdf') {
-            return response()->view('reports.condition-print', $data);
+            return $reportPdf->download('reports.condition-print', $data, 'laporan-keadaan-'.now()->format('Ymd_His').'.pdf');
         }
 
         $outputRows = [['Jenis Laporan', ...$data['ranges'], 'Total']];
@@ -663,7 +666,7 @@ class ReportController extends Controller
     {
         $role = strtolower((string) $request->session()->get('hak_akses'));
 
-        if (in_array($role, ['admin', 'superadmin'], true)) {
+        if (in_array($role, ['admin', 'superadmin', 'it_admin'], true)) {
             return;
         }
 
@@ -918,6 +921,6 @@ class ReportController extends Controller
 
     private function ensureReportAccess(Request $request): void
     {
-        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala'], true), 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala', 'it_admin'], true), 403);
     }
 }

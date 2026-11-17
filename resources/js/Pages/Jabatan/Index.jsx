@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
@@ -26,16 +27,16 @@ export default function JabatanIndex({ items, units, positions, filters, canMana
                 <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Daftar jabatan aktif</h1>
                 <p className="mt-2 text-slate-500">Kelola jabatan aktif dan penempatan unit kerja pegawai.</p>
                 </div>
-                <div className="flex flex-wrap gap-2"><a href={withFilters('/jabatan/export')} className="simpeg-utility inline-flex min-h-11 items-center rounded-xl border px-4 py-2.5 text-sm font-bold">Export XLSX</a>{canImport && <Link href="/jabatan/import" className="simpeg-utility inline-flex min-h-11 items-center rounded-xl border px-4 py-2.5 text-sm font-bold">Import jabatan</Link>}{canManage && <Link href="/jabatan/create" className="simpeg-primary inline-flex min-h-11 items-center rounded-xl px-4 py-2.5 text-sm font-bold">Tambah jabatan</Link>}</div>
+                <div className="flex flex-wrap gap-2"><ExportDropdown items={[{ href: withFilters('/jabatan/export'), label: 'Export XLSX' }]} />{canImport && <Link href="/jabatan/import" className="simpeg-utility inline-flex min-h-11 items-center rounded-xl border px-4 py-2.5 text-sm font-bold">Import jabatan</Link>}{canManage && <Link href="/jabatan/create" className="simpeg-action-primary inline-flex min-h-11 items-center rounded-xl px-4 py-2.5 text-sm font-bold">Tambah jabatan</Link>}</div>
             </div>
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 lg:grid-cols-[1fr_220px_220px_auto] lg:items-end">
-                    <div className="simpeg-mobile-filter-search">
-                        <label htmlFor="jabatan-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari</label>
-                        <input id="jabatan-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" />
-                    </div>
-                    <MobileFilterGroup id="positions-mobile-filters" activeCount={Number(Boolean(filters.unit)) + Number(Boolean(filters.jabatan))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
+                    <MobileFilterGroup id="positions-mobile-filters" activeCount={Number(Boolean(filters.search)) + Number(Boolean(filters.unit)) + Number(Boolean(filters.jabatan))}>
+                        <div className="simpeg-mobile-filter-search">
+                            <label htmlFor="jabatan-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari</label>
+                            <input id="jabatan-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" />
+                        </div>
                         <SearchableCombobox id="jabatan-unit" name="unit" label="Unit kerja" value={filters.unit} options={units} optionValue={(unit) => unit.kode} optionLabel={(unit) => unit.nama || unit.kode} placeholder="Cari unit kerja" maxOptions={units.length} />
                         <SearchableCombobox id="jabatan-position" name="jabatan" label="Nama jabatan" value={filters.jabatan} options={positions} optionValue={(position) => position.jabatan} optionLabel={(position) => position.jabatan} optionDescription={(position) => `Kode ${position.kode_jabatan}`} placeholder="Cari jabatan" />
                         <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>

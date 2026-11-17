@@ -27,6 +27,8 @@ class HandleInertiaRequests extends Middleware
                 'id_user',
                 'nama_user',
                 'hak_akses',
+                'role_code',
+                'role_label',
                 'id_pegawai',
                 'kode_kantor',
             ]),
@@ -91,6 +93,8 @@ class HandleInertiaRequests extends Middleware
             'name' => $config?->nama_app ?: config('app.name', 'SIMPEG'),
             'alias' => $config?->alias_app ?: 'SIMPEG',
             'description' => $config?->desc_app ?: 'Kepegawaian',
+            'websiteUrl' => $config?->url_app,
+            'footerText' => $config?->anchor_app,
             'logoUrl' => $logoUrl,
             'darkLogoUrl' => $darkLogoUrl,
             'loginLogoUrl' => $config?->logo
@@ -99,6 +103,21 @@ class HandleInertiaRequests extends Middleware
             'loginDarkLogoUrl' => $config?->logo_dark
                 ? $darkLogoUrl
                 : asset('images/bkk-simpeg-dark-logo.png'),
+            // The sidebar uses the transparent wordmark by default. A logo
+            // uploaded from Application Settings still takes precedence.
+            'sidebarLogoUrl' => $config?->logo
+                ? $logoUrl
+                : asset('images/bkk-simpeg-blue-logo.png'),
+            'sidebarDarkLogoUrl' => $config?->logo_dark
+                ? $darkLogoUrl
+                : asset('images/bkk-simpeg-dark-logo.png'),
+            'sidebarColor' => $config?->sidebar_color ?: 'theme',
+            'fontSize' => $config?->font_size ?: 'normal',
+            'density' => $config?->density ?: 'comfortable',
+            'defaultTheme' => $config?->default_theme ?: 'light',
+            'allowUserTheme' => $config?->allow_user_theme === null ? true : (bool) $config?->allow_user_theme,
+            'reduceMotion' => (bool) $config?->reduce_motion,
+            'applyLoginTheme' => $config?->apply_login_theme === null ? true : (bool) $config?->apply_login_theme,
         ];
     }
 }

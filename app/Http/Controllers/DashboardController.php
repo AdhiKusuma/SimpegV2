@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\CarbonImmutable;
 use App\Models\Legacy\TbDiklat;
 use App\Models\Legacy\TbHukuman;
 use App\Models\Legacy\TbKantor;
+use App\Models\Legacy\TbMutasi;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbMasterJabatan;
 use App\Models\QuotaJabatan;
@@ -90,6 +92,20 @@ class DashboardController extends Controller
             ]);
 
         return response()->json($employees);
+    }
+
+    public function employeeTrend(Request $request): JsonResponse
+    {
+        abort_unless($this->rbac->can($request, 'dashboard.view'), 403);
+
+        $role = strtolower((string) $request->session()->get('hak_akses'));
+        $unit = $role === 'kepala'
+            ? $request->session()->get('kode_kantor')
+            : $request->string('unit_kerja')->trim()->value();
+        $unit = $unit ?: null;
+        $year = max(2000, min(2100, $request->integer('year', now()->year)));
+
+        return response()->json($this->employeeTrendData($unit, $year));
     }
 
     private function dashboardData(Request $request, ?string $forcedUnit = null): array
@@ -215,11 +231,109 @@ class DashboardController extends Controller
                 'employment' => $this->employmentStats($unit),
                 'violations' => $this->violationTrend($unit, $year),
                 'positions' => $this->positionStats($unit),
+                'employeeTrend' => $this->employeeTrendData($unit, $year),
             ], $group),
             'retirement' => Inertia::defer(fn (): array => $this->retirementList($unit, $year), $group),
             'executivePositions' => Inertia::defer(fn (): array => $this->positionAvailability('PE', $unit), $group),
             'structuralPositions' => Inertia::defer(fn (): array => $this->positionAvailability('PS', $unit), $group),
         ];
+    }
+
+    private function employeeTrendData(?string $unit, int $year): array
+    {
+        $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        $incoming = array_fill(0, 12, 0);
+        $outgoing = array_fill(0, 12, 0);
+        $active = array_fill(0, 12, 0);
+        $inactive = array_fill(0, 12, 0);
+
+        $employeesQuery = TbPegawai::query()
+            ->from('tb_pegawai as p')
+            ->whereNotNull('p.tmt_kerja')
+            ->select(['p.id_peg', 'p.tmt_kerja', 'p.status_aktif']);
+        $this->applyTrendEmployeeScope($employeesQuery, $unit);
+        $employees = $employeesQuery->get();
+        $employeeIds = $employees->pluck('id_peg')->filter()->values();
+
+        $exitDates = collect();
+        if ($employeeIds->isNotEmpty()) {
+            $exitDates = TbMutasi::query()
+                ->from('tb_mutasi as m')
+                ->whereIn('m.id_peg', $employeeIds->all())
+                ->whereNotNull('m.tmt')
+                ->selectRaw('m.id_peg, MAX(m.tmt) as exit_date')
+                ->groupBy('m.id_peg')
+                ->get()
+                ->mapWithKeys(fn ($row): array => [(string) $row->id_peg => $row->exit_date]);
+        }
+
+        $years = collect();
+        foreach ($employees as $employee) {
+            $joinDate = $employee->tmt_kerja instanceof CarbonImmutable
+                ? $employee->tmt_kerja
+                : CarbonImmutable::parse($employee->tmt_kerja);
+            $exitDateValue = $exitDates->get((string) $employee->id_peg);
+            $exitDate = $exitDateValue ? CarbonImmutable::parse($exitDateValue) : null;
+            $years->push($joinDate->year);
+            if ($exitDate) {
+                $years->push($exitDate->year);
+            }
+
+            if ($joinDate->year === $year && $joinDate->month >= 1 && $joinDate->month <= 12) {
+                $incoming[$joinDate->month - 1]++;
+            }
+            if ($exitDate && $exitDate->year === $year && $exitDate->month >= 1 && $exitDate->month <= 12) {
+                $outgoing[$exitDate->month - 1]++;
+            }
+
+            for ($month = 1; $month <= 12; $month++) {
+                $monthEnd = CarbonImmutable::create($year, $month, 1)->endOfMonth();
+                if ($joinDate->greaterThan($monthEnd)) {
+                    continue;
+                }
+
+                $isInactive = (int) $employee->status_aktif === 3
+                    && ($exitDate === null || $exitDate->lessThanOrEqualTo($monthEnd));
+
+                if ($isInactive) {
+                    $inactive[$month - 1]++;
+                } else {
+                    $active[$month - 1]++;
+                }
+            }
+        }
+
+        $years = $years->filter(fn ($value): bool => is_numeric($value))
+            ->map(fn ($value): int => (int) $value)
+            ->push($year)
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
+
+        return [
+            'labels' => $labels,
+            'year' => $year,
+            'years' => $years,
+            'incoming' => $incoming,
+            'outgoing' => $outgoing,
+            'active' => $active,
+            'inactive' => $inactive,
+        ];
+    }
+
+    private function applyTrendEmployeeScope(Builder $query, ?string $unit): void
+    {
+        if ($unit === null) {
+            return;
+        }
+
+        $query->whereExists(function ($subquery) use ($unit): void {
+            $subquery->select(DB::raw('1'))
+                ->from('tb_jabatan as scope_job')
+                ->whereColumn('scope_job.id_peg', 'p.id_peg');
+            $this->applyUnitFilter($subquery, $unit, 'scope_job');
+        });
     }
 
     private function activeEmployeeQuery(?string $unit): Builder
@@ -486,7 +600,7 @@ class DashboardController extends Controller
             )->values();
         }
 
-        return $rows->map(function ($row) use ($configuredQuotas): array {
+        $masterRows = $rows->map(function ($row) use ($configuredQuotas): array {
             $positionId = (string) $row->kode_jabatan;
             $quota = $configuredQuotas->has($positionId)
                 ? (int) $configuredQuotas->get($positionId)
@@ -506,8 +620,82 @@ class DashboardController extends Controller
                 'status' => $status,
             ];
         })
-            ->filter(fn (array $row): bool => $row['kuota'] > 0 || $row['terisi'] > 0)
+            ->filter(fn (array $row): bool => $row['kuota'] > 0 || $row['terisi'] > 0);
+
+        // Custom quotas are intentionally not part of tb_master_jabatan. Include
+        // them here so a quota created from the admin form is visible in the
+        // dashboard card for the matching PE/PS group.
+        return $masterRows
+            ->concat($this->customPositionAvailability($group, $unit))
+            ->values()
             ->all();
+    }
+
+    private function customPositionAvailability(string $group, ?string $unit)
+    {
+        if (! Schema::hasTable('kuota_jabatan')
+            || ! Schema::hasColumn('kuota_jabatan', 'kode_jabatan')
+            || ! Schema::hasColumn('kuota_jabatan', 'nama_jabatan')
+            || ! Schema::hasColumn('kuota_jabatan', 'group_jabatan')
+            || ! Schema::hasColumn('kuota_jabatan', 'lingkup')) {
+            return collect();
+        }
+
+        $query = QuotaJabatan::query()
+            ->from('kuota_jabatan as q')
+            ->whereNull('q.jabatan_id')
+            ->where('q.group_jabatan', $group)
+            ->where('q.kuota_pegawai', '>', 0)
+            ->whereNotNull('q.kode_jabatan')
+            ->where('q.kode_jabatan', '<>', '')
+            ->whereNotNull('q.nama_jabatan')
+            ->where('q.nama_jabatan', '<>', '')
+            ->selectRaw('q.kode_jabatan, q.nama_jabatan, q.group_jabatan, MAX(q.lingkup) as lingkup')
+            ->selectRaw('SUM(q.kuota_pegawai) as total_kuota')
+            ->groupBy('q.kode_jabatan', 'q.nama_jabatan', 'q.group_jabatan');
+
+        if ($unit !== null) {
+            $scope = $this->dashboardUnitScope($unit);
+            if ($scope['type'] === 'unit') {
+                $query->whereExists(function ($subquery) use ($scope): void {
+                    $subquery->select(DB::raw('1'))
+                        ->from('tb_kantor as quota_office')
+                        ->whereColumn('quota_office.kode_cabang', 'q.kode_cabang')
+                        ->where('quota_office.kode_kantor_detail', $scope['code']);
+                });
+            } else {
+                $query->whereBetween('q.kode_cabang', [$scope['from'], $scope['to']]);
+            }
+        }
+
+        return $query->get()->map(function ($row) use ($unit): array {
+            $filled = 0;
+
+            if (Schema::hasTable('tb_jabatan') && Schema::hasTable('tb_pegawai')) {
+                $filledQuery = DB::table('tb_jabatan as j')
+                    ->join('tb_pegawai as p', 'p.id_peg', '=', 'j.id_peg')
+                    ->where('j.kode_jabatan', (string) $row->kode_jabatan)
+                    ->where('j.status_jab', 'Aktif')
+                    ->where('p.status_aktif', 1);
+                $this->applyUnitFilter($filledQuery, $unit, 'j');
+                $filled = (int) $filledQuery->distinct()->count('p.id_peg');
+            }
+
+            $quota = (int) $row->total_kuota;
+            $remaining = max($quota - $filled, 0);
+            $status = $filled === 0
+                ? 'Kosong'
+                : ($filled < $quota ? 'Tersedia' : ($filled > $quota ? 'Melebihi kuota' : 'Penuh'));
+
+            return [
+                'kode_jabatan' => (string) $row->kode_jabatan,
+                'nama_jabatan' => trim((string) $row->nama_jabatan),
+                'terisi' => $filled,
+                'kuota' => $quota,
+                'sisa' => $remaining,
+                'status' => $status,
+            ];
+        })->filter(fn (array $row): bool => $row['kuota'] > 0 || $row['terisi'] > 0)->values();
     }
 
     private function configuredPositionQuotas(string $group, ?string $unit)

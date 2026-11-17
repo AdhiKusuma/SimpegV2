@@ -40,7 +40,7 @@ class DataDiriDocumentPolicy
 
     private function isAdministrator(Request $request): bool
     {
-        return in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin'], true);
+        return in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'it_admin'], true);
     }
 
     private function sessionEmployeeId(Request $request): string

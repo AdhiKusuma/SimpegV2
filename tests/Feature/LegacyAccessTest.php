@@ -216,7 +216,67 @@ class LegacyAccessTest extends TestCase
 
         $print = $this->withSession($session)->get('/laporan/rekap-biaya-pendidikan/export?type=pdf');
         $print->assertOk();
-        $print->assertSee('Rekapitulasi Biaya Pendidikan');
+        $print->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('.pdf', (string) $print->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF-', $print->streamedContent());
+    }
+
+    public function test_employee_report_pdf_export_returns_real_pdf_document(): void
+    {
+        $session = [
+            'id_user' => 'admin-demo',
+            'hak_akses' => 'admin',
+        ];
+
+        $response = $this->withSession($session)->get('/pegawai/export/pdf');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('.pdf', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF-', $response->streamedContent());
+    }
+
+    public function test_nominative_report_pdf_export_returns_real_pdf_document(): void
+    {
+        $response = $this->withSession(['id_user' => 'admin-demo', 'hak_akses' => 'admin'])
+            ->get('/laporan/nominatif/export?type=pdf');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $response->streamedContent());
+    }
+
+    public function test_formation_report_pdf_export_returns_real_pdf_document(): void
+    {
+        $response = $this->withSession(['id_user' => 'admin-demo', 'hak_akses' => 'admin'])
+            ->get('/laporan/formasi/export?type=pdf');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('.pdf', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF-', $response->streamedContent());
+    }
+
+    public function test_training_costs_report_pdf_export_returns_real_pdf_document(): void
+    {
+        $response = $this->withSession(['id_user' => 'admin-demo', 'hak_akses' => 'admin'])
+            ->get('/laporan/rekap-diklat/export?type=pdf');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('.pdf', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF-', $response->streamedContent());
+    }
+
+    public function test_condition_report_pdf_export_returns_real_pdf_document(): void
+    {
+        $response = $this->withSession(['id_user' => 'admin-demo', 'hak_akses' => 'admin'])
+            ->get('/laporan/keadaan/export?type=pdf');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringContainsString('.pdf', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF-', $response->streamedContent());
     }
 
     public function test_admin_can_open_legacy_education_activity_management_from_local_mysql(): void
@@ -873,7 +933,9 @@ class LegacyAccessTest extends TestCase
         try {
             $create = $this->withSession($session)->post('/config/kuota-jabatan', [
                 'kode_cabang' => $branch,
+                'kode_jabatan' => 'CUSTOM-'.random_int(10000, 99999),
                 'nama_jabatan' => $name,
+                'group_jabatan' => 'PE',
                 'kuota_pegawai' => 3,
             ]);
             $create->assertRedirectToRoute('config.quota.index');
@@ -886,7 +948,9 @@ class LegacyAccessTest extends TestCase
 
             $duplicate = $this->withSession($session)->post('/config/kuota-jabatan', [
                 'kode_cabang' => $branch,
+                'kode_jabatan' => 'CUSTOM-DUPLICATE',
                 'nama_jabatan' => $name,
+                'group_jabatan' => 'PE',
                 'kuota_pegawai' => 4,
             ]);
             $duplicate->assertSessionHasErrors('nama_jabatan');
@@ -894,13 +958,17 @@ class LegacyAccessTest extends TestCase
             $update = $this->withSession($session)->put('/config/kuota-jabatan/'.$quotaId, [
                 'kode_cabang' => $branch,
                 'jabatan_id' => null,
+                'kode_jabatan' => 'CUSTOM-UPDATED',
                 'nama_jabatan' => $name.' Updated',
+                'group_jabatan' => 'PS',
                 'kuota_pegawai' => 5,
             ]);
             $update->assertRedirectToRoute('config.quota.index');
             $this->assertDatabaseHas('kuota_jabatan', [
                 'id' => $quotaId,
+                'kode_jabatan' => 'CUSTOM-UPDATED',
                 'nama_jabatan' => $name.' Updated',
+                'group_jabatan' => 'PS',
                 'kuota_pegawai' => 5,
             ]);
         } finally {

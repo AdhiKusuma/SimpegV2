@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import { Head, router } from '@inertiajs/react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
@@ -18,13 +19,16 @@ export default function Condition({ ranges, counts, categories, subtotals, offic
         <LegacyPageShell title="Laporan Keadaan Pegawai">
             <div className="simpeg-report-page">
             <Head title="Laporan Keadaan Pegawai" />
-            <div className="mb-6">
-                <p className="simpeg-muted mb-2 text-sm font-semibold uppercase tracking-[0.18em]">Laporan Kepegawaian</p>
-                <h1 className="simpeg-text text-3xl font-extrabold tracking-tight">Laporan keadaan pegawai</h1>
-                <p className="simpeg-muted mt-2">Rekapitulasi pegawai aktif berdasarkan rentang usia, pendidikan, status, jabatan, dan hukuman disiplin.</p>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <p className="simpeg-muted mb-2 text-sm font-semibold uppercase tracking-[0.18em]">Laporan Kepegawaian</p>
+                    <h1 className="simpeg-text text-3xl font-extrabold tracking-tight">Laporan keadaan pegawai</h1>
+                    <p className="simpeg-muted mt-2">Rekapitulasi pegawai aktif berdasarkan rentang usia, pendidikan, status, jabatan, dan hukuman disiplin.</p>
+                </div>
+                <ExportDropdown items={[{ href: `/laporan/keadaan/export?${exportQuery.toString()}`, label: 'Export XLSX' }, { href: `/laporan/keadaan/export?type=pdf&${exportQuery.toString()}`, label: 'Cetak / simpan PDF', target: '_blank' }]} />
             </div>
 
-            <section className="simpeg-condition-filter simpeg-card mb-6 rounded-2xl border p-4 shadow-sm sm:p-5">
+            <section className="simpeg-filter-only-shell simpeg-condition-filter mb-6">
                 <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-condition-filter__form simpeg-filter-toolbar--mobile-panel grid min-w-0 grid-cols-1 gap-4 lg:items-end">
                     <MobileFilterGroup id="condition-mobile-filters" activeCount={activeFilterCount}>
                         <SearchableCombobox id="condition-office" name="kantor" label="Kantor cabang" value={filters.kantor} options={offices} optionValue={(office) => office.kode} optionLabel={(office) => office.nama} placeholder="Cari kantor cabang" emptyMessage="Kantor tidak ditemukan." disabled={offices.length === 1} />
@@ -36,8 +40,6 @@ export default function Condition({ ranges, counts, categories, subtotals, offic
                     </MobileFilterGroup>
                     <div className="simpeg-mobile-filter-actions--top simpeg-condition-filter__actions grid min-w-0 gap-2 sm:grid-cols-3">
                         <button type="submit" className="simpeg-primary simpeg-desktop-filter-apply simpeg-condition-filter__action simpeg-condition-filter__apply inline-flex h-12 items-center justify-center rounded-xl px-4 text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]">Terapkan</button>
-                        <a href={`/laporan/keadaan/export?${exportQuery.toString()}`} className="simpeg-condition-filter__action simpeg-condition-filter__export inline-flex h-12 items-center justify-center whitespace-nowrap rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">Export XLSX</a>
-                        <a href={`/laporan/keadaan/export?type=pdf&${exportQuery.toString()}`} target="_blank" rel="noreferrer" className="simpeg-utility simpeg-condition-filter__action inline-flex h-12 items-center justify-center whitespace-nowrap rounded-xl border px-4 text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]">Cetak / Simpan PDF</a>
                     </div>
                 </form>
             </section>

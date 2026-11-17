@@ -45,8 +45,8 @@ export default function AuthorizationIndex({ pending, filters }) {
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800" role="status">{flash.success}</div>}
             {flash?.error && <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800" role="alert">{flash.error}</div>}
 
-            <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 lg:grid-cols-[1fr_180px_150px_150px_auto] lg:items-end">
+            <section className="simpeg-filter-only-shell simpeg-authorization-filter mb-6">
+                <form onSubmit={submit} className="simpeg-authorization-filter__form simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 lg:grid-cols-[1fr_180px_150px_150px_auto] lg:items-end">
                     <MobileFilterGroup id="authorization-mobile-filters" activeCount={activeFilterCount}>
                         <SelectCombobox id="approval-status" name="status" label="Status otorisasi" value={filters.status} options={[{ value: 'Menunggu', label: 'Menunggu' }, { value: 'Semua', label: 'Semua' }, { value: 'Disetujui', label: 'Disetujui' }, { value: 'Ditolak', label: 'Ditolak' }]} />
                         <SelectCombobox id="approval-date-by" name="date_by" label="Tanggal berdasar" value={filters.date_by} options={[{ value: 'pengajuan', label: 'Pengajuan' }, { value: 'otorisasi', label: 'Otorisasi' }]} />
@@ -62,7 +62,6 @@ export default function AuthorizationIndex({ pending, filters }) {
                     </MobileFilterGroup>
                     <div className="simpeg-mobile-filter-actions--top flex gap-2">
                         <button type="submit" className="simpeg-desktop-filter-apply inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
-                        <Link href="/otorisasi" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-blue-600 hover:text-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Reset</Link>
                     </div>
                 </form>
             </section>

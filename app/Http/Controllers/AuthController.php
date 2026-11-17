@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbUser;
+use App\Services\AuditLogService;
 use App\Services\Sso\SsoClient;
 use App\Services\Sso\SsoException;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +21,10 @@ class AuthController extends Controller
     private const REMEMBER_COOKIE = 'simpeg-remember';
     private const REMEMBER_LIFETIME_MINUTES = 60 * 24 * 30;
 
-    public function __construct(private readonly SsoClient $ssoClient) {}
+    public function __construct(
+        private readonly SsoClient $ssoClient,
+        private readonly AuditLogService $auditLogs,
+    ) {}
 
     public function create(Request $request): Response|RedirectResponse
     {
@@ -52,11 +56,17 @@ class AuthController extends Controller
         $ssoEnabled = (bool) config('services.sso.enabled', false);
         $ssoToken = null;
         $ssoProfile = null;
+        $localUser = $this->findLocalUser($loginInput);
+        $isEmergencyLocalLogin = $localUser !== null
+            && (bool) ($localUser->local_login_enabled ?? false)
+            && strtolower((string) $localUser->hak_akses) === 'it_admin';
 
-        if ($ssoEnabled) {
+        if ($ssoEnabled && ! $isEmergencyLocalLogin) {
             try {
                 $sso = $this->ssoClient->authenticate($loginInput, $credentials['password']);
             } catch (SsoException $exception) {
+                $this->auditLoginFailure($request, 'Login SSO gagal.');
+
                 return back()->withErrors([
                     'id_user' => $exception->getMessage(),
                 ])->onlyInput('id_user');
@@ -67,47 +77,57 @@ class AuthController extends Controller
             $user = $this->resolveSsoUser($ssoProfile);
 
             if (! $user) {
+                $this->auditLoginFailure($request, 'Pegawai SSO belum terdaftar sebagai pegawai aktif.');
+
                 return back()->withErrors([
                     'id_user' => 'Pegawai SSO belum terdaftar sebagai pegawai aktif di SIMPEG lokal. Hubungi Admin.',
                 ])->onlyInput('id_user');
             }
         } else {
-            $user = TbUser::query()
-                ->where(function ($query) use ($loginInput): void {
-                    $query->where('id_user', $loginInput)
-                        ->orWhere('id_pegawai', $loginInput);
-                })
-                ->first();
-
+            $user = $localUser;
             if (! $user || ! $this->passwordMatches($user->password, $credentials['password'])) {
                 $user = null;
             }
         }
 
         if (! $user) {
+            $this->auditLoginFailure($request, 'Username/ID pegawai atau password salah.');
+
             return back()->withErrors([
                 'id_user' => 'Username/ID Pegawai atau password salah.',
             ])->onlyInput('id_user');
         }
 
         if ($user->status_aktif === 'N') {
+            $this->auditLoginFailure($request, 'Percobaan login pada akun yang tidak aktif.');
+
             return back()->withErrors([
                 'id_user' => 'Akun Anda dinonaktifkan. Hubungi Admin.',
             ])->onlyInput('id_user');
         }
 
         $role = strtolower((string) $user->hak_akses);
-        if (! in_array($role, ['admin', 'superadmin', 'kepala', 'user'], true)) {
+        if (! app(\App\Services\RbacService::class)->isValidRole($role)) {
+            $this->auditLoginFailure($request, 'Akun belum memiliki hak akses yang valid.');
+
             return back()->withErrors([
                 'id_user' => 'Akun belum memiliki hak akses yang valid. Hubungi Admin.',
             ])->onlyInput('id_user');
         }
 
-        if (! $ssoEnabled) {
+        if (! $ssoEnabled || $isEmergencyLocalLogin) {
             $this->upgradePasswordHash($user, $credentials['password']);
         }
 
         $this->establishSession($request, $user, $role, $ssoToken, $ssoProfile);
+        $this->auditLogs->record($request, [
+            'module' => 'security',
+            'action' => 'Login Success',
+            'description' => 'Pengguna berhasil masuk.',
+            'entity_type' => 'user',
+            'entity_id' => $user->id_user,
+            'metadata' => ['provider' => $isEmergencyLocalLogin ? 'local_emergency' : ($ssoEnabled ? 'sso' : 'local')],
+        ]);
 
         $request->session()->flash('welcome', true);
 
@@ -115,7 +135,7 @@ class AuthController extends Controller
             'kepala' => redirect()->route('dashboard'),
             'user' => redirect()->route('profile'),
             'admin', 'superadmin' => redirect()->route('dashboard'),
-            default => redirect()->route('login'),
+            default => redirect()->route('dashboard'),
         };
 
         return $response->withCookie(cookie(
@@ -144,6 +164,8 @@ class AuthController extends Controller
             'id_user' => $user->id_user,
             'nama_user' => $user->nama_user,
             'hak_akses' => $role,
+            'role_code' => $role,
+            'role_label' => config('rbac.roles.'.$role, $role),
             'id_pegawai' => $user->id_pegawai,
         ];
 
@@ -160,6 +182,16 @@ class AuthController extends Controller
                 ->where('status_jab', 'Aktif')
                 ->value('unit_kerja') ?? '-');
         }
+    }
+
+    private function findLocalUser(string $loginInput): ?TbUser
+    {
+        return TbUser::query()
+            ->where(function ($query) use ($loginInput): void {
+                $query->where('id_user', $loginInput)
+                    ->orWhere('id_pegawai', $loginInput);
+            })
+            ->first();
     }
 
     private function restoreRememberedSession(Request $request): ?string
@@ -190,7 +222,7 @@ class AuthController extends Controller
         }
 
         $role = strtolower((string) $user->hak_akses);
-        if (! in_array($role, ['admin', 'superadmin', 'kepala', 'user'], true)) {
+        if (! app(\App\Services\RbacService::class)->isValidRole($role)) {
             return null;
         }
 
@@ -200,6 +232,14 @@ class AuthController extends Controller
         }
 
         $this->establishSession($request, $user, $role);
+        $this->auditLogs->record($request, [
+            'module' => 'security',
+            'action' => 'Login Remembered',
+            'description' => 'Sesi dipulihkan melalui pilihan ingat saya.',
+            'entity_type' => 'user',
+            'entity_id' => $user->id_user,
+            'metadata' => ['provider' => 'remember_cookie'],
+        ]);
 
         return $role;
     }
@@ -327,8 +367,28 @@ class AuthController extends Controller
         }
     }
 
+    private function auditLoginFailure(Request $request, string $description): void
+    {
+        $attemptedId = trim((string) $request->input('id_user'));
+
+        $this->auditLogs->record($request, [
+            'module' => 'security',
+            'action' => 'Login Failed',
+            'description' => $description,
+            'actor_name' => $attemptedId !== '' ? $attemptedId : 'Tidak dikenal',
+            'metadata' => ['attempted_id' => $attemptedId],
+        ]);
+    }
+
     public function destroy(Request $request): RedirectResponse
     {
+        $this->auditLogs->record($request, [
+            'module' => 'security',
+            'action' => 'Logout',
+            'description' => 'Pengguna keluar dari aplikasi.',
+            'entity_type' => 'user',
+            'entity_id' => $request->session()->get('id_user'),
+        ]);
         $request->session()->flush();
         $request->session()->regenerateToken();
 

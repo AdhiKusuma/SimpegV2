@@ -1,5 +1,7 @@
 import { Head, router } from '@inertiajs/react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
 
 export default function Formation({ rows, totals, offices, filters }) {
@@ -16,19 +18,23 @@ export default function Formation({ rows, totals, offices, filters }) {
         <LegacyPageShell title="Laporan Formasi Pegawai">
             <div className="simpeg-report-page">
             <Head title="Laporan Formasi Pegawai" />
-            <div className="mb-6">
-                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Kepegawaian</p>
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Laporan formasi pegawai</h1>
-                <p className="mt-2 text-slate-500">Perbandingan kuota jabatan, pegawai yang sudah terisi, dan kebutuhan formasi.</p>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Kepegawaian</p>
+                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Laporan formasi pegawai</h1>
+                    <p className="mt-2 text-slate-500">Perbandingan kuota jabatan, pegawai yang sudah terisi, dan kebutuhan formasi.</p>
+                </div>
+                <ExportDropdown items={[{ href: `/laporan/formasi/export?${exportQuery.toString()}`, label: 'Export XLSX' }, { href: `/laporan/formasi/export?type=pdf&${exportQuery.toString()}`, label: 'Cetak / simpan PDF', target: '_blank' }]} />
             </div>
 
-            <section className="simpeg-formation-filter simpeg-card mb-6 rounded-2xl border p-4 shadow-sm sm:p-5" aria-label="Filter laporan formasi">
-                <form onSubmit={submit} className="simpeg-filter-toolbar grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-5">
-                    <SearchableCombobox id="formation-office" name="kode_cabang" label="Kantor cabang" value={filters.kode_cabang} options={officeOptions} optionValue={(office) => office.kode} optionLabel={(office) => office.nama} placeholder="Cari kantor cabang" emptyMessage="Kantor tidak ditemukan." disabled={offices.length === 1} className="min-w-0" />
-                    <div className="simpeg-formation-filter__actions grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:shrink-0">
-                        <button type="submit" className="simpeg-primary simpeg-formation-filter__action inline-flex w-full items-center justify-center rounded-xl px-6 text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)] lg:w-auto">Terapkan</button>
-                        <a href={`/laporan/formasi/export?${exportQuery.toString()}`} className="simpeg-formation-filter__action inline-flex w-full items-center justify-center whitespace-nowrap rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20 lg:w-auto">Export XLSX</a>
-                        <a href={`/laporan/formasi/export?type=pdf&${exportQuery.toString()}`} target="_blank" rel="noreferrer" className="simpeg-formation-filter__action inline-flex w-full items-center justify-center whitespace-nowrap rounded-xl border border-slate-300 px-5 text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20 lg:w-auto">Cetak / Simpan PDF</a>
+            <section className="simpeg-filter-only-shell simpeg-formation-filter" aria-label="Filter laporan formasi">
+                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid min-w-0 gap-4 lg:items-end">
+                    <MobileFilterGroup id="formation-mobile-filters" activeCount={Number(Boolean(filters.kode_cabang))}>
+                        <SearchableCombobox id="formation-office" name="kode_cabang" label="Kantor cabang" value={filters.kode_cabang} options={officeOptions} optionValue={(office) => office.kode} optionLabel={(office) => office.nama} placeholder="Cari kantor cabang" emptyMessage="Kantor tidak ditemukan." disabled={offices.length === 1} className="min-w-0" />
+                        <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
+                    </MobileFilterGroup>
+                    <div className="simpeg-formation-filter__actions simpeg-mobile-filter-actions--top grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:shrink-0">
+                        <button type="submit" className="simpeg-primary simpeg-desktop-filter-apply simpeg-formation-filter__action inline-flex w-full items-center justify-center rounded-xl px-6 text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)] lg:w-auto">Terapkan</button>
                     </div>
                 </form>
             </section>

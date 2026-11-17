@@ -637,11 +637,11 @@ class AuthorizationController extends Controller
 
     private function ensureListAccess(Request $request): void
     {
-        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['kepala', 'admin'], true), 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['kepala', 'admin', 'it_admin'], true), 403);
     }
 
     private function ensureActionAccess(Request $request): void
     {
-        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['kepala', 'admin'], true), 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['kepala', 'admin', 'it_admin'], true), 403);
     }
 }

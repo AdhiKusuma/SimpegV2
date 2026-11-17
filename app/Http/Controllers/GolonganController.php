@@ -92,7 +92,7 @@ class GolonganController extends Controller
 
     private function canManage(Request $request): bool
     {
-        return strtolower((string) $request->session()->get('hak_akses')) === 'admin';
+        return in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'it_admin'], true);
     }
 
     private function ensureCanManage(Request $request): void
@@ -102,6 +102,6 @@ class GolonganController extends Controller
 
     private function ensureStaffAccess(Request $request): void
     {
-        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala'], true), 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala', 'it_admin'], true), 403);
     }
 }

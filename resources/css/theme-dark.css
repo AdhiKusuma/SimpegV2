@@ -24,7 +24,7 @@
     }
 
     html.dark [class*="bg-amber-50/"] {
-        background-color: rgb(120 53 15 / 0.28) !important;
+        background-color: var(--simpeg-warning-soft) !important;
     }
 
     /* Non-semantic accent utilities use the active theme accent in dark mode. */
@@ -92,7 +92,7 @@
     }
 
     html.dark .bg-slate-200 {
-        background-color: #374151 !important;
+        background-color: var(--simpeg-surface-alt) !important;
     }
 
     html.dark .text-slate-900,
@@ -153,62 +153,62 @@
 
     html.dark .bg-emerald-50,
     html.dark .bg-emerald-100 {
-        background-color: rgb(16 185 129 / 0.16) !important;
+        background-color: var(--simpeg-success-soft) !important;
     }
 
     html.dark [class~="bg-emerald-100/80"] {
-        background-color: rgb(6 78 59 / 0.72) !important;
+        background-color: var(--simpeg-success-soft) !important;
     }
 
     html.dark .bg-amber-50,
     html.dark .bg-amber-100 {
-        background-color: rgb(245 158 11 / 0.16) !important;
+        background-color: var(--simpeg-warning-soft) !important;
     }
 
     html.dark [class~="bg-amber-100/80"] {
-        background-color: rgb(120 53 15 / 0.72) !important;
+        background-color: var(--simpeg-warning-soft) !important;
     }
 
     html.dark .bg-rose-50,
     html.dark .bg-rose-100 {
-        background-color: rgb(244 63 94 / 0.16) !important;
+        background-color: var(--simpeg-danger-soft) !important;
     }
 
     html.dark [class~="bg-rose-100/80"] {
-        background-color: rgb(136 19 55 / 0.72) !important;
+        background-color: var(--simpeg-danger-soft) !important;
     }
 
     html.dark .bg-sky-50,
     html.dark .bg-sky-100 {
-        background-color: rgb(14 165 233 / 0.16) !important;
+        background-color: var(--simpeg-info-soft) !important;
     }
 
     html.dark [class~="bg-sky-100/80"] {
-        background-color: rgb(12 74 110 / 0.72) !important;
+        background-color: var(--simpeg-info-soft) !important;
     }
 
     html.dark .text-emerald-700,
     html.dark .text-emerald-800,
     html.dark .text-emerald-900 {
-        color: #a7f3d0 !important;
+        color: var(--simpeg-success-ink) !important;
     }
 
     html.dark .text-amber-700,
     html.dark .text-amber-800,
     html.dark .text-amber-900 {
-        color: #fde68a !important;
+        color: var(--simpeg-warning-ink) !important;
     }
 
     html.dark .text-rose-700,
     html.dark .text-rose-800,
     html.dark .text-rose-900 {
-        color: #fda4af !important;
+        color: var(--simpeg-danger-ink) !important;
     }
 
     html.dark .text-sky-700,
     html.dark .text-sky-800,
     html.dark .text-sky-900 {
-        color: #7dd3fc !important;
+        color: var(--simpeg-info-ink) !important;
     }
 
     html.dark .hover\:bg-slate-100:hover {
@@ -234,23 +234,23 @@
     }
 
     html.dark [class~="hover:bg-emerald-50"]:hover {
-        background-color: rgb(6 78 59 / 0.58) !important;
-        color: #a7f3d0 !important;
+        background-color: var(--simpeg-success-soft) !important;
+        color: var(--simpeg-success-ink) !important;
     }
 
     html.dark [class~="hover:bg-amber-50"]:hover {
-        background-color: rgb(120 53 15 / 0.58) !important;
-        color: #fde68a !important;
+        background-color: var(--simpeg-warning-soft) !important;
+        color: var(--simpeg-warning-ink) !important;
     }
 
     html.dark [class~="hover:bg-rose-50"]:hover {
-        background-color: rgb(136 19 55 / 0.58) !important;
-        color: #fda4af !important;
+        background-color: var(--simpeg-danger-soft) !important;
+        color: var(--simpeg-danger-ink) !important;
     }
 
     html.dark [class~="hover:bg-sky-50"]:hover {
-        background-color: rgb(12 74 110 / 0.58) !important;
-        color: #7dd3fc !important;
+        background-color: var(--simpeg-info-soft) !important;
+        color: var(--simpeg-info-ink) !important;
     }
 
     html.dark [class~="hover:text-slate-800"]:hover,

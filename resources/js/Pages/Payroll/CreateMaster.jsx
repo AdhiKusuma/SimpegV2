@@ -286,7 +286,7 @@ export default function CreateMaster({ employees = [], scopeLabel, willRequireAp
                     </div>
                     <p className="simpeg-muted px-4 pb-4 text-sm sm:px-6">Field bertanda * wajib diisi. Field lainnya bernilai awal 0 dan dapat diubah jika ada nominal. Potongan absensi dicatat terpisah setelah rekap bulanan; angsuran kredit dan potongan lain ikut mengurangi gaji bersih serta Total ekspor.</p>
                     <div className="flex flex-col-reverse justify-end gap-2 border-t p-4 sm:flex-row sm:p-5">
-                        <Link href="/payroll/edit" className="simpeg-utility inline-flex min-h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold">Batal</Link>
+                        <Link href="/payroll" className="simpeg-utility inline-flex min-h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold">Batal</Link>
                         <button type="submit" disabled={form.processing || !employees.length} className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold disabled:opacity-60"><Save aria-hidden="true" className="h-4 w-4" />{form.processing ? 'Memproses…' : willRequireApproval ? 'Ajukan Master Gaji' : 'Simpan Master Gaji'}</button>
                     </div>
                 </section>

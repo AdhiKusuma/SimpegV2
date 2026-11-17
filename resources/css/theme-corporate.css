@@ -55,7 +55,7 @@ html[data-theme="corporate"] .simpeg-header .simpeg-search-trigger:focus-visible
     background-color: var(--simpeg-header-control-hover) !important;
     border-color: var(--simpeg-header-accent) !important;
     color: var(--simpeg-header-foreground) !important;
-    box-shadow: 0 0 0 3px rgb(235 152 60 / 0.32) !important;
+    box-shadow: 0 0 0 3px var(--simpeg-focus-ring) !important;
 }
 
 html[data-theme="corporate"] .simpeg-header .simpeg-text {
@@ -137,7 +137,7 @@ html[data-theme="corporate"] [class*="border-[#131822]"] {
 }
 
 html[data-theme="corporate"] [class*="hover:bg-[#FAD873]"]:hover {
-    background-color: rgb(235 152 60 / 0.18) !important;
+    background-color: var(--simpeg-nav-hover) !important;
     color: var(--simpeg-text) !important;
 }
 

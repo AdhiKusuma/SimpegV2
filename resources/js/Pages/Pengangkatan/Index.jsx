@@ -35,24 +35,23 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                     <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Pengangkatan pegawai</h1>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Daftar riwayat pengangkatan pegawai.</p>
                 </div>
-                {canManage && <Link href="/pengangkatan/create" className="inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Pengangkatan baru</Link>}
+                {canManage && <Link href="/pengangkatan/create" className="simpeg-action-primary inline-flex min-h-11 items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Pengangkatan baru</Link>}
             </div>
 
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800" role="status">{flash.success}</div>}
 
-            <section className="simpeg-card overflow-hidden rounded-2xl border shadow-sm">
-                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel simpeg-card-soft grid gap-4 border-b p-5 md:p-6 lg:grid-cols-[minmax(0,1fr)_210px_auto] lg:items-end">
-                    <div className="simpeg-mobile-filter-search">
-                        <label htmlFor="appointment-search" className="mb-2 block text-xs font-bold uppercase tracking-wide simpeg-muted">Pencarian</label>
-                        <input id="appointment-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="simpeg-input h-12 w-full rounded-xl border px-4 text-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" />
-                    </div>
-                    <MobileFilterGroup id="appointment-mobile-filters" activeCount={Number(Boolean(filters.tahun && filters.tahun !== 'Semua'))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
+            <section className="simpeg-filter-list-shell">
+                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel">
+                    <MobileFilterGroup id="appointment-mobile-filters" activeCount={Number(Boolean(filters.search)) + Number(Boolean(filters.tahun && filters.tahun !== 'Semua'))}>
+                        <div className="simpeg-mobile-filter-search">
+                            <label htmlFor="appointment-search" className="mb-2 block text-xs font-bold uppercase tracking-wide simpeg-muted">Pencarian</label>
+                            <input id="appointment-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="simpeg-input h-12 w-full rounded-xl border px-4 text-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" />
+                        </div>
                         <SelectCombobox id="appointment-year" name="tahun" label="Tahun SK" value={filters.tahun} options={years} emptyLabel="Semua tahun" />
                         <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
                     </MobileFilterGroup>
                     <div className="simpeg-mobile-filter-actions--after-search flex gap-2">
                         <button type="submit" className="simpeg-desktop-filter-apply h-12 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
-                        <Link href="/pengangkatan" className="inline-flex h-12 items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-600 hover:text-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Reset</Link>
                     </div>
                 </form>
 

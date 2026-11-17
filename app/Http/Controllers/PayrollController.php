@@ -211,7 +211,10 @@ class PayrollController extends Controller
         $importedByName = $payrollImport?->imported_by
             ? DB::table('tb_user')->where('id_user', $payrollImport->imported_by)->value('nama_user')
             : null;
-        $canClearHistory = $this->canClearDevelopmentHistory($request, $rbac);
+        $canClearHistory = $this->canClearHistory($request, $rbac);
+        $historyCleanupPlan = $canClearHistory
+            ? $this->historyCleanupPlan()
+            : ['candidates' => [], 'protected' => []];
 
         return Inertia::render('Payroll/Index', [
             'filters' => ['tahun' => $year, 'bulan' => $month, 'office' => $selectedOffice, 'view' => $view, 'stage' => $stage],
@@ -235,7 +238,8 @@ class PayrollController extends Controller
             'canImport' => $this->canImportPayroll($request, $rbac),
             'canEditMaster' => $rbac->can($request, 'payroll.master.edit'),
             'canClearHistory' => $canClearHistory,
-            'payrollHistoryCount' => $canClearHistory ? PayrollImport::query()->count() : 0,
+            'payrollHistoryCount' => count($historyCleanupPlan['candidates']),
+            'payrollProtectedHistoryCount' => count($historyCleanupPlan['protected']),
             'scopeLabel' => $scope['label'],
             'scopeLocked' => $scope['restricted'] && count($scope['codes']) <= 1,
             'flash' => [
@@ -636,24 +640,72 @@ class PayrollController extends Controller
             ->with('success', 'Data payroll berhasil diimpor. Batch sebelumnya untuk periode ini tetap tersimpan sebagai riwayat.');
     }
 
-    public function clearDevelopmentHistory(Request $request, RbacService $rbac): RedirectResponse
+    public function clearHistory(Request $request, RbacService $rbac): RedirectResponse
     {
-        abort_unless($this->isDevelopmentEnvironment() && $this->isDevelopmentDatabase(), 404);
-        $this->authorizePayrollImport($request, $rbac);
-        $request->validate(['confirmation' => ['required', 'in:HAPUS']]);
+        $this->authorizeHistoryCleanup($request, $rbac);
+        $request->validate(['confirmation' => ['required', 'in:HAPUS RIWAYAT']]);
 
-        $batchCount = DB::transaction(function (): int {
-            $count = PayrollImport::query()->count();
-            PayrollImport::query()->delete();
+        $plan = $this->historyCleanupPlan();
+        if ($plan['candidates'] === []) {
+            return to_route('payroll.index')->with(
+                'error',
+                'Tidak ada riwayat payroll lama yang aman untuk dibersihkan. Batch aktif atau data yang masih digunakan tetap dilindungi.',
+            );
+        }
 
-            return $count;
+        $actorId = trim((string) $request->session()->get('id_user')) ?: null;
+        $deletedCount = DB::transaction(function () use ($plan, $actorId): int {
+            $deleted = 0;
+            $reason = 'Pembersihan riwayat payroll produksi';
+
+            foreach ($plan['candidates'] as $candidate) {
+                $import = PayrollImport::query()->whereKey((int) $candidate['id'])->lockForUpdate()->first();
+                if (! $import || $import->is_current) {
+                    continue;
+                }
+
+                if (Schema::hasTable('payroll_salary_masters')
+                    && DB::table('payroll_salary_masters')->where('source_import_id', $import->id)->exists()) {
+                    continue;
+                }
+
+                if (Schema::hasTable('payroll_publications')) {
+                    $publication = DB::table('payroll_publications')
+                        ->where('payroll_import_id', $import->id)
+                        ->lockForUpdate()
+                        ->first();
+                    if ($publication && $publication->status !== 'deleted') {
+                        continue;
+                    }
+                }
+
+                DB::table('payroll_history_cleanup_logs')->insert([
+                    'payroll_import_id' => $import->id,
+                    'tahun' => $import->tahun,
+                    'bulan' => $import->bulan,
+                    'source_filename' => $import->source_filename,
+                    'source_sha256' => $import->source_sha256,
+                    'deleted_by' => $actorId,
+                    'reason' => $reason,
+                    'deleted_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $import->delete();
+                $deleted++;
+            }
+
+            return $deleted;
         });
 
         $request->session()->forget('payroll_previews');
 
         return to_route('payroll.index')->with(
-            'success',
-            "Riwayat payroll pengujian dibersihkan: {$batchCount} batch. Data pegawai dan master data tidak diubah.",
+            $deletedCount > 0 ? 'success' : 'error',
+            $deletedCount > 0
+                ? "Riwayat payroll lama dibersihkan: {$deletedCount} batch. Batch aktif dan data yang masih digunakan tidak diubah."
+                : 'Tidak ada riwayat payroll yang dapat dibersihkan karena seluruh kandidat sedang dilindungi.',
         );
     }
 
@@ -929,7 +981,7 @@ class PayrollController extends Controller
     private function officeScope(Request $request): array
     {
         $role = strtolower((string) $request->session()->get('hak_akses'));
-        if (in_array($role, ['admin', 'superadmin'], true)) {
+        if (in_array($role, ['admin', 'superadmin', 'it_admin'], true)) {
             return ['restricted' => false, 'codes' => [], 'label' => null];
         }
 
@@ -973,32 +1025,86 @@ class PayrollController extends Controller
     {
         $role = strtolower((string) $request->session()->get('hak_akses'));
 
-        return $role !== 'admin' && ! $rbac->can($request, 'payroll.approval.bypass');
+        return ! in_array($role, ['admin', 'it_admin'], true) && ! $rbac->can($request, 'payroll.approval.bypass');
     }
 
-    private function canClearDevelopmentHistory(Request $request, RbacService $rbac): bool
+    private function canClearHistory(Request $request, RbacService $rbac): bool
+    {
+        return $this->historyCleanupEnabled()
+            && Schema::hasTable('payroll_history_cleanup_logs')
+            && $rbac->can($request, 'payroll.history.clear');
+    }
+
+    private function authorizeHistoryCleanup(Request $request, RbacService $rbac): void
+    {
+        abort_unless($this->historyCleanupEnabled(), 404);
+        abort_unless(Schema::hasTable('payroll_history_cleanup_logs'), 503, 'Migration audit pembersihan riwayat belum dijalankan.');
+        abort_unless($rbac->can($request, 'payroll.history.clear'), 403, 'Akun Anda tidak memiliki izin membersihkan riwayat payroll.');
+    }
+
+    private function historyCleanupEnabled(): bool
     {
         return $this->isDevelopmentEnvironment()
-            && $this->isDevelopmentDatabase()
-            && $this->canImportPayroll($request, $rbac);
+            || (bool) config('payroll.allow_production_history_cleanup', false);
+    }
+
+    private function historyCleanupPlan(): array
+    {
+        if (! Schema::hasTable('payroll_imports')) {
+            return ['candidates' => [], 'protected' => []];
+        }
+
+        $imports = PayrollImport::query()
+            ->where('is_current', false)
+            ->orderBy('id')
+            ->get(['id', 'tahun', 'bulan', 'source_filename', 'source_sha256']);
+        if ($imports->isEmpty()) {
+            return ['candidates' => [], 'protected' => []];
+        }
+
+        $ids = $imports->pluck('id')->map(fn ($id): int => (int) $id)->all();
+        $protected = [];
+
+        if (Schema::hasTable('payroll_salary_masters')) {
+            $protected = DB::table('payroll_salary_masters')
+                ->whereIn('source_import_id', $ids)
+                ->whereNotNull('source_import_id')
+                ->pluck('source_import_id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+        }
+
+        if (Schema::hasTable('payroll_publications')) {
+            $published = DB::table('payroll_publications')
+                ->whereIn('payroll_import_id', $ids)
+                ->where('status', '<>', 'deleted')
+                ->pluck('payroll_import_id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+            $protected = array_merge($protected, $published);
+        }
+
+        $protected = array_values(array_unique($protected));
+        $candidates = $imports
+            ->reject(fn (PayrollImport $import): bool => in_array((int) $import->id, $protected, true))
+            ->map(fn (PayrollImport $import): array => [
+                'id' => (int) $import->id,
+                'tahun' => (int) $import->tahun,
+                'bulan' => (int) $import->bulan,
+                'source_filename' => (string) ($import->source_filename ?? ''),
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'candidates' => $candidates,
+            'protected' => $protected,
+        ];
     }
 
     private function isDevelopmentEnvironment(): bool
     {
         return app()->environment('local', 'testing');
-    }
-
-    private function isDevelopmentDatabase(): bool
-    {
-        $connection = (string) config('database.default');
-        $driver = (string) config("database.connections.{$connection}.driver");
-        $database = (string) config("database.connections.{$connection}.database");
-
-        if (app()->environment('testing') && $driver === 'sqlite' && $database === ':memory:') {
-            return true;
-        }
-
-        return preg_match('/(?:^|[_-])(?:dummy|dev|development|local|testing)$/i', $database) === 1;
     }
 
     private function cleanExpiredPreviews(Request $request): void

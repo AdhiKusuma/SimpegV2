@@ -1,0 +1,32 @@
+/* Light workspace canvas: keep the page outside data surfaces softly gray,
+ * while tables and cards retain their white reading surface. */
+html:not(.dark) body .simpeg-app-canvas,
+html:not(.dark) body .simpeg-app-canvas .simpeg-shell-frame,
+html:not(.dark) body .simpeg-app-canvas .simpeg-shell-content,
+html:not(.dark) body .simpeg-app-canvas .simpeg-main-shell {
+    --simpeg-canvas: #f7f5f6 !important;
+    --bg: #f7f5f6 !important;
+    --simpeg-form-shell: #f7f5f6 !important;
+    background: #f7f5f6 !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas .simpeg-shell-content :is(
+    .simpeg-card,
+    .simpeg-form-card,
+    .simpeg-audit-cleanup-card,
+    .simpeg-audit-filter-card,
+    .simpeg-audit-table-card,
+    .simpeg-role-table-card,
+    .simpeg-role-empty-card,
+    .simpeg-special-card,
+    [data-slot='card'],
+    table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+) {
+    background: #ffffff !important;
+}

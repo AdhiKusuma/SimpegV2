@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
@@ -15,25 +16,28 @@ export default function Nominative({ items, offices, positions, statuses, filter
         { value: '', label: 'Semua status' },
         ...statuses.map((status) => ({ value: status, label: status })),
     ];
-    const activeFilterCount = [filters.kantor, filters.jabatan, filters.status_kepeg].filter(Boolean).length;
+    const activeFilterCount = [filters.search, filters.kantor, filters.jabatan, filters.status_kepeg].filter(Boolean).length;
 
     return (
         <LegacyPageShell title="Laporan Nominatif Pegawai">
             <div className="simpeg-report-page">
             <Head title="Laporan Nominatif Pegawai" />
-            <div className="mb-6">
-                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Kepegawaian</p>
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Laporan nominatif pegawai</h1>
-                <p className="mt-2 text-slate-500">Daftar pegawai aktif berdasarkan kantor, jabatan, status, dan pencarian.</p>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Laporan Kepegawaian</p>
+                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Laporan nominatif pegawai</h1>
+                    <p className="mt-2 text-slate-500">Daftar pegawai aktif berdasarkan kantor, jabatan, status, dan pencarian.</p>
+                </div>
+                <ExportDropdown items={[{ href: `/laporan/nominatif/export?${exportQuery.toString()}`, label: 'Export XLSX' }, { href: `/laporan/nominatif/export?type=pdf&${exportQuery.toString()}`, label: 'Cetak / simpan PDF', target: '_blank' }]} />
             </div>
 
-            <section className="simpeg-card mb-6 rounded-2xl border p-4 shadow-sm sm:p-5" aria-label="Filter laporan nominatif">
+            <section className="simpeg-filter-only-shell mb-6" aria-label="Filter laporan nominatif">
                 <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel simpeg-nominative-filter grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,1fr))_auto_auto_auto] xl:items-end">
-                    <div className="simpeg-nominative-filter__search simpeg-mobile-filter-search min-w-0">
-                        <label htmlFor="nominative-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari</label>
-                        <input id="nominative-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="simpeg-input h-12 w-full rounded-xl border px-4 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]" />
-                    </div>
-                    <MobileFilterGroup id="nominative-mobile-filters" activeCount={activeFilterCount} toggleClassName="simpeg-mobile-filter-toggle--after-search">
+                    <MobileFilterGroup id="nominative-mobile-filters" activeCount={activeFilterCount}>
+                        <div className="simpeg-nominative-filter__search simpeg-mobile-filter-search min-w-0">
+                            <label htmlFor="nominative-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari</label>
+                            <input id="nominative-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="simpeg-input h-12 w-full rounded-xl border px-4 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]" />
+                        </div>
                         <SearchableCombobox id="nominative-office" name="kantor" label="Kantor" value={filters.kantor} options={offices} optionValue={(office) => office.kode} optionLabel={(office) => office.nama} placeholder="Cari kantor" emptyMessage="Kantor tidak ditemukan." disabled={offices.length === 1} className="min-w-0" />
                         <SearchableCombobox id="nominative-position" name="jabatan" label="Jabatan" value={filters.jabatan} options={positions} placeholder="Cari jabatan" emptyMessage="Jabatan tidak ditemukan." className="min-w-0" />
                         <SearchableCombobox id="nominative-status" name="status_kepeg" label="Status" value={filters.status_kepeg} options={statusOptions} placeholder="Semua status" emptyMessage="Status tidak ditemukan." searchable={false} className="min-w-0" />
@@ -41,8 +45,6 @@ export default function Nominative({ items, offices, positions, statuses, filter
                     </MobileFilterGroup>
                     <div className="simpeg-nominative-filter__actions simpeg-mobile-filter-actions--after-search grid grid-cols-1 gap-3 sm:col-span-2 sm:grid-cols-2 xl:contents">
                         <button type="submit" className="simpeg-primary simpeg-desktop-filter-apply inline-flex h-12 w-full items-center justify-center rounded-xl px-5 text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]">Terapkan</button>
-                        <a href={`/laporan/nominatif/export?${exportQuery.toString()}`} className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-600/20">Export XLSX</a>
-                        <a href={`/laporan/nominatif/export?type=pdf&${exportQuery.toString()}`} target="_blank" rel="noreferrer" className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl border border-slate-300 px-4 text-sm font-bold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Cetak / Simpan PDF</a>
                     </div>
                 </form>
             </section>

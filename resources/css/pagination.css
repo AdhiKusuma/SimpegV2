@@ -1,0 +1,66 @@
+/* Shared pagination contract for every list page. Use the generated page
+ * query directly so the palette is applied before React effects run too. */
+html body .simpeg-app-canvas .simpeg-shell-content main a[href*='page=']:not([class~='text-white']):not([class~='is-active']):not([aria-current='page']):not([class~='simpeg-primary']):not([class~='simpeg-utility']) {
+    border-color: var(--simpeg-border) !important;
+    background-color: var(--simpeg-card) !important;
+    color: var(--simpeg-text) !important;
+    -webkit-text-fill-color: var(--simpeg-text) !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main a[href*='page=']:not([class~='text-white']):not([class~='is-active']):not([aria-current='page']):not([class~='simpeg-primary']):not([class~='simpeg-utility']) :where(*) {
+    color: var(--simpeg-text) !important;
+    -webkit-text-fill-color: var(--simpeg-text) !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main a[href*='page=']:not([class~='text-white']):not([class~='is-active']):not([aria-current='page']):not([class~='simpeg-primary']):not([class~='simpeg-utility']):hover,
+html body .simpeg-app-canvas .simpeg-shell-content main a[href*='page=']:not([class~='text-white']):not([class~='is-active']):not([aria-current='page']):not([class~='simpeg-primary']):not([class~='simpeg-utility']):focus-visible {
+    border-color: var(--simpeg-primary) !important;
+    background-color: var(--simpeg-hover-surface) !important;
+    color: var(--simpeg-primary) !important;
+    -webkit-text-fill-color: var(--simpeg-primary) !important;
+    outline: none;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main a[href*='page=']:not([class~='text-white']):not([class~='is-active']):not([aria-current='page']):not([class~='simpeg-primary']):not([class~='simpeg-utility']):is(:hover, :focus-visible) :where(*) {
+    color: var(--simpeg-primary) !important;
+    -webkit-text-fill-color: var(--simpeg-primary) !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main a[href*='page=']:is(
+    [class~='text-white'],
+    [class~='is-active'],
+    [aria-current='page'],
+    [class~='simpeg-primary'],
+    [class~='bg-blue-600'],
+    [class~='bg-blue-700'],
+    [class~='bg-amber-600'],
+    [class~='bg-emerald-600'],
+    [class~='bg-red-600'],
+    [class~='bg-violet-600'],
+    [class~='bg-cyan-700']
+) {
+    border-color: var(--simpeg-primary) !important;
+    background-color: var(--simpeg-primary) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main a[href*='page=']:is(
+    [class~='text-white'],
+    [class~='is-active'],
+    [aria-current='page'],
+    [class~='simpeg-primary'],
+    [class~='bg-blue-600'],
+    [class~='bg-blue-700'],
+    [class~='bg-amber-600'],
+    [class~='bg-emerald-600'],
+    [class~='bg-red-600'],
+    [class~='bg-violet-600'],
+    [class~='bg-cyan-700']
+) :where(*) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}

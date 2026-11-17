@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
+import MobileFilterGroup from '../../Components/MobileFilterGroup';
 
 export default function OfficeIndex({ offices, filters }) {
     function submit(event) {
@@ -18,10 +19,14 @@ export default function OfficeIndex({ offices, filters }) {
             </div>
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-search flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row">
-                    <label htmlFor="office-search" className="sr-only">Cari kantor</label>
-                    <input id="office-search" name="search" defaultValue={filters.search} placeholder="Cari kode, nama, alamat, atau status kantor" className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" />
-                    <button type="submit" className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Cari</button>
+                <form onSubmit={submit} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-3 border-b border-slate-100 p-4">
+                    <MobileFilterGroup id="office-mobile-filters" activeCount={Number(Boolean(filters.search))}>
+                        <div className="min-w-0">
+                            <label htmlFor="office-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari kantor</label>
+                            <input id="office-search" name="search" defaultValue={filters.search} placeholder="Cari kode, nama, alamat, atau status kantor" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" />
+                        </div>
+                        <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
+                    </MobileFilterGroup>
                 </form>
 
                 <div className="overflow-x-auto">

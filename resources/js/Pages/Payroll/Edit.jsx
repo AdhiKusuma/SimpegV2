@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Banknote, FileSpreadsheet, Save } from 'lucide-react';
+import { ArrowLeft, Banknote, Save } from 'lucide-react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import PayrollAmountInput from '../../Components/PayrollAmountInput';
 
@@ -34,7 +35,7 @@ export default function Edit({ employee, willRequireApproval = false, canExport 
                     <h1 className="simpeg-text text-3xl font-extrabold tracking-tight">Edit data gaji</h1>
                     <p className="simpeg-muted mt-2">{employee.employee_name} · ID {employee.employee_id} · {employee.office_name}</p>
                 </div>
-                {canExport && <a href={exportHref} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-xl border px-4 text-sm font-bold sm:self-auto"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Export XLSX</a>}
+                {canExport && <ExportDropdown items={[{ href: exportHref, label: 'Export XLSX' }]} />}
             </div>
             {flash.error && <div role="alert" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">{flash.error}</div>}
             {willRequireApproval && <div role="note" className="mb-5 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">Perubahan akan dikirim ke approval supervisor kantor terkait. Master Gaji baru diperbarui setelah disetujui.</div>}

@@ -22,7 +22,9 @@
 <body>
     <h1>Laporan Formasi Pegawai</h1>
     <p>Kantor: {{ $filters['kode_cabang'] ?: 'Semua kantor / global' }}</p>
-    <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @if (!($pdf ?? false))
+        <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @endif
     <table>
         <thead>
         <tr>

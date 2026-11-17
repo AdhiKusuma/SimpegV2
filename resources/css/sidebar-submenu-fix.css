@@ -1,0 +1,54 @@
+/* Keep an expanded submenu open without turning its whole content area into
+ * a hover surface. The separator is a structural guide, not a panel. */
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar
+    .simpeg-sidebar-nav-content {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar
+    .simpeg-sidebar-nav-content::before,
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar
+    .simpeg-sidebar-nav-content > :is(.simpeg-sidebar-nav-link, .simpeg-sidebar-nav-group)::before {
+    z-index: 2;
+    background: rgb(255 255 255 / 0.72) !important;
+    pointer-events: none;
+}
+
+/* An active group means "this section is open". The selected destination is
+ * the child link, so keep the group label on the rail's readable ink instead
+ * of using the selected-leaf foreground color. */
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar
+    .simpeg-sidebar-group-trigger.simpeg-nav-group-active,
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar
+    .simpeg-sidebar-group-trigger.simpeg-nav-group-active:hover,
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar
+    .simpeg-sidebar-group-trigger.simpeg-nav-group-active:focus-visible {
+    background: var(--sb-hover, rgb(255 255 255 / 0.08)) !important;
+    background-color: var(--sb-hover, rgb(255 255 255 / 0.08)) !important;
+    border-color: transparent !important;
+    color: var(--sb-text, #ffffff) !important;
+    box-shadow: none !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar
+    .simpeg-sidebar-group-trigger.simpeg-nav-group-active :is(
+        .simpeg-sidebar-group-label,
+        .simpeg-nav-icon,
+        .simpeg-nav-group-active-icon,
+        .simpeg-sidebar-group-chevron,
+        svg,
+        svg *
+    ) {
+    color: var(--sb-text, #ffffff) !important;
+    -webkit-text-fill-color: var(--sb-text, #ffffff) !important;
+    stroke: currentColor !important;
+}
+
+/* Do not let a hovered parent paint the submenu area through inherited or
+ * legacy group styles. */
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar
+    .simpeg-sidebar-nav-group:hover .simpeg-sidebar-nav-content {
+    background: transparent !important;
+    background-color: transparent !important;
+}

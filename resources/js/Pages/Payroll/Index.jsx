@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Banknote, Download, FileSpreadsheet, LockKeyhole, Plus, Trash2, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
@@ -50,7 +51,7 @@ function MobileAmountGrid({ fields, values }) {
     </dl>;
 }
 
-export default function Index({ filters, years = [], offices = [], summaryRows = [], summaryTotals = {}, entries, payrollImport, canImport, canEditMaster = false, canClearHistory = false, payrollHistoryCount = 0, scopeLabel, scopeLocked, flash = {} }) {
+export default function Index({ filters, years = [], offices = [], summaryRows = [], summaryTotals = {}, entries, payrollImport, canImport, canEditMaster = false, canClearHistory = false, payrollHistoryCount = 0, payrollProtectedHistoryCount = 0, scopeLabel, scopeLocked, flash = {} }) {
     const [selectedOffice, setSelectedOffice] = useState(String(filters.office || ''));
     const [selectedYear, setSelectedYear] = useState(String(filters.tahun));
     const [selectedMonth, setSelectedMonth] = useState(String(filters.bulan));
@@ -121,18 +122,14 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                 </div>
                 <div className="flex flex-col items-stretch gap-2 sm:items-end">
                     <div className="flex flex-wrap gap-2">
-                        {canClearHistory && payrollHistoryCount > 0 && <button type="button" onClick={() => { clearHistoryForm.reset(); clearHistoryForm.clearErrors(); setClearHistoryOpen(true); }} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]">
-                            <Trash2 aria-hidden="true" className="h-4 w-4" /> Bersihkan riwayat
+                        {canClearHistory && <button type="button" disabled={payrollHistoryCount === 0} title={payrollHistoryCount === 0 ? 'Belum ada riwayat payroll lama yang aman untuk dibersihkan.' : 'Bersihkan riwayat payroll lama'} onClick={() => { if (payrollHistoryCount === 0) return; clearHistoryForm.reset(); clearHistoryForm.clearErrors(); setClearHistoryOpen(true); }} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50">
+                            <Trash2 aria-hidden="true" className="h-4 w-4" /> Bersihkan riwayat lama
                         </button>}
-                        {payrollImport ? <a href={`/payroll/export?${exportParams.toString()}`} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold">
-                            <FileSpreadsheet aria-hidden="true" className="h-4 w-4" /> Export XLSX
-                        </a> : <button type="button" disabled title="Belum ada data payroll pada periode yang dipilih." className="simpeg-utility inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold opacity-60">
-                            <FileSpreadsheet aria-hidden="true" className="h-4 w-4" /> Export XLSX
-                        </button>}
+                        <ExportDropdown items={payrollImport ? [{ href: `/payroll/export?${exportParams.toString()}`, label: 'Export XLSX' }] : []} disabled={!payrollImport} label="Export" />
                         {canImport && <Link href="/payroll/import" className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold">
                             <Upload aria-hidden="true" className="h-4 w-4" /> Import XLSX
                         </Link>}
-                        {canEditMaster && <Link href="/payroll/edit/create" className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold">
+                        {canEditMaster && <Link href="/payroll/edit/create" className="simpeg-action-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold">
                             <Plus aria-hidden="true" className="h-4 w-4" /> Tambah manual
                         </Link>}
                     </div>
@@ -151,7 +148,7 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
             {flash.success && <div role="status" className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{flash.success}</div>}
             {flash.error && <div role="alert" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">{flash.error}</div>}
 
-            <section className="simpeg-card mb-6 rounded-2xl border p-4 shadow-sm sm:p-5" aria-label="Filter payroll">
+            <section className="simpeg-filter-shell mb-6" aria-label="Filter payroll">
                 <form onSubmit={applyFilters} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(9rem,0.55fr)_minmax(10rem,0.55fr)_minmax(16rem,1.2fr)_auto] xl:items-end">
                     <MobileFilterGroup id="payroll-mobile-filters" activeCount={Number(Boolean(selectedOffice))}>
                     <div>
@@ -367,13 +364,14 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                             <Trash2 aria-hidden="true" className="h-5 w-5" />
                         </span>
                         <div>
-                            <h2 id="clear-payroll-history-title" className="simpeg-text text-lg font-bold">Bersihkan riwayat Payroll?</h2>
+                            <h2 id="clear-payroll-history-title" className="simpeg-text text-lg font-bold">Bersihkan riwayat Payroll lama?</h2>
                             <p id="clear-payroll-history-description" className="simpeg-muted mt-1 text-sm leading-6">
-                                Ini akan menghapus permanen {Number(payrollHistoryCount).toLocaleString('id-ID')} batch import Payroll beserta rincian dan rekapnya. Data pegawai dan master data tidak terpengaruh.
+                                Ini akan menghapus permanen {Number(payrollHistoryCount).toLocaleString('id-ID')} batch payroll lama yang tidak aktif. Batch aktif, batch yang masih terkait publikasi, dan batch yang masih menjadi sumber Master Gaji akan tetap dilindungi.
+                                {Number(payrollProtectedHistoryCount) > 0 && ` Saat ini ${Number(payrollProtectedHistoryCount).toLocaleString('id-ID')} batch tidak dapat dibersihkan.`}
                             </p>
                         </div>
                     </div>
-                    <label htmlFor="clear-payroll-confirmation" className="simpeg-text mb-2 block text-sm font-semibold">Ketik HAPUS untuk melanjutkan</label>
+                    <label htmlFor="clear-payroll-confirmation" className="simpeg-text mb-2 block text-sm font-semibold">Ketik HAPUS RIWAYAT untuk melanjutkan</label>
                     <input
                         id="clear-payroll-confirmation"
                         autoFocus
@@ -383,12 +381,12 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                         aria-invalid={Boolean(clearHistoryForm.errors.confirmation)}
                         aria-describedby={clearHistoryForm.errors.confirmation ? 'clear-payroll-confirmation-error' : undefined}
                         className="simpeg-input h-11 w-full rounded-xl border px-3 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]"
-                        placeholder="HAPUS"
+                        placeholder="HAPUS RIWAYAT"
                     />
                     {clearHistoryForm.errors.confirmation && <p id="clear-payroll-confirmation-error" role="alert" className="mt-2 text-sm font-medium text-red-700 dark:text-red-300">{clearHistoryForm.errors.confirmation}</p>}
                     <div className="mt-6 flex flex-col-reverse justify-end gap-2 sm:flex-row">
                         <button type="button" onClick={closeClearHistory} className="simpeg-utility inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]">Batal</button>
-                        <button type="submit" disabled={clearHistoryForm.processing || clearHistoryForm.data.confirmation !== 'HAPUS'} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-700 px-4 text-sm font-bold text-white transition hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-700/30 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="submit" disabled={clearHistoryForm.processing || clearHistoryForm.data.confirmation !== 'HAPUS RIWAYAT'} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-700 px-4 text-sm font-bold text-white transition hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-700/30 disabled:cursor-not-allowed disabled:opacity-50">
                             <Trash2 aria-hidden="true" className="h-4 w-4" /> {clearHistoryForm.processing ? 'Membersihkan…' : 'Hapus riwayat'}
                         </button>
                     </div>

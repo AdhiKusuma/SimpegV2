@@ -1,0 +1,1077 @@
+@layer utilities {
+    html[data-simpeg-reduce-motion="1"] *,
+    html[data-simpeg-reduce-motion="1"] *::before,
+    html[data-simpeg-reduce-motion="1"] *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+    }
+
+    .simpeg-settings-page {
+        --settings-card: #ffffff;
+        --settings-card-soft: #f4f7fd;
+        --settings-ink: #0B1F4B;
+        --settings-muted: #55668A;
+        --settings-subtle: #6C7FA3;
+        --settings-border: #D6E2F5;
+        --settings-blue: #0D5FE0;
+        --settings-blue-soft: #E8F0FD;
+        --settings-green: #1E9E6A;
+        --settings-shadow: 0 0.45rem 1.35rem rgb(10 42 102 / 0.07);
+        max-width: 92rem;
+        min-width: 0;
+        margin-inline: auto;
+        padding-bottom: 2rem;
+        color: var(--settings-ink);
+    }
+
+    html.dark .simpeg-settings-page {
+        --settings-card: #FFFFFF;
+        --settings-card-soft: #F4F7FD;
+        --settings-ink: #0B1F4B;
+        --settings-muted: #55668A;
+        --settings-subtle: #6C7FA3;
+        --settings-border: #D6E2F5;
+        --settings-blue: #0D5FE0;
+        --settings-blue-soft: #E8F0FD;
+        --settings-green: #1E9E6A;
+        --settings-shadow: 0 0.75rem 2rem rgb(13 95 224 / 0.08);
+    }
+
+    .simpeg-settings-form {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .simpeg-settings-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 2rem;
+        padding: 0.5rem 0 1rem;
+    }
+
+    .simpeg-settings-heading {
+        min-width: 0;
+    }
+
+    .simpeg-settings-breadcrumb {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: var(--settings-muted);
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .simpeg-settings-breadcrumb svg {
+        height: 0.8rem;
+        width: 0.8rem;
+        color: var(--settings-subtle);
+    }
+
+    .simpeg-settings-breadcrumb span {
+        color: var(--settings-blue);
+    }
+
+    .simpeg-settings-heading h1 {
+        position: relative;
+        width: fit-content;
+        margin-top: 0.55rem;
+        color: var(--settings-ink);
+        font-size: clamp(1.9rem, 3vw, 2.5rem);
+        font-weight: 750;
+        letter-spacing: -0.055em;
+        line-height: 1.05;
+    }
+
+    .simpeg-settings-heading h1::after {
+        display: block;
+        width: 2.75rem;
+        height: 0.22rem;
+        margin-top: 0.65rem;
+        border-radius: 999px;
+        background: #FFA20F;
+        content: '';
+    }
+
+    .simpeg-settings-heading > p:last-child {
+        max-width: 42rem;
+        margin-top: 0.7rem;
+        color: var(--settings-muted);
+        font-size: 0.9rem;
+        line-height: 1.55;
+    }
+
+    .simpeg-settings-header-actions {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .simpeg-settings-reset,
+    .simpeg-settings-save {
+        display: inline-flex;
+        min-height: 2.75rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border-radius: 0.8rem;
+        padding: 0.65rem 1rem;
+        font-size: 0.82rem;
+        font-weight: 650;
+        transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .simpeg-settings-reset svg,
+    .simpeg-settings-save svg {
+        height: 1rem;
+        width: 1rem;
+    }
+
+    .simpeg-settings-reset {
+        border: 1px solid var(--settings-border);
+        background: var(--settings-card);
+        color: var(--settings-ink);
+    }
+
+    .simpeg-settings-reset:hover {
+        border-color: var(--settings-blue);
+        color: var(--settings-blue);
+    }
+
+    .simpeg-settings-save {
+        border: 1px solid var(--settings-blue);
+        background: var(--settings-blue);
+        color: #ffffff;
+        box-shadow: 0 0.45rem 1rem rgb(13 95 224 / 0.2);
+    }
+
+    .simpeg-settings-save:hover:not(:disabled) {
+        background: #0A4DB8;
+        box-shadow: 0 0.6rem 1.25rem rgb(13 95 224 / 0.26);
+        transform: translateY(-1px);
+    }
+
+    .simpeg-settings-save:disabled {
+        cursor: wait;
+        opacity: 0.7;
+    }
+
+    .simpeg-settings-flash {
+        border: 1px solid rgb(30 158 106 / 0.3);
+        border-radius: 0.85rem;
+        background: rgb(30 158 106 / 0.1);
+        color: var(--settings-green);
+        padding: 0.75rem 1rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    .simpeg-settings-layout {
+        display: grid;
+        min-width: 0;
+        align-items: start;
+        gap: 1.25rem;
+        grid-template-columns: minmax(0, 1.42fr) minmax(20rem, 0.72fr);
+    }
+
+    .simpeg-settings-main,
+    .simpeg-settings-aside {
+        display: grid;
+        min-width: 0;
+        gap: 1.25rem;
+    }
+
+    .simpeg-settings-card {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid var(--settings-border);
+        border-radius: 1.25rem;
+        background: var(--settings-card);
+        box-shadow: var(--settings-shadow);
+    }
+
+    .simpeg-settings-card-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.35rem 1.5rem 1rem;
+    }
+
+    .simpeg-settings-card-heading-compact {
+        padding-bottom: 0.8rem;
+    }
+
+    .simpeg-settings-card-heading > div,
+    .simpeg-settings-title-row {
+        min-width: 0;
+    }
+
+    .simpeg-settings-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+
+    .simpeg-settings-title-row > svg {
+        height: 1.15rem;
+        width: 1.15rem;
+        flex-shrink: 0;
+        color: var(--settings-blue);
+    }
+
+    .simpeg-settings-title-row h2 {
+        color: var(--settings-ink);
+        font-size: 1.05rem;
+        font-weight: 750;
+        letter-spacing: -0.025em;
+    }
+
+    .simpeg-settings-card-heading p {
+        margin-top: 0.35rem;
+        color: var(--settings-muted);
+        font-size: 0.78rem;
+        line-height: 1.45;
+    }
+
+    .simpeg-settings-badge {
+        display: inline-flex;
+        flex-shrink: 0;
+        align-items: center;
+        min-height: 1.55rem;
+        border-radius: 999px;
+        background: var(--settings-blue-soft);
+        color: var(--settings-muted);
+        padding: 0.25rem 0.6rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+    }
+
+    .simpeg-settings-badge-amber {
+        background: rgb(255 162 15 / 0.16);
+        color: #A45B00;
+    }
+
+    html.dark .simpeg-settings-badge-amber {
+        color: #FFB845;
+    }
+
+    .simpeg-settings-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin: 0 1.5rem 0.3rem;
+        border-radius: 0.65rem;
+        background: rgb(30 158 106 / 0.12);
+        color: var(--settings-green);
+        padding: 0.55rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .simpeg-settings-status svg {
+        height: 0.9rem;
+        width: 0.9rem;
+    }
+
+    .simpeg-settings-card-section {
+        border-top: 1px solid var(--settings-border);
+        padding: 1.2rem 1.5rem 1.35rem;
+    }
+
+    .simpeg-settings-section-heading h3 {
+        color: var(--settings-ink);
+        font-size: 0.9rem;
+        font-weight: 750;
+    }
+
+    .simpeg-settings-section-heading p {
+        margin-top: 0.2rem;
+        color: var(--settings-muted);
+        font-size: 0.76rem;
+    }
+
+    .simpeg-settings-segmented {
+        display: grid;
+        max-width: 23rem;
+        margin-top: 0.8rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.2rem;
+        border-radius: 0.85rem;
+        background: var(--settings-blue-soft);
+        padding: 0.25rem;
+    }
+
+    .simpeg-settings-segmented button {
+        display: inline-flex;
+        min-height: 2.5rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        border: 1px solid transparent;
+        border-radius: 0.65rem;
+        color: var(--settings-muted);
+        padding: 0.45rem 0.5rem;
+        font-size: 0.73rem;
+        font-weight: 650;
+        text-align: center;
+    }
+
+    .simpeg-settings-segmented button svg {
+        height: 0.9rem;
+        width: 0.9rem;
+    }
+
+    .simpeg-settings-segmented button.is-active {
+        border-color: var(--settings-border);
+        background: var(--settings-card);
+        color: var(--settings-ink);
+        box-shadow: 0 1px 3px rgb(10 42 102 / 0.1);
+    }
+
+    .simpeg-settings-theme-options {
+        display: grid;
+        gap: 1.2rem;
+    }
+
+    .simpeg-settings-theme-group-heading {
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+        margin-bottom: 0.65rem;
+    }
+
+    .simpeg-settings-theme-group-heading span {
+        color: var(--settings-muted);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .simpeg-settings-theme-group-heading small {
+        color: var(--settings-subtle);
+        font-size: 0.7rem;
+    }
+
+    .simpeg-settings-theme-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.65rem;
+    }
+
+    .simpeg-settings-theme-option {
+        position: relative;
+        display: flex;
+        min-width: 0;
+        min-height: 7rem;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        border: 1px solid var(--settings-border);
+        border-radius: 0.8rem;
+        background: var(--settings-card);
+        color: var(--settings-ink);
+        padding: 0.65rem;
+        text-align: center;
+        transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    .simpeg-settings-theme-option:hover {
+        border-color: var(--settings-blue);
+        transform: translateY(-1px);
+    }
+
+    .simpeg-settings-theme-option.is-active {
+        border: 2px solid var(--settings-blue);
+        box-shadow: 0 0 0 3px var(--settings-blue-soft);
+    }
+
+    .simpeg-settings-theme-swatch {
+        position: relative;
+        display: block;
+        height: 2.45rem;
+        width: 2.45rem;
+        border: 1px solid rgb(255 255 255 / 0.46);
+        border-radius: 50%;
+        box-shadow: 0 0.45rem 0.9rem rgb(10 42 102 / 0.2);
+    }
+
+    .simpeg-settings-theme-check {
+        position: absolute;
+        right: -0.15rem;
+        top: -0.15rem;
+        display: inline-flex;
+        height: 1.15rem;
+        width: 1.15rem;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--settings-card);
+        border-radius: 50%;
+        background: var(--settings-blue);
+        color: white;
+    }
+
+    .simpeg-settings-theme-check svg {
+        height: 0.7rem;
+        width: 0.7rem;
+    }
+
+    .simpeg-settings-theme-option strong {
+        overflow: hidden;
+        max-width: 100%;
+        font-size: 0.74rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .simpeg-settings-theme-option small {
+        border-radius: 999px;
+        background: rgb(255 162 15 / 0.16);
+        color: #A45B00;
+        padding: 0.14rem 0.45rem;
+        font-size: 0.57rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    html.dark .simpeg-settings-theme-option small {
+        color: #FFB845;
+    }
+
+    .simpeg-settings-logo-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        padding: 0.5rem 1.5rem 0;
+    }
+
+    .simpeg-settings-logo-field {
+        min-width: 0;
+    }
+
+    .simpeg-settings-field-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .simpeg-settings-field-heading strong {
+        display: inline-flex;
+        min-width: 0;
+        align-items: center;
+        gap: 0.35rem;
+        color: var(--settings-ink);
+        font-size: 0.78rem;
+    }
+
+    .simpeg-settings-field-heading strong svg {
+        height: 0.9rem;
+        width: 0.9rem;
+        color: #FFA20F;
+    }
+
+    .simpeg-settings-field-heading span {
+        border-radius: 999px;
+        background: rgb(30 158 106 / 0.12);
+        color: var(--settings-green);
+        padding: 0.25rem 0.5rem;
+        font-size: 0.62rem;
+        font-weight: 700;
+    }
+
+    .simpeg-settings-logo-preview {
+        display: flex;
+        height: 8.5rem;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px dashed #B8CCEA;
+        border-radius: 0.85rem;
+        background: #FBFDFF;
+        padding: 0.8rem;
+    }
+
+    /* Light preview uses the same soft workspace background as the application. */
+    .simpeg-settings-logo-preview.is-light {
+        border-color: #D6E2F5;
+        background: #f7f5f6;
+    }
+
+    .simpeg-settings-logo-preview.is-dark {
+        border-color: #3A5278;
+        background: #1B2A4A;
+    }
+
+    .simpeg-settings-logo-preview img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .simpeg-settings-logo-preview span {
+        color: var(--settings-subtle);
+        font-size: 0.75rem;
+    }
+
+    .simpeg-settings-upload-button {
+        display: inline-flex;
+        min-height: 2.35rem;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        margin-top: 0.6rem;
+        cursor: pointer;
+        border: 1px solid var(--settings-blue);
+        border-radius: 0.65rem;
+        background: transparent;
+        color: var(--settings-blue);
+        padding: 0.45rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .simpeg-settings-upload-button:hover {
+        background: var(--settings-blue-soft);
+    }
+
+    .simpeg-settings-upload-button svg {
+        height: 0.9rem;
+        width: 0.9rem;
+    }
+
+    .simpeg-settings-upload-button input {
+        position: absolute;
+        height: 1px;
+        width: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .simpeg-settings-helper {
+        margin: 1rem 1.5rem 1.35rem;
+        color: var(--settings-muted);
+        font-size: 0.72rem;
+        line-height: 1.55;
+    }
+
+    .simpeg-settings-fields-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        padding: 0.6rem 1.5rem 1.5rem;
+    }
+
+    .simpeg-settings-field-wide {
+        grid-column: 1 / -1;
+    }
+
+    .simpeg-settings-label {
+        display: block;
+        margin-bottom: 0.45rem;
+        color: var(--settings-ink);
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .simpeg-settings-input {
+        min-height: 2.75rem;
+        width: 100%;
+        border: 1px solid var(--settings-border) !important;
+        border-radius: 0.65rem !important;
+        background: var(--settings-card) !important;
+        color: var(--settings-ink) !important;
+        padding: 0.65rem 0.75rem;
+        outline: none;
+        transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .simpeg-settings-input:focus {
+        border-color: var(--settings-blue) !important;
+        box-shadow: 0 0 0 3px var(--settings-blue-soft) !important;
+    }
+
+    .simpeg-settings-error {
+        margin-top: 0.35rem;
+        color: #D64545;
+        font-size: 0.7rem;
+        font-weight: 650;
+    }
+
+    .simpeg-settings-live-preview {
+        margin: 0 1rem;
+        border: 1px solid #D6E2F5;
+        border-radius: 0.95rem;
+        background: #F5F8FE;
+        padding: 1rem;
+        color: #0B1F4B;
+    }
+
+    .simpeg-settings-live-preview.is-dark {
+        border-color: #3A5278;
+        background: #1B2A4A;
+        color: #F1F5F9;
+    }
+
+    .simpeg-settings-live-preview-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .simpeg-settings-live-preview-topline img {
+        max-height: 2rem;
+        max-width: 8rem;
+        object-fit: contain;
+    }
+
+    .simpeg-settings-preview-placeholder,
+    .simpeg-settings-preview-avatar {
+        display: inline-flex;
+        height: 2rem;
+        width: 2rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.65rem;
+        background: var(--preview-accent);
+        color: #ffffff;
+        font-size: 0.68rem;
+        font-weight: 800;
+    }
+
+    .simpeg-settings-preview-avatar {
+        height: 1.65rem;
+        width: 1.65rem;
+        border-radius: 50%;
+        font-size: 0.55rem;
+    }
+
+    .simpeg-settings-live-preview h3 {
+        margin-top: 1rem;
+        color: inherit;
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+    }
+
+    .simpeg-settings-live-preview > p {
+        margin-top: 0.2rem;
+        color: var(--settings-muted);
+        font-size: 0.7rem;
+    }
+
+    .simpeg-settings-preview-list {
+        display: grid;
+        gap: 0.45rem;
+        margin-top: 0.9rem;
+    }
+
+    .simpeg-settings-preview-row {
+        display: grid;
+        grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid #D6E2F5;
+        border-radius: 0.7rem;
+        background: #ffffff;
+        padding: 0.45rem;
+    }
+
+    .simpeg-settings-live-preview.is-dark .simpeg-settings-preview-row {
+        border-color: #3A5278;
+        background: #1B2A4A;
+    }
+
+    .simpeg-settings-preview-row > span {
+        display: inline-flex;
+        height: 1.55rem;
+        width: 1.55rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--settings-blue-soft);
+        color: var(--preview-accent);
+        font-size: 0.58rem;
+        font-weight: 800;
+    }
+
+    .simpeg-settings-preview-row div {
+        display: grid;
+        min-width: 0;
+    }
+
+    .simpeg-settings-preview-row strong,
+    .simpeg-settings-preview-row small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .simpeg-settings-preview-row strong {
+        color: inherit;
+        font-size: 0.68rem;
+    }
+
+    .simpeg-settings-preview-row small {
+        color: var(--settings-muted);
+        font-size: 0.58rem;
+    }
+
+    .simpeg-settings-preview-row b {
+        border-radius: 999px;
+        background: var(--preview-accent);
+        color: #ffffff;
+        padding: 0.22rem 0.42rem;
+        font-size: 0.55rem;
+    }
+
+    .simpeg-settings-preview-row b.is-muted {
+        border: 1px solid var(--settings-border);
+        background: transparent;
+        color: var(--settings-muted);
+    }
+
+    .simpeg-settings-preview-actions {
+        display: flex;
+        gap: 0.45rem;
+        margin-top: 0.75rem;
+    }
+
+    .simpeg-settings-preview-actions button {
+        min-height: 2rem;
+        border: 1px solid var(--preview-accent);
+        border-radius: 0.55rem;
+        background: var(--preview-accent);
+        color: #ffffff;
+        padding: 0.35rem 0.55rem;
+        font-size: 0.62rem;
+        font-weight: 700;
+    }
+
+    .simpeg-settings-preview-actions button + button {
+        background: transparent;
+        color: var(--preview-accent);
+    }
+
+    .simpeg-settings-preview-meta {
+        margin: 0.8rem 1rem 1.2rem;
+        color: var(--settings-muted);
+        font-size: 0.7rem;
+    }
+
+    .simpeg-settings-preview-meta strong {
+        color: var(--settings-ink);
+    }
+
+    .simpeg-settings-font-value {
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+        padding: 0.4rem 1.5rem 0;
+    }
+
+    .simpeg-settings-font-value strong {
+        color: var(--settings-blue);
+        font-size: 2.2rem;
+        letter-spacing: -0.06em;
+    }
+
+    .simpeg-settings-font-value span {
+        color: var(--settings-muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .simpeg-settings-font-value em {
+        margin-left: auto;
+        border-radius: 999px;
+        background: var(--settings-blue-soft);
+        color: var(--settings-ink);
+        padding: 0.3rem 0.55rem;
+        font-size: 0.65rem;
+        font-style: normal;
+        font-weight: 700;
+    }
+
+    .simpeg-settings-range-labels {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.2rem 1.5rem 0;
+        color: var(--settings-muted);
+        font-weight: 700;
+    }
+
+    .simpeg-settings-range-labels > span:last-child {
+        font-size: 1.25rem;
+    }
+
+    .simpeg-settings-range-labels input {
+        min-width: 0;
+        flex: 1;
+        accent-color: var(--settings-blue);
+    }
+
+    .simpeg-settings-range-ticks {
+        display: flex;
+        justify-content: space-between;
+        margin: 0.15rem 2.35rem 0 2rem;
+        color: var(--settings-subtle);
+        font-size: 0.62rem;
+    }
+
+    .simpeg-settings-font-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        padding: 0.8rem 1.5rem;
+    }
+
+    .simpeg-settings-font-buttons button {
+        min-height: 2rem;
+        border: 1px solid var(--settings-border);
+        border-radius: 999px;
+        background: var(--settings-card);
+        color: var(--settings-ink);
+        padding: 0.35rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 650;
+    }
+
+    .simpeg-settings-font-buttons button.is-active {
+        border-color: var(--settings-blue);
+        background: var(--settings-blue);
+        color: #ffffff;
+    }
+
+    .simpeg-settings-sample {
+        margin: 0 1.5rem 1.35rem;
+        border: 1px solid var(--settings-border);
+        border-radius: 0.8rem;
+        background: var(--settings-card-soft);
+        padding: 0.85rem;
+    }
+
+    .simpeg-settings-sample span {
+        color: var(--settings-muted);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+    }
+
+    .simpeg-settings-sample p {
+        margin-top: 0.35rem;
+        color: var(--settings-ink);
+        font-size: 0.85rem;
+        font-weight: 650;
+        line-height: 1.55;
+    }
+
+    .simpeg-settings-density {
+        padding: 0.5rem 1.5rem 0.9rem;
+    }
+
+    .simpeg-settings-density > strong {
+        color: var(--settings-ink);
+        font-size: 0.75rem;
+    }
+
+    .simpeg-settings-density > div {
+        display: grid;
+        margin-top: 0.5rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.15rem;
+        border-radius: 0.75rem;
+        background: var(--settings-blue-soft);
+        padding: 0.2rem;
+    }
+
+    .simpeg-settings-density > div > * {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        border-radius: 0.55rem;
+        color: var(--settings-muted);
+        padding: 0.5rem 0.25rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .simpeg-settings-density > div > *:hover,
+    .simpeg-settings-density > div > *:focus-visible,
+    .simpeg-settings-density > div > *.is-active {
+        background: var(--settings-card);
+        color: var(--settings-ink);
+        box-shadow: 0 1px 3px rgb(10 42 102 / 0.1);
+    }
+
+    .simpeg-settings-toggle-list {
+        border-top: 1px solid var(--settings-border);
+        padding: 0.25rem 1.5rem 0.6rem;
+    }
+
+    .simpeg-settings-toggle-row {
+        display: grid;
+        grid-template-columns: 1.15rem minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 0.65rem;
+        padding: 0.85rem 0;
+    }
+
+    .simpeg-settings-toggle-row + .simpeg-settings-toggle-row {
+        border-top: 1px solid var(--settings-border);
+    }
+
+    .simpeg-settings-toggle-row > svg {
+        height: 1rem;
+        width: 1rem;
+        margin-top: 0.1rem;
+        color: var(--settings-blue);
+    }
+
+    .simpeg-settings-toggle-row strong {
+        color: var(--settings-ink);
+        font-size: 0.74rem;
+    }
+
+    .simpeg-settings-toggle-row p {
+        margin-top: 0.18rem;
+        color: var(--settings-muted);
+        font-size: 0.67rem;
+        line-height: 1.45;
+    }
+
+    .simpeg-settings-switch {
+        position: relative;
+        display: inline-flex;
+        height: 1.5rem;
+        width: 2.65rem;
+        flex-shrink: 0;
+        align-items: center;
+        border: 0;
+        border-radius: 999px;
+        background: #9AA9C4;
+        padding: 0.18rem;
+        transition: background-color 160ms ease;
+    }
+
+    .simpeg-settings-switch span {
+        display: block;
+        height: 1.15rem;
+        width: 1.15rem;
+        border-radius: 50%;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgb(10 42 102 / 0.2);
+        transition: transform 160ms ease;
+    }
+
+    .simpeg-settings-switch.is-on {
+        background: var(--settings-blue);
+    }
+
+    .simpeg-settings-switch.is-on span {
+        transform: translateX(1.15rem);
+    }
+
+    @media (max-width: 1100px) {
+        .simpeg-settings-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .simpeg-settings-aside {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: start;
+        }
+
+        .simpeg-settings-preview-card {
+            grid-row: span 2;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .simpeg-settings-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .simpeg-settings-header-actions {
+            width: 100%;
+        }
+
+        .simpeg-settings-reset,
+        .simpeg-settings-save {
+            flex: 1;
+        }
+
+        .simpeg-settings-aside {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .simpeg-settings-preview-card {
+            grid-row: auto;
+        }
+
+        .simpeg-settings-theme-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .simpeg-settings-logo-grid,
+        .simpeg-settings-fields-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .simpeg-settings-field-wide {
+            grid-column: auto;
+        }
+    }
+}
+
+/* Appearance settings must win over older legacy rules that forced the
+ * sidebar to always display the dark wordmark. */
+html:not(.dark) body .simpeg-app-canvas .simpeg-sidebar .simpeg-theme-logo-light {
+    display: block !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas .simpeg-sidebar .simpeg-theme-logo-dark {
+    display: none !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-sidebar .simpeg-theme-logo-light {
+    display: none !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-sidebar .simpeg-theme-logo-dark {
+    display: block !important;
+}
+
+html[data-simpeg-density="compact"] .simpeg-shell-content > main {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+html[data-simpeg-density="spacious"] .simpeg-shell-content > main {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+}
+
+html[data-simpeg-density="compact"] .simpeg-sidebar-nav {
+    row-gap: 0.25rem !important;
+}
+
+html[data-simpeg-density="spacious"] .simpeg-sidebar-nav {
+    row-gap: 0.75rem !important;
+}

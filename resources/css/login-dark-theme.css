@@ -1,0 +1,126 @@
+/* Keep the login dark mode on the same #1B2A4A/amber system as the sidebar. */
+html.dark body .simpeg-login-page {
+    --simpeg-canvas: #1B2A4A !important;
+    --simpeg-canvas-mid: #1B2A4A !important;
+    --simpeg-canvas-end: #1B2A4A !important;
+    --simpeg-surface: #1B2A4A !important;
+    --simpeg-card: #1B2A4A !important;
+    --simpeg-card-soft: #243A62 !important;
+    --simpeg-input: #243A62 !important;
+    --simpeg-text: #F1F5F9 !important;
+    --simpeg-muted: #C4CBD4 !important;
+    --simpeg-subtle: #AEB7C2 !important;
+    --simpeg-border: rgb(214 226 245 / 0.28) !important;
+    --simpeg-track: #3A5278 !important;
+    --simpeg-primary: #FFB81C !important;
+    --simpeg-primary-hover: #FFD166 !important;
+    --simpeg-primary-foreground: #171717 !important;
+    --simpeg-primary-soft: rgb(255 184 28 / 0.18) !important;
+    --simpeg-primary-border: rgb(255 184 28 / 0.48) !important;
+    --simpeg-focus-ring: rgb(255 184 28 / 0.38) !important;
+    --simpeg-link: #7DC1FF !important;
+    background: #1B2A4A !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form {
+    background: #1B2A4A !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    box-shadow: 0 1.5rem 3.5rem rgb(0 0 0 / 0.34) !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-input {
+    background: #243A62 !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-input::placeholder {
+    color: #AEB7C2 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-input:focus {
+    border-color: #FFB81C !important;
+    box-shadow: 0 0 0 3px rgb(255 184 28 / 0.38) !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-submit {
+    border-color: #FFB81C !important;
+    background: #FFB81C !important;
+    color: #171717 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-submit:hover:not(:disabled),
+html.dark body .simpeg-login-page .simpeg-login-submit:focus-visible {
+    border-color: #FFD166 !important;
+    background: #FFD166 !important;
+    color: #171717 !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-login-topbar,
+    .simpeg-login-context,
+    .simpeg-login-context .simpeg-login-access-note,
+    .simpeg-login-footer-line
+) {
+    border-color: rgb(214 226 245 / 0.28) !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-login-brand-name,
+    .simpeg-login-form-heading h2,
+    .simpeg-login-label,
+    .simpeg-login-field-heading,
+    .simpeg-login-form-footer,
+    .simpeg-login-remember,
+    .simpeg-login-context h2,
+    .simpeg-login-support-trigger span,
+    .simpeg-login-password-toggle
+) {
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-login-brand-caption,
+    .simpeg-login-topbar-meta,
+    .simpeg-login-form-heading > p:last-child,
+    .simpeg-login-context p,
+    .simpeg-login-support-trigger,
+    .simpeg-login-access-note,
+    .simpeg-login-focus-help
+) {
+    color: #C4CBD4 !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-theme-toggle,
+    .simpeg-login-appearance-toggle
+) {
+    background: #243A62 !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-theme-toggle:hover,
+    .simpeg-theme-toggle:focus-visible,
+    .simpeg-login-appearance-toggle:hover,
+    .simpeg-login-appearance-toggle:focus-visible
+) {
+    background: #2A426C !important;
+    border-color: #FFB81C !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-resource-trigger {
+    background: #1B2A4A !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-resource-trigger:hover,
+html.dark body .simpeg-login-page .simpeg-login-resource-trigger:focus-visible {
+    background: #243A62 !important;
+    border-color: #FFB81C !important;
+    color: #F1F5F9 !important;
+}

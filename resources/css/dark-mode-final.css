@@ -1,0 +1,2164 @@
+/* Canonical dark-mode layer.
+ *
+ * Legacy page styles can keep their layout and component rules, but color
+ * ownership lives here and in theme-tokens.css. Keep this file last in app.css
+ * so a later page-specific navy rule cannot win by accident.
+ */
+
+html.dark body .simpeg-app-canvas,
+html.dark body .simpeg-app-canvas .simpeg-shell-frame,
+html.dark body .simpeg-app-canvas .simpeg-shell-content,
+html.dark body .simpeg-app-canvas .simpeg-main-shell {
+    --simpeg-canvas: #F7F5F6 !important;
+    --bg: #F7F5F6 !important;
+    --simpeg-canvas-mid: #F7F5F6 !important;
+    --simpeg-canvas-end: #F7F5F6 !important;
+    --simpeg-surface: #FFFFFF !important;
+    --surface: #FFFFFF !important;
+    --simpeg-surface-alt: #F5F8FE !important;
+    --surface-alt: #F5F8FE !important;
+    --simpeg-card: #FFFFFF !important;
+    --simpeg-card-soft: #E8F0FD !important;
+    --simpeg-header: #1B2A4A !important;
+    --simpeg-input: #FFFFFF !important;
+    --simpeg-text: #0B1F4B !important;
+    --text: #0B1F4B !important;
+    --simpeg-muted: #55668A !important;
+    --text-muted: #55668A !important;
+    --simpeg-subtle: #6C7FA3 !important;
+    --simpeg-border: #D6E2F5 !important;
+    --border: #D6E2F5 !important;
+    --simpeg-track: #D6E2F5 !important;
+    --simpeg-form-shell: #F7F5F6 !important;
+    --simpeg-form-section: #FFFFFF !important;
+    --simpeg-hover-surface: #F5F8FE !important;
+    --simpeg-hover-ink: #0B1F4B !important;
+    --simpeg-hover-border: #7DC1FF !important;
+    --simpeg-primary: #0D5FE0 !important;
+    --primary: #0D5FE0 !important;
+    --simpeg-primary-hover: #1688DC !important;
+    --primary-hover: #1688DC !important;
+    --simpeg-primary-foreground: #FFFFFF !important;
+    --simpeg-link: #7DC1FF !important;
+    --simpeg-on-accent: #171717 !important;
+    --simpeg-primary-soft: rgb(13 95 224 / 0.18) !important;
+    --simpeg-primary-border: rgb(125 193 255 / 0.42) !important;
+    --simpeg-focus-ring: rgb(125 193 255 / 0.38) !important;
+    --simpeg-nav-hover: #2A426C !important;
+    --simpeg-section: #FFFFFF !important;
+    --simpeg-table-surface: #FFFFFF !important;
+    --simpeg-table-header: #E8F0FD !important;
+    --simpeg-table-grid: #D6E2F5 !important;
+    --simpeg-table-text: #0B1F4B !important;
+    --simpeg-table-muted: #55668A !important;
+    --simpeg-table-hover: #F5F8FE !important;
+    --simpeg-accent: #FFB81C !important;
+    --simpeg-accent-hover: #FFD166 !important;
+    --simpeg-accent-ink: #171717 !important;
+    --simpeg-shadow-card: 0 10px 24px rgb(0 0 0 / 0.18) !important;
+    --simpeg-shadow-button: 0 0.45rem 1rem rgb(13 95 224 / 0.25) !important;
+    --simpeg-shadow-accent: 0 0.45rem 1rem rgb(255 184 28 / 0.30) !important;
+    background: #F7F5F6 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header {
+    background: #1B2A4A !important;
+    border-color: rgb(214 226 245 / 0.22) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-sidebar {
+    background: #1B2A4A !important;
+    border-right-color: var(--simpeg-sidebar-divider) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-card,
+    .simpeg-dashboard-stat,
+    .simpeg-dashboard-chart-card,
+    .simpeg-dashboard-tenure-card,
+    .simpeg-dashboard-position-card,
+    .simpeg-form-card,
+    [data-slot='card'],
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-role-table-card,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+) {
+    --simpeg-canvas: #F5F8FE !important;
+    --simpeg-surface: #FFFFFF !important;
+    --surface: #FFFFFF !important;
+    --simpeg-surface-alt: #E8F0FD !important;
+    --surface-alt: #E8F0FD !important;
+    --simpeg-card: #FFFFFF !important;
+    --simpeg-card-soft: #E8F0FD !important;
+    --simpeg-input: #FFFFFF !important;
+    --simpeg-text: #0B1F4B !important;
+    --text: #0B1F4B !important;
+    --simpeg-muted: #55668A !important;
+    --text-muted: #55668A !important;
+    --simpeg-subtle: #6C7FA3 !important;
+    --simpeg-border: #D6E2F5 !important;
+    --border: #D6E2F5 !important;
+    --simpeg-track: #D6E2F5 !important;
+    --simpeg-chart-1: #0D5FE0 !important;
+    --simpeg-chart-2: #7DB3FF !important;
+    --simpeg-chart-3: #FFA20F !important;
+    --simpeg-chart-4: #0A2A66 !important;
+    --simpeg-chart-5: #55668A !important;
+    --simpeg-chart-grid: #D6E2F5 !important;
+    --simpeg-chart-label: #55668A !important;
+    --simpeg-chart-highlight: #FFA20F !important;
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+/* Dark theme changes the navigation chrome only. Keep the authenticated
+ * workspace canvas, main area, and footer identical to light mode. */
+html.dark body .simpeg-app-canvas,
+html.dark body .simpeg-app-canvas .simpeg-shell-frame,
+html.dark body .simpeg-app-canvas .simpeg-shell-content,
+html.dark body .simpeg-app-canvas .simpeg-main-shell,
+html.dark body .simpeg-app-canvas .simpeg-shell-content > main,
+html.dark body .simpeg-app-canvas .simpeg-shell-footer {
+    --simpeg-canvas: #F7F5F6 !important;
+    --bg: #F7F5F6 !important;
+    --simpeg-canvas-mid: #F7F5F6 !important;
+    --simpeg-canvas-end: #F7F5F6 !important;
+    --simpeg-form-shell: #F7F5F6 !important;
+    background: #F7F5F6 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header,
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-sidebar,
+    #primary-navigation.simpeg-sidebar
+) {
+    background: #1B2A4A !important;
+}
+
+html.dark body .simpeg-app-canvas :is(.simpeg-card-soft) {
+    --simpeg-surface-alt: #E8F0FD !important;
+    --surface-alt: #E8F0FD !important;
+    --simpeg-card-soft: #E8F0FD !important;
+    --simpeg-text: #0B1F4B !important;
+    --text: #0B1F4B !important;
+    --simpeg-muted: #55668A !important;
+    --text-muted: #55668A !important;
+    --simpeg-border: #D6E2F5 !important;
+    --border: #D6E2F5 !important;
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+/* Tables stay paper white in dark mode for reliable data reading. */
+html.dark body .simpeg-app-canvas :is(
+    table,
+    .simpeg-table-surface,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-scroll
+) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas :is(table thead, table thead tr, table thead th) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    table tbody,
+    table tbody tr,
+    table tbody th,
+    table tbody td,
+    table tfoot,
+    table tfoot tr,
+    table tfoot td
+) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas table tbody tr:hover,
+html.dark body .simpeg-app-canvas table tbody tr:hover :is(th, td) {
+    background: #F5F8FE !important;
+    color: #0B1F4B !important;
+}
+
+/* The dashboard hero intentionally matches the light-mode hero exactly. */
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+    position: relative !important;
+    overflow: hidden !important;
+    background-color: #F5F8FE !important;
+    background-image:
+        radial-gradient(45% 75% at 80% 40%, rgb(43 123 240 / 0.16) 0%, rgb(43 123 240 / 0) 70%),
+        radial-gradient(30% 50% at 0% 0%, rgb(255 162 15 / 0.10) 0%, rgb(255 162 15 / 0) 70%) !important;
+    background-position: center, center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100%, 100% 100% !important;
+    background-blend-mode: normal !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::before {
+    display: none !important;
+    content: none !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+    display: block !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 60% !important;
+    height: 100% !important;
+    content: '' !important;
+    background: url('/images/dashboard-building-modern.png') no-repeat right center / auto 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    mix-blend-mode: multiply !important;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.92) 26%, #000 36%, #000 100%) !important;
+    mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.92) 26%, #000 36%, #000 100%) !important;
+    -webkit-mask-position: center !important;
+    mask-position: center !important;
+    -webkit-mask-size: 100% 100% !important;
+    mask-size: 100% 100% !important;
+    -webkit-mask-repeat: no-repeat !important;
+    mask-repeat: no-repeat !important;
+    filter: drop-shadow(0 16px 28px rgb(13 95 224 / 0.22)) !important;
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__copy,
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls {
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) :is(
+    .simpeg-dashboard-eyebrow,
+    .simpeg-dashboard-hero__title,
+    .simpeg-dashboard-hero__description,
+    .simpeg-dashboard-hero__controls .simpeg-muted
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) :is(
+    .simpeg-dashboard-eyebrow,
+    .simpeg-dashboard-hero__title span
+) {
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+}
+
+/* Plain Tailwind surface utilities are also used by older pages without a
+ * Card class. Keep their light-mode surface and readable foreground in sync. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    [class~='bg-white'],
+    [class*='bg-white/']
+) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    [class~='bg-slate-50'],
+    [class*='bg-slate-50/']
+) {
+    background: #F5F8FE !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    [class~='bg-slate-100'],
+    [class*='bg-slate-100/'],
+    [class~='bg-slate-200']
+) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    [class~='bg-white'],
+    [class*='bg-white/'],
+    [class~='bg-slate-50'],
+    [class*='bg-slate-50/'],
+    [class~='bg-slate-100'],
+    [class*='bg-slate-100/'],
+    [class~='bg-slate-200']
+) :is(
+    .simpeg-text,
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-gray-900,
+    .text-zinc-900,
+    [data-slot='card-title']
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    [class~='bg-white'],
+    [class*='bg-white/'],
+    [class~='bg-slate-50'],
+    [class*='bg-slate-50/'],
+    [class~='bg-slate-100'],
+    [class*='bg-slate-100/'],
+    [class~='bg-slate-200']
+) :is(
+    .simpeg-muted,
+    .text-slate-600,
+    .text-slate-500,
+    .text-slate-400,
+    .text-slate-300,
+    .text-gray-600,
+    .text-gray-500,
+    .text-zinc-600,
+    .text-zinc-500,
+    [data-slot='card-description']
+) {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__description,
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls .simpeg-muted {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls .simpeg-input {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action--primary {
+    background: #0D5FE0 !important;
+    border-color: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-settings-page {
+    --settings-card: #FFFFFF !important;
+    --settings-card-soft: #F4F7FD !important;
+    --settings-ink: #0B1F4B !important;
+    --settings-muted: #55668A !important;
+    --settings-subtle: #6C7FA3 !important;
+    --settings-border: #D6E2F5 !important;
+    --settings-blue: #0D5FE0 !important;
+    --settings-blue-soft: #E8F0FD !important;
+    --settings-shadow: 0 0.75rem 2rem rgb(13 95 224 / 0.08) !important;
+}
+
+html.dark body:has(.simpeg-login-page),
+html.dark body .simpeg-login-page {
+    background: #1B2A4A !important;
+    color: #F1F5F9 !important;
+}
+
+/* The default light-mode rail is still the blue brand rail. Only the explicit
+ * Light sidebar option gets dark ink on a white rail. */
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) {
+    --sb-text: #FFFFFF !important;
+    --sb-label: #C9D6F2 !important;
+    --sb-hover: rgb(255 255 255 / 0.08) !important;
+    --sb-active-bg: #FFA20F !important;
+    --sb-active-text: #0B1F4B !important;
+    background: linear-gradient(180deg, #0F2A6B 0%, #0A2A66 100%) !important;
+    border-right-color: rgb(255 255 255 / 0.12) !important;
+    color: #FFFFFF !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) :is(
+    .simpeg-sidebar-nav-link:not(.simpeg-nav-active) .simpeg-sidebar-nav-label,
+    .simpeg-sidebar-group-trigger:not(.simpeg-nav-group-active) .simpeg-sidebar-group-label,
+    .simpeg-sidebar-group-trigger:not(.simpeg-nav-group-active) .simpeg-sidebar-group-chevron,
+    .simpeg-sidebar-nav-link:not(.simpeg-nav-active) .simpeg-nav-icon,
+    .simpeg-sidebar-group-trigger:not(.simpeg-nav-group-active) .simpeg-nav-icon,
+    .simpeg-sidebar-section-label,
+    .simpeg-sidebar-logout
+) {
+    color: var(--sb-text) !important;
+    -webkit-text-fill-color: var(--sb-text) !important;
+    stroke: currentColor !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) :is(
+    .simpeg-sidebar-nav-link:not(.simpeg-nav-active) svg,
+    .simpeg-sidebar-nav-link:not(.simpeg-nav-active) svg *,
+    .simpeg-sidebar-group-trigger:not(.simpeg-nav-group-active) svg,
+    .simpeg-sidebar-group-trigger:not(.simpeg-nav-group-active) svg *,
+    .simpeg-sidebar-logout svg,
+    .simpeg-sidebar-logout svg *
+) {
+    color: var(--sb-text) !important;
+    -webkit-text-fill-color: var(--sb-text) !important;
+    stroke: currentColor !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) .simpeg-sidebar-section-label :is(svg, svg *) {
+    color: var(--sb-text) !important;
+    -webkit-text-fill-color: var(--sb-text) !important;
+    stroke: currentColor !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) :is(
+    .simpeg-sidebar-nav-link.simpeg-nav-active svg,
+    .simpeg-sidebar-nav-link.simpeg-nav-active svg *
+) {
+    color: var(--sb-active-text) !important;
+    -webkit-text-fill-color: var(--sb-active-text) !important;
+    stroke: currentColor !important;
+}
+
+/* An expanded parent is a navigation state, not the leaf-page active state.
+ * Keep it on the blue rail so its label and submenu remain white. */
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) .simpeg-sidebar-group-trigger.simpeg-nav-group-active {
+    background: rgb(255 255 255 / 0.08) !important;
+    border-color: transparent !important;
+    color: #FFFFFF !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) .simpeg-sidebar-group-trigger.simpeg-nav-group-active :is(
+    .simpeg-sidebar-group-label,
+    .simpeg-nav-group-active-icon,
+    .simpeg-sidebar-group-chevron,
+    svg,
+    svg *
+) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}
+
+/* Keep the authenticated workspace charcoal while restoring the light-mode
+ * paper treatment inside dashboard cards. This is intentionally the final
+ * dark-mode rule set so legacy page-specific navy declarations cannot win. */
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-stat,
+    .simpeg-dashboard-chart-card,
+    .simpeg-dashboard-tenure-card,
+    .simpeg-dashboard-position-card,
+    [data-slot='card']
+) {
+    --simpeg-surface: #FFFFFF !important;
+    --surface: #FFFFFF !important;
+    --simpeg-surface-alt: #E8F0FD !important;
+    --surface-alt: #E8F0FD !important;
+    --simpeg-card: #FFFFFF !important;
+    --simpeg-card-soft: #E8F0FD !important;
+    --simpeg-input: #FFFFFF !important;
+    --simpeg-text: #0B1F4B !important;
+    --text: #0B1F4B !important;
+    --simpeg-muted: #55668A !important;
+    --text-muted: #55668A !important;
+    --simpeg-subtle: #6C7FA3 !important;
+    --simpeg-border: #D6E2F5 !important;
+    --border: #D6E2F5 !important;
+    --simpeg-track: #D6E2F5 !important;
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    box-shadow: 0 10px 24px rgb(13 95 224 / 0.08) !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-stat-info,
+    .simpeg-dashboard-chart-card [data-slot='card-description'],
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-bar-label,
+    .simpeg-muted
+) {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-position-value,
+    .simpeg-dashboard-bar-value,
+    .simpeg-dashboard-chart-card [data-slot='card-title'],
+    .simpeg-dashboard-tenure-card [data-slot='card-title'],
+    .simpeg-dashboard-position-card [data-slot='card-title'],
+    .simpeg-dashboard-chart-legend .simpeg-text,
+    .simpeg-dashboard-tenure-grid .simpeg-text
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-stat-link:hover,
+    .simpeg-dashboard-stat-link:focus-visible,
+    .simpeg-dashboard-stat:hover,
+    .simpeg-dashboard-stat:focus-within,
+    .simpeg-dashboard-chart-card:hover,
+    .simpeg-dashboard-chart-card:focus-within,
+    .simpeg-dashboard-tenure-card:hover,
+    .simpeg-dashboard-tenure-card:focus-within,
+    .simpeg-dashboard-position-card:hover,
+    .simpeg-dashboard-position-card:focus-within
+) {
+    background: #F5F8FE !important;
+    border-color: #B9D0F2 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-stat-link:hover .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-stat-link:focus-visible .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-stat-link:hover .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-stat-link:focus-visible .simpeg-dashboard-stat-value
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-stat-icon,
+    .simpeg-dashboard-chart-icon
+) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #0D5FE0 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-chart-legend,
+    .simpeg-dashboard-tenure-grid > button
+) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-position-track,
+    .simpeg-track
+) {
+    background: #D6E2F5 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-position-fill {
+    background: #0D5FE0 !important;
+}
+
+/* Legacy report pages use a plain section as the table shell instead of the
+ * shared Card component. Give that route the same light-mode paper contract,
+ * including its count bar, table rows, pagination, and row hover state. */
+html.dark body .simpeg-app-canvas .simpeg-report-page {
+    --simpeg-surface: #FFFFFF !important;
+    --surface: #FFFFFF !important;
+    --simpeg-card: #FFFFFF !important;
+    --simpeg-card-soft: #E8F0FD !important;
+    --simpeg-input: #FFFFFF !important;
+    --simpeg-text: #0B1F4B !important;
+    --text: #0B1F4B !important;
+    --simpeg-muted: #55668A !important;
+    --text-muted: #55668A !important;
+    --simpeg-subtle: #6C7FA3 !important;
+    --simpeg-border: #D6E2F5 !important;
+    --border: #D6E2F5 !important;
+    --simpeg-hover-surface: #F5F8FE !important;
+    --simpeg-hover-ink: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-report-page > section:not(.simpeg-filter-only-shell) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-report-page > section:not(.simpeg-filter-only-shell) > :is(
+    .border-b,
+    .border-t,
+    .simpeg-report-pagination
+) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-report-page > section:not(.simpeg-filter-only-shell) :is(
+    table,
+    table tbody,
+    table tbody tr,
+    table tbody th,
+    table tbody td
+) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-report-page > section:not(.simpeg-filter-only-shell) :is(
+    table thead,
+    table thead tr,
+    table thead th
+) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-report-page > section:not(.simpeg-filter-only-shell) table tbody tr:hover,
+html.dark body .simpeg-app-canvas .simpeg-report-page > section:not(.simpeg-filter-only-shell) table tbody tr:hover :is(th, td) {
+    background: #F5F8FE !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-report-page > section:not(.simpeg-filter-only-shell) :is(
+    [class~='text-blue-700'],
+    [class~='bg-blue-50']
+) {
+    color: #0D5FE0 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-report-page > section:not(.simpeg-filter-only-shell) [class~='bg-blue-50'] {
+    background: #E8F0FD !important;
+}
+
+/* Some legacy pages wrap their table in a plain section or an
+ * overflow-x-auto div. Normalize those containers too, otherwise the table
+ * itself may be white while its surrounding paper remains charcoal. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+/* Foreground contract for every light-mode surface inside dark mode. The
+ * legacy dark theme remaps slate utility classes to near-white globally; that
+ * is correct on the charcoal workspace, but wrong on white cards and tables. */
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-card,
+    .simpeg-card-soft,
+    [data-slot='card'],
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll,
+    .simpeg-report-page,
+    .simpeg-shell-content main section:has(table)
+) :is(
+    .simpeg-text,
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-gray-900,
+    .text-zinc-900,
+    [data-slot='card-title']
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-card,
+    .simpeg-card-soft,
+    [data-slot='card'],
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll,
+    .simpeg-report-page,
+    .simpeg-shell-content main section:has(table)
+) :is(
+    .simpeg-muted,
+    .text-slate-600,
+    .text-slate-500,
+    .text-slate-400,
+    .text-slate-300,
+    .text-gray-600,
+    .text-gray-500,
+    .text-zinc-600,
+    .text-zinc-500,
+    [data-slot='card-description']
+) {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-card,
+    .simpeg-card-soft,
+    [data-slot='card'],
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll,
+    .simpeg-report-page,
+    .simpeg-shell-content main section:has(table)
+) :is(
+    .text-blue-600,
+    .text-blue-700,
+    .text-blue-800,
+    .text-indigo-600,
+    .text-indigo-700,
+    .text-sky-600,
+    .text-sky-700
+) {
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+}
+
+/* Final cross-page data-surface contract. A number of older pages use a
+ * bare overflow wrapper or a page-specific table class instead of the shared
+ * Card component. They must still receive the same paper surface and ink as
+ * every other light-mode data surface when the workspace is dark. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) {
+    --simpeg-table-surface: #FFFFFF !important;
+    --simpeg-table-header: #E8F0FD !important;
+    --simpeg-table-grid: #D6E2F5 !important;
+    --simpeg-table-text: #0B1F4B !important;
+    --simpeg-table-muted: #55668A !important;
+    --simpeg-table-hover: #F5F8FE !important;
+    --simpeg-surface: #FFFFFF !important;
+    --surface: #FFFFFF !important;
+    --simpeg-card: #FFFFFF !important;
+    --simpeg-card-soft: #E8F0FD !important;
+    --simpeg-input: #FFFFFF !important;
+    --simpeg-text: #0B1F4B !important;
+    --text: #0B1F4B !important;
+    --simpeg-muted: #55668A !important;
+    --text-muted: #55668A !important;
+    --simpeg-subtle: #6C7FA3 !important;
+    --simpeg-border: #D6E2F5 !important;
+    --border: #D6E2F5 !important;
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) :is(
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-gray-900,
+    .text-gray-800,
+    .text-zinc-900,
+    .text-zinc-800,
+    .simpeg-text,
+    [data-slot='card-title']
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) :is(
+    .text-slate-600,
+    .text-slate-500,
+    .text-slate-400,
+    .text-slate-300,
+    .text-gray-600,
+    .text-gray-500,
+    .text-zinc-600,
+    .text-zinc-500,
+    .simpeg-muted,
+    [data-slot='card-description']
+) {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table :is(
+    thead,
+    thead tr,
+    thead th
+) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table :is(
+    tbody,
+    tbody tr,
+    tbody th,
+    tbody td,
+    tfoot,
+    tfoot tr,
+    tfoot th,
+    tfoot td
+) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table tbody :is(
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-slate-600,
+    .text-slate-500,
+    .text-slate-400,
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700,
+    .text-gray-600,
+    .text-zinc-900,
+    .text-zinc-800,
+    .text-zinc-700,
+    .text-zinc-600,
+    .simpeg-text,
+    .simpeg-muted
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table tbody :is(
+    .text-blue-600,
+    .text-blue-700,
+    .text-blue-800,
+    .text-indigo-600,
+    .text-indigo-700,
+    .text-violet-700,
+    .text-cyan-700,
+    .text-sky-700
+) {
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table tbody tr:hover :is(th, td) {
+    background: #F5F8FE !important;
+    color: #0B1F4B !important;
+}
+
+/* Utility-only panels (modals, import previews, and older detail blocks) do
+ * not always carry a semantic Card class. Set their local variables too so
+ * nested text-slate utilities resolve to dark ink instead of inheriting the
+ * light text used by the blue workspace canvas. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    [class~='bg-white'],
+    [class*='bg-white/'],
+    [class~='bg-slate-50'],
+    [class*='bg-slate-50/'],
+    [class~='bg-slate-100'],
+    [class*='bg-slate-100/'],
+    [class~='bg-slate-200']
+) {
+    --simpeg-surface: #FFFFFF !important;
+    --surface: #FFFFFF !important;
+    --simpeg-card: #FFFFFF !important;
+    --simpeg-card-soft: #E8F0FD !important;
+    --simpeg-input: #FFFFFF !important;
+    --simpeg-text: #0B1F4B !important;
+    --text: #0B1F4B !important;
+    --simpeg-muted: #55668A !important;
+    --text-muted: #55668A !important;
+    --simpeg-subtle: #6C7FA3 !important;
+    --simpeg-border: #D6E2F5 !important;
+    --border: #D6E2F5 !important;
+}
+
+/* -------------------------------------------------------------------------
+ * Contrast audit contract
+ * -------------------------------------------------------------------------
+ * This is intentionally the last layer in app.css. A number of legacy
+ * screens still combine Tailwind utility colors with the semantic SIMPEG
+ * classes, so a component can otherwise inherit a light foreground on a
+ * light surface (or a dark foreground on a dark surface). Keep the visual
+ * states explicit here; this does not change routing or component behavior.
+ */
+
+/* Header controls are light controls in both themes. Their text and icons
+ * must therefore be the same dark ink in both themes. */
+html body .simpeg-app-canvas .simpeg-header :is(
+    .simpeg-search-trigger,
+    .simpeg-history-controls,
+    .simpeg-history-control,
+    .simpeg-utility,
+    .simpeg-theme-toggle
+) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-header :is(
+    .simpeg-search-trigger,
+    .simpeg-history-control,
+    .simpeg-utility,
+    .simpeg-theme-toggle
+) :is(svg, svg *, span, p) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-header :is(
+    .simpeg-search-trigger:hover,
+    .simpeg-search-trigger:focus-visible,
+    .simpeg-history-control:hover,
+    .simpeg-history-control:focus-visible,
+    .simpeg-utility:hover,
+    .simpeg-utility:focus-visible,
+    .simpeg-theme-toggle:hover,
+    .simpeg-theme-toggle:focus-visible
+) {
+    background: #F5F8FE !important;
+    border-color: #0D5FE0 !important;
+    color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-header .simpeg-search-trigger span {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-header .simpeg-live-datetime {
+    border-color: #D6E2F5 !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas .simpeg-header {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas .simpeg-header-context :is(.simpeg-text, .simpeg-muted),
+html:not(.dark) body .simpeg-app-canvas .simpeg-live-datetime .simpeg-muted {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header {
+    background: #1B2A4A !important;
+    border-color: rgb(214 226 245 / 0.22) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header-context .simpeg-text {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header-context .simpeg-muted,
+html.dark body .simpeg-app-canvas .simpeg-live-datetime .simpeg-muted {
+    color: #C9D6F2 !important;
+    -webkit-text-fill-color: #C9D6F2 !important;
+}
+
+/* The default rail is blue in light mode and #1B2A4A in dark mode. The
+ * profile card is deliberately a light surface, so its identity text is
+ * always dark and never inherits the rail's white text. */
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) {
+    --sb-text: #FFFFFF !important;
+    --sb-label: #C9D6F2 !important;
+    --sb-active-bg: #FFA20F !important;
+    --sb-active-text: #0B1F4B !important;
+    background: #0F2A6B !important;
+}
+
+html.dark body .simpeg-app-canvas #primary-navigation.simpeg-sidebar {
+    --sb-text: #FFFFFF !important;
+    --sb-label: #C9D6F2 !important;
+    --sb-active-bg: #FFA20F !important;
+    --sb-active-text: #0B1F4B !important;
+    background: #1B2A4A !important;
+    background-image: none !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar .simpeg-sidebar-profile {
+    background: #F5F8FE !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar .simpeg-sidebar-profile-details :is(.simpeg-text, .simpeg-muted) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar .simpeg-sidebar-profile-details .simpeg-muted {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar .simpeg-sidebar-collapse-toggle {
+    background: #F5F8FE !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar .simpeg-sidebar-collapse-toggle :is(svg, svg *) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar :is(
+    .simpeg-sidebar-nav-link:not(.simpeg-nav-active),
+    .simpeg-sidebar-group-trigger:not(.simpeg-nav-group-active),
+    .simpeg-sidebar-logout
+) :is(.simpeg-sidebar-nav-label, .simpeg-sidebar-group-label, .simpeg-nav-icon, .simpeg-sidebar-group-chevron, svg, svg *) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar :is(.simpeg-sidebar-section-label, .simpeg-sidebar-nav-label, .simpeg-sidebar-group-label) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar :is(.simpeg-nav-active, .simpeg-nav-group-active) :is(
+    .simpeg-sidebar-nav-label,
+    .simpeg-sidebar-group-label,
+    .simpeg-nav-icon,
+    .simpeg-nav-active-icon,
+    .simpeg-sidebar-group-chevron,
+    svg,
+    svg *
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+/* If the user explicitly chooses a light sidebar, invert only the rail
+ * foregrounds. The active amber item keeps the same dark ink as the default
+ * rail. */
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar[data-sidebar-color="light"] {
+    background: #FFFFFF !important;
+    color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar[data-sidebar-color="light"] :is(
+    .simpeg-sidebar-nav-link:not(.simpeg-nav-active),
+    .simpeg-sidebar-group-trigger:not(.simpeg-nav-group-active),
+    .simpeg-sidebar-logout
+) :is(.simpeg-sidebar-nav-label, .simpeg-sidebar-group-label, .simpeg-nav-icon, .simpeg-sidebar-group-chevron, svg, svg *) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar[data-sidebar-color="light"] :is(.simpeg-sidebar-section-label, .simpeg-sidebar-nav-label, .simpeg-sidebar-group-label) {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+/* Dashboard hero controls: the primary action is always white-on-blue. The
+ * explicit child rule prevents a Button/Tailwind text utility from turning
+ * the label white on a white background. */
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls .simpeg-input {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action--primary {
+    background: #0D5FE0 !important;
+    border-color: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    box-shadow: 0 0.45rem 1rem rgb(13 95 224 / 0.18) !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action--primary :is(span, svg, svg *) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action--primary:is(:hover, :focus-visible):not(:disabled) {
+    background: #0A4DB8 !important;
+    border-color: #0A4DB8 !important;
+    color: #FFFFFF !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) :is(span, svg, svg *) {
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+    stroke: currentColor !important;
+}
+
+/* Dark workspace: all data surfaces use the same paper treatment as light
+ * mode. Include plain legacy sections and direct table wrappers, not only
+ * the newer semantic Card classes. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    div:has(> table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    div:has(> table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table :is(
+    tbody,
+    tbody tr,
+    tbody th,
+    tbody td,
+    tfoot,
+    tfoot tr,
+    tfoot th,
+    tfoot td
+) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    div:has(> table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table :is(th, td) :is(
+    .simpeg-text,
+    .simpeg-muted,
+    .text-slate-900,
+    .text-slate-800,
+    .text-slate-700,
+    .text-slate-600,
+    .text-slate-500,
+    .text-slate-400,
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700,
+    .text-gray-600,
+    .text-zinc-900,
+    .text-zinc-800,
+    .text-zinc-700,
+    .text-zinc-600
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    div:has(> table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table :is(thead, thead tr, thead th) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    div:has(> table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table :is(a.text-blue-600, a.text-blue-700, a.text-blue-800, a.text-indigo-600, a.text-sky-600, a.text-sky-700) {
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    div:has(> table),
+    .overflow-x-auto:has(> table),
+    .simpeg-table-scroll,
+    .simpeg-table-surface,
+    .simpeg-report-table,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table tbody tr:hover :is(th, td) {
+    background: #F5F8FE !important;
+    color: #0B1F4B !important;
+}
+
+/* Shared tab/filter controls are also inner surfaces, not charcoal canvas. */
+html.dark body .simpeg-app-canvas .simpeg-section-tabs {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-section-tab {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-section-tab:hover,
+html.dark body .simpeg-app-canvas .simpeg-section-tab:focus-visible {
+    background: #F5F8FE !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-section-tab--active,
+html.dark body .simpeg-app-canvas .simpeg-section-tab--active:hover {
+    background: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* The rail and workspace use the same dark canvas. Do not let a legacy
+ * light border token render a bright vertical divider at the navbar edge. */
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-sidebar,
+    #primary-navigation.simpeg-sidebar
+) {
+    border-right: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Login dark mode follows the same #1B2A4A canvas as the authenticated
+ * sidebar/navbar. Light mode is intentionally untouched by this contract. */
+html.dark body .simpeg-login-page {
+    --simpeg-canvas: #1B2A4A !important;
+    --simpeg-canvas-mid: #1B2A4A !important;
+    --simpeg-canvas-end: #1B2A4A !important;
+    --simpeg-surface: #1B2A4A !important;
+    --simpeg-card: #1B2A4A !important;
+    --simpeg-card-soft: #243A62 !important;
+    --simpeg-input: #243A62 !important;
+    --simpeg-text: #F1F5F9 !important;
+    --simpeg-muted: #C4CBD4 !important;
+    --simpeg-subtle: #AEB7C2 !important;
+    --simpeg-border: rgb(214 226 245 / 0.28) !important;
+    --simpeg-primary: #FFB81C !important;
+    --simpeg-primary-hover: #FFD166 !important;
+    --simpeg-primary-foreground: #171717 !important;
+    background: #1B2A4A !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-topbar {
+    background: #1B2A4A !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form {
+    background: #1B2A4A !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-input {
+    background: #243A62 !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-input::placeholder {
+    color: #AEB7C2 !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-login-form-heading h2,
+    .simpeg-login-label,
+    .simpeg-login-field-heading,
+    .simpeg-login-form-footer,
+    .simpeg-login-remember,
+    .simpeg-login-context h2,
+    .simpeg-login-support-trigger span,
+    .simpeg-login-password-toggle
+) {
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-login-form-heading > p:last-child,
+    .simpeg-login-context p,
+    .simpeg-login-support-trigger,
+    .simpeg-login-access-note,
+    .simpeg-login-focus-help
+) {
+    color: #C4CBD4 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-topbar :is(
+    .simpeg-login-brand-name,
+    .simpeg-login-brand-caption,
+    .simpeg-login-topbar-meta
+) {
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-submit {
+    border-color: #FFB81C !important;
+    background: #FFB81C !important;
+    color: #171717 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-submit:hover:not(:disabled),
+html.dark body .simpeg-login-page .simpeg-login-submit:focus-visible {
+    border-color: #FFD166 !important;
+    background: #FFD166 !important;
+    color: #171717 !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-theme-toggle,
+    .simpeg-login-appearance-toggle
+) {
+    background: #243A62 !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page :is(
+    .simpeg-theme-toggle:hover,
+    .simpeg-theme-toggle:focus-visible,
+    .simpeg-login-appearance-toggle:hover,
+    .simpeg-login-appearance-toggle:focus-visible
+) {
+    background: #2A426C !important;
+    border-color: #FFB81C !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-resource-trigger {
+    background: #1B2A4A !important;
+    border-color: rgb(214 226 245 / 0.28) !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-resource-trigger:hover,
+html.dark body .simpeg-login-page .simpeg-login-resource-trigger:focus-visible {
+    background: #243A62 !important;
+    border-color: #FFB81C !important;
+    color: #F1F5F9 !important;
+}
+
+/* -------------------------------------------------------------------------
+ * Cross-role contrast audit
+ * -------------------------------------------------------------------------
+ * Every authenticated role renders through LegacyPageShell, but the pages
+ * inside <main> use a mixture of semantic classes and legacy utilities. Keep
+ * one final contract here so a role-specific page cannot reintroduce a dark
+ * canvas or a light foreground on a paper surface.
+ */
+html.dark body .simpeg-app-canvas,
+html.dark body .simpeg-app-canvas .simpeg-shell-frame,
+html.dark body .simpeg-app-canvas .simpeg-shell-content,
+html.dark body .simpeg-app-canvas .simpeg-shell-content > main,
+html.dark body .simpeg-app-canvas .simpeg-shell-footer {
+    --simpeg-canvas: #F7F5F6 !important;
+    --bg: #F7F5F6 !important;
+    --simpeg-canvas-mid: #F7F5F6 !important;
+    --simpeg-canvas-end: #F7F5F6 !important;
+    --simpeg-form-shell: #F7F5F6 !important;
+    background: #F7F5F6 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas :is(
+    .simpeg-header,
+    .simpeg-sidebar,
+    #primary-navigation.simpeg-sidebar
+) {
+    background: #1B2A4A !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-footer {
+    border-color: #D6E2F5 !important;
+    color: #55668A !important;
+}
+
+/* Profile pages contain a white facts column and pale blue information
+ * fields. Their inherited dark utility foregrounds were the source of the
+ * white-on-white text shown in the profile screenshot. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-profile-hero,
+    .simpeg-profile-navigation,
+    .simpeg-profile-panel
+) {
+    --simpeg-card: #FFFFFF !important;
+    --simpeg-card-soft: #E8F0FD !important;
+    --simpeg-text: #0B1F4B !important;
+    --simpeg-muted: #55668A !important;
+    --simpeg-subtle: #6C7FA3 !important;
+    --simpeg-border: #D6E2F5 !important;
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-profile-facts,
+    .simpeg-profile-fact,
+    .simpeg-profile-records,
+    .simpeg-profile-panel-heading,
+    .simpeg-profile-panel-heading-block
+) {
+    background: #FFFFFF !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-profile-fact span,
+    .simpeg-profile-section-kicker,
+    .simpeg-profile-eyebrow,
+    .simpeg-profile-records p,
+    .simpeg-profile-field dt
+) {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-profile-fact strong,
+    .simpeg-profile-records span,
+    .simpeg-profile-field dd,
+    .simpeg-profile-panel h2,
+    .simpeg-profile-panel h3,
+    .simpeg-profile-panel p
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main .simpeg-profile-field {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main .simpeg-profile-identity {
+    background: #0D5FE0 !important;
+    color: #FFFFFF !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main .simpeg-profile-identity :is(
+    .simpeg-profile-identity-kicker,
+    h2,
+    p,
+    .simpeg-profile-status
+) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-profile-tab:not(.simpeg-profile-tab-active),
+    .simpeg-profile-tab:not(.simpeg-profile-tab-active) span
+) {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-profile-tab-active,
+    .simpeg-profile-tab-active span
+) {
+    background: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* Family approval notices keep their light amber semantic surface instead of
+ * becoming charcoal while the nested table remains paper white. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section:has(#family-pending-title) {
+    background: #FFFBEB !important;
+    border-color: #F5D58A !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section:has(#family-pending-title) :is(
+    #family-pending-title,
+    #family-pending-title + p
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+/* Final dashboard action contract. The shared dashboard action styles are
+ * intentionally limited to secondary actions; keep the primary link blue
+ * with a readable white icon and label in both themes. This is placed in the
+ * utilities layer so it wins over legacy important utility declarations. */
+@layer utilities {
+    html body .simpeg-app-canvas .simpeg-dashboard-hero :is(
+        a.simpeg-dashboard-action--primary,
+        a[data-dashboard-action='primary']
+    ) {
+        background: #0D5FE0 !important;
+        background-color: #0D5FE0 !important;
+        background-image: none !important;
+        border-color: #0D5FE0 !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        opacity: 1 !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-dashboard-hero :is(
+        a.simpeg-dashboard-action--primary,
+        a[data-dashboard-action='primary']
+    ):hover:not(:disabled),
+    html body .simpeg-app-canvas .simpeg-dashboard-hero :is(
+        a.simpeg-dashboard-action--primary,
+        a[data-dashboard-action='primary']
+    ):focus-visible {
+        background: #1688DC !important;
+        background-color: #1688DC !important;
+        border-color: #1688DC !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-dashboard-hero :is(
+        a.simpeg-dashboard-action--primary,
+        a[data-dashboard-action='primary']
+    ) :is(svg, svg *, span, strong) {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        stroke: currentColor !important;
+    }
+}
+
+/* Logout follows the same active/hover treatment as the other sidebar
+ * actions. The old rose utility classes made the user role render a pale
+ * hover surface with white text, so the label and Lucide stroke disappeared.
+ */
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar :is(
+    .simpeg-sidebar-logout:hover,
+    .simpeg-sidebar-logout:focus-visible
+) {
+    background: var(--sb-active-bg, #FFA20F) !important;
+    background-color: var(--sb-active-bg, #FFA20F) !important;
+    border-color: var(--sb-active-bg, #FFA20F) !important;
+    color: var(--sb-active-text, #0B1F4B) !important;
+    -webkit-text-fill-color: var(--sb-active-text, #0B1F4B) !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar :is(
+    .simpeg-sidebar-logout:hover,
+    .simpeg-sidebar-logout:focus-visible
+) :is(.simpeg-sidebar-logout-label, svg, svg *) {
+    color: var(--sb-active-text, #0B1F4B) !important;
+    -webkit-text-fill-color: var(--sb-active-text, #0B1F4B) !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+/* Shared action contract for every authenticated page. A few legacy pages
+ * still add green/amber utility classes to their filter submit button, while
+ * others rely on the primary token. Keep filter and create actions visually
+ * identical in both appearance modes; semantic approve/reject/status controls
+ * are intentionally excluded. */
+html body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-config-primary-action,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    .simpeg-condition-filter__apply,
+    .simpeg-audit-apply,
+    .simpeg-quota-filter-apply,
+    .simpeg-dashboard-action--primary,
+    [data-dashboard-action='primary']
+) {
+    background: #0D5FE0 !important;
+    background-color: #0D5FE0 !important;
+    border-color: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-config-primary-action,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    .simpeg-condition-filter__apply,
+    .simpeg-audit-apply,
+    .simpeg-quota-filter-apply,
+    .simpeg-dashboard-action--primary,
+    [data-dashboard-action='primary']
+):hover:not(:disabled),
+html body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-config-primary-action,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    .simpeg-condition-filter__apply,
+    .simpeg-audit-apply,
+    .simpeg-quota-filter-apply,
+    .simpeg-dashboard-action--primary,
+    [data-dashboard-action='primary']
+):focus-visible {
+    background: #1688DC !important;
+    background-color: #1688DC !important;
+    border-color: #1688DC !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-config-primary-action,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    .simpeg-condition-filter__apply,
+    .simpeg-audit-apply,
+    .simpeg-quota-filter-apply,
+    .simpeg-dashboard-action--primary,
+    [data-dashboard-action='primary']
+) :is(svg, svg *, span, strong) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}
+
+/* Button uses asChild, so the clickable dashboard action is the Link itself.
+ * Keep its blue surface and white label in both themes; otherwise the outline
+ * utility on the rendered anchor can leave a white button with white text. */
+html body .simpeg-app-canvas .simpeg-dashboard-hero a[data-dashboard-action='primary'],
+html body .simpeg-app-canvas .simpeg-dashboard-hero a[data-dashboard-action='primary']:hover:not(:disabled),
+html body .simpeg-app-canvas .simpeg-dashboard-hero a[data-dashboard-action='primary']:focus-visible {
+    background: #0D5FE0 !important;
+    background-color: #0D5FE0 !important;
+    background-image: none !important;
+    border-color: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html body .simpeg-app-canvas .simpeg-dashboard-hero a[data-dashboard-action='primary'] > :is(svg, span),
+html body .simpeg-app-canvas .simpeg-dashboard-hero a[data-dashboard-action='primary'] .simpeg-dashboard-action__label {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-dashboard-hero a[data-dashboard-action='primary']:hover:not(:disabled),
+html body .simpeg-app-canvas .simpeg-dashboard-hero a[data-dashboard-action='primary']:focus-visible {
+    background: #1688DC !important;
+    background-color: #1688DC !important;
+    border-color: #1688DC !important;
+}
+
+/* Secondary toolbar actions use the same pale-blue/ink treatment everywhere,
+ * including import links and the filter trigger. */
+html body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-utility,
+    .simpeg-mobile-filter-toggle,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-section-tab:not(.simpeg-section-tab--active)
+) {
+    background: #E8F0FD !important;
+    background-color: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-utility,
+    .simpeg-mobile-filter-toggle,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-section-tab:not(.simpeg-section-tab--active)
+):hover:not(:disabled),
+html body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-utility,
+    .simpeg-mobile-filter-toggle,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-section-tab:not(.simpeg-section-tab--active)
+):focus-visible {
+    background: #F5F8FE !important;
+    background-color: #F5F8FE !important;
+    border-color: #7DC1FF !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-utility,
+    .simpeg-mobile-filter-toggle,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-section-tab:not(.simpeg-section-tab--active)
+) :is(svg, svg *, span, strong) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+/* Export is a secondary utility, not a primary submit action. */
+html body .simpeg-app-canvas .simpeg-shell-content main .simpeg-export-trigger {
+    background: #E8F0FD !important;
+    background-color: #E8F0FD !important;
+    border-color: #B8CCEA !important;
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main .simpeg-export-trigger:hover:not(:disabled),
+html body .simpeg-app-canvas .simpeg-shell-content main .simpeg-export-trigger:focus-visible {
+    background: #F5F8FE !important;
+    background-color: #F5F8FE !important;
+    border-color: #7DC1FF !important;
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main .simpeg-export-trigger :is(svg, svg *, span, strong) {
+    color: #0D5FE0 !important;
+    -webkit-text-fill-color: #0D5FE0 !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section:has(#family-pending-title) > div > div > table {
+    background: #FFFFFF !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section:has(#family-pending-title) > div > div > table :is(
+    thead,
+    thead tr,
+    thead th,
+    tbody,
+    tbody tr,
+    tbody td
+) {
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section:has(#family-pending-title) > div > div > table :is(thead, thead tr, thead th) {
+    background: #E8F0FD !important;
+    color: #55668A !important;
+}
+
+/* All table-bearing surfaces and their headings share the light-mode paper
+ * treatment across admin, kepala, and user pages. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .simpeg-table-surface,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll,
+    .simpeg-report-page > section:not(.simpeg-filter-only-shell)
+):not(.simpeg-filter-only-shell) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .simpeg-table-surface,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table :is(
+    tbody,
+    tbody tr,
+    tbody th,
+    tbody td,
+    tfoot,
+    tfoot tr,
+    tfoot th,
+    tfoot td
+) {
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    section:has(table),
+    .simpeg-table-surface,
+    .simpeg-table-wrap,
+    .simpeg-profile-table-wrap,
+    .simpeg-audit-table-card,
+    .simpeg-audit-table-wrap,
+    .simpeg-role-table-card,
+    .simpeg-role-table-scroll,
+    .simpeg-quota-table-wrap,
+    .simpeg-access-matrix__table-scroll
+):not(.simpeg-filter-only-shell) table :is(thead, thead tr, thead th) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #55668A !important;
+}
+
+/* Utility surfaces, filters, and outline actions must remain readable when
+ * a page is rendered by a restricted role with a reduced navigation set. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-utility,
+    .simpeg-mobile-filter-toggle,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-section-tabs,
+    .simpeg-section-tab:not(.simpeg-section-tab--active)
+) {
+    background: #E8F0FD !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-utility,
+    .simpeg-mobile-filter-toggle,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-section-tabs,
+    .simpeg-section-tab:not(.simpeg-section-tab--active)
+) :is(svg, svg *, span, strong) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply
+) {
+    background: #0D5FE0 !important;
+    border-color: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply
+) :is(svg, svg *, span, strong) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}
+
+/* Restore the light-mode warning treatment after the generic table-surface
+ * rule above, without allowing its foreground to fall back to dark-theme
+ * text tokens. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section:has(#family-pending-title) {
+    background: #FFFBEB !important;
+    border-color: #F5D58A !important;
+    color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section:has(#family-pending-title) :is(
+    #family-pending-title,
+    #family-pending-title + p
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+/* Employee list: the generic table-surface rule above also matches the
+ * section that owns the filter controls. Keep that outer wrapper transparent
+ * so dark mode does not create a large white block around the Filter button;
+ * the direct table wrapper remains the intentional data surface. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section.employees-index-page {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    color: #0B1F4B !important;
+    box-shadow: none !important;
+}
+
+/* Keep the configured Ink rail consistent across Inertia navigations. The
+ * dashboard reference styling uses the light-mode blue brand rail, but older
+ * pages otherwise resolve Ink to the dark-mode gray rail. */
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar[data-sidebar-color="ink"] {
+    --simpeg-sidebar: #0B3D80 !important;
+    --simpeg-sidebar-bg: #0B3D80 !important;
+    --simpeg-sidebar-ink: #F8FBFF !important;
+    --simpeg-sidebar-muted: #B8CBE3 !important;
+    --simpeg-sidebar-border: #174F91 !important;
+    --sb-text: #F8FBFF !important;
+    --sb-label: #B8CBE3 !important;
+    --sb-hover: rgb(255 255 255 / 0.10) !important;
+    --sb-active-bg: #FFA20F !important;
+    --sb-active-text: #0B1F4B !important;
+    background: #0B3D80 !important;
+    background-color: #0B3D80 !important;
+    background-image: none !important;
+    border-right-color: #174F91 !important;
+    color: #F8FBFF !important;
+}
+
+/* The employee list section contains both the filter toolbar and the table.
+ * Generic table-surface selectors see the table and paint the whole section
+ * white, which creates the empty white block beside/above Filter. The table
+ * wrapper owns the paper surface; the surrounding section and controls must
+ * stay on the workspace canvas in either theme. */
+html body .simpeg-app-canvas .simpeg-shell-content main section.employees-index-page,
+html body .simpeg-app-canvas .simpeg-shell-content main > .employees-index-controls,
+html body .simpeg-app-canvas .simpeg-shell-content main section.employees-index-page > .employees-index-controls,
+html body .simpeg-app-canvas .simpeg-shell-content main section.employees-index-page > .employees-index-controls > form.employees-index-filter-box {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}

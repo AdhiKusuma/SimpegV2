@@ -6,7 +6,9 @@
     };
     $monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     $month = $monthLabels[max(0, min(11, ((int) ($slip['bulan'] ?? 1)) - 1))].'-'.str_pad((string) (((int) ($slip['tahun'] ?? 0)) % 100), 2, '0', STR_PAD_LEFT);
-    $logoPath = public_path('images/logo-simpeg.png');
+    // The payslip renders the logo at 53pt; keep the embedded source small so
+    // Dompdf does not decode a 1254px asset for a low-resolution print slot.
+    $logoPath = public_path('images/logo-simpeg-256.png');
     $logo = is_file($logoPath) ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath)) : null;
     $earnings = array_values($slip['earnings'] ?? []);
     $deductions = array_values($slip['deductions'] ?? []);

@@ -375,7 +375,7 @@ class FilesController extends Controller
     private function officeScope(Request $request): array
     {
         $role = strtolower((string) $request->session()->get('hak_akses'));
-        if (in_array($role, ['admin', 'superadmin'], true)) {
+        if (in_array($role, ['admin', 'superadmin', 'it_admin'], true)) {
             return ['restricted' => false, 'codes' => [], 'label' => null];
         }
 

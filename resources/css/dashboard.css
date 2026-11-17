@@ -38,11 +38,11 @@
     background: var(--simpeg-card);
     border: 1px solid var(--simpeg-border);
     border-radius: 1rem;
-    box-shadow: 0 24px 72px rgb(15 23 42 / 24%);
+    box-shadow: var(--simpeg-shadow-modal);
 }
 
 .simpeg-tenure-dialog::backdrop {
-    background: rgb(15 23 42 / 48%);
+    background: var(--simpeg-backdrop);
     backdrop-filter: blur(3px);
 }
 
@@ -91,36 +91,36 @@
 .simpeg-app-canvas:has(.simpeg-dashboard-shell),
 .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-frame,
 .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-content {
-    background: #ffffff !important;
-    color: #18181b;
+    background: var(--simpeg-surface) !important;
+    color: var(--simpeg-text);
 }
 
 html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell),
 html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-frame,
 html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-content {
-    background: #080808 !important;
-    color: #fafafa;
+    background: var(--simpeg-surface) !important;
+    color: var(--simpeg-text);
 }
 
 .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-header {
-    background: #ffffff !important;
-    border-color: #e4e4e7 !important;
+    background: var(--simpeg-header) !important;
+    border-color: var(--simpeg-border) !important;
     backdrop-filter: none;
 }
 
 html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-header {
-    background: #080808 !important;
-    border-color: #27272a !important;
+    background: var(--simpeg-header) !important;
+    border-color: var(--simpeg-border) !important;
 }
 
 .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-sidebar {
-    background: #ffffff !important;
-    border-color: #e4e4e7 !important;
+    background: var(--simpeg-sidebar-bg) !important;
+    border-color: var(--simpeg-sidebar-border) !important;
 }
 
 html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-sidebar {
-    background: #080808 !important;
-    border-color: #27272a !important;
+    background: var(--simpeg-sidebar-bg) !important;
+    border-color: var(--simpeg-border) !important;
 }
 
 .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell {
@@ -131,40 +131,40 @@ html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-sidebar {
 .simpeg-dashboard-shell .simpeg-card,
 .simpeg-dashboard-shell .simpeg-card-soft {
     border-radius: 0.75rem !important;
-    box-shadow: 0 1px 2px rgb(24 24 27 / 0.04);
+    box-shadow: var(--simpeg-shadow-card);
 }
 
 .simpeg-dashboard-shell .simpeg-card {
-    background: #ffffff !important;
-    border-color: #e4e4e7 !important;
+    background: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
 }
 
 .simpeg-dashboard-shell .simpeg-card-soft {
-    background: #fafafa !important;
-    border-color: #e4e4e7 !important;
+    background: var(--simpeg-card-soft) !important;
+    border-color: var(--simpeg-border) !important;
 }
 
 html.dark .simpeg-dashboard-shell .simpeg-card,
 html.dark .simpeg-dashboard-shell .simpeg-card-soft {
-    background: #101012 !important;
-    border-color: #27272a !important;
+    background: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
     box-shadow: none;
 }
 
 html.dark .simpeg-dashboard-shell .simpeg-card-soft {
-    background: #18181b !important;
+    background: var(--simpeg-card-soft) !important;
 }
 
 .simpeg-dashboard-shell .simpeg-dashboard-card-header,
 .simpeg-dashboard-shell .simpeg-dashboard-card-content,
 .simpeg-dashboard-shell .simpeg-border {
-    border-color: #e4e4e7 !important;
+    border-color: var(--simpeg-border) !important;
 }
 
 html.dark .simpeg-dashboard-shell .simpeg-dashboard-card-header,
 html.dark .simpeg-dashboard-shell .simpeg-dashboard-card-content,
 html.dark .simpeg-dashboard-shell .simpeg-border {
-    border-color: #27272a !important;
+    border-color: var(--simpeg-border) !important;
 }
 
 .simpeg-dashboard-shell .simpeg-primary {
@@ -178,52 +178,53 @@ html.dark .simpeg-dashboard-shell .simpeg-border {
     border-color: var(--simpeg-primary-hover) !important;
 }
 
-.simpeg-dashboard-shell .simpeg-dashboard-action,
-.simpeg-dashboard-shell .simpeg-dashboard-action:hover:not(:disabled),
-.simpeg-dashboard-shell .simpeg-dashboard-action:focus-visible {
-    background: var(--simpeg-primary) !important;
-    border-color: var(--simpeg-primary) !important;
-    color: var(--simpeg-primary-foreground) !important;
+.simpeg-dashboard-shell .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary),
+.simpeg-dashboard-shell .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary):hover:not(:disabled),
+.simpeg-dashboard-shell .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary):focus-visible {
+    background: transparent !important;
+    border-color: var(--simpeg-primary-border) !important;
+    color: var(--simpeg-primary) !important;
 }
 
-.simpeg-dashboard-shell .simpeg-dashboard-action:hover:not(:disabled),
-.simpeg-dashboard-shell .simpeg-dashboard-action:focus-visible {
-    background: var(--simpeg-primary-hover) !important;
-    border-color: var(--simpeg-primary-hover) !important;
+.simpeg-dashboard-shell .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary):hover:not(:disabled),
+.simpeg-dashboard-shell .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary):focus-visible {
+    background: var(--simpeg-primary-soft) !important;
+    border-color: var(--simpeg-primary) !important;
+    color: var(--simpeg-primary-hover) !important;
 }
 
 .simpeg-dashboard-shell .simpeg-utility,
 .simpeg-dashboard-shell .simpeg-theme-toggle {
     background: transparent !important;
-    border-color: #d4d4d8 !important;
-    color: #27272a !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
     box-shadow: none !important;
 }
 
 .simpeg-dashboard-shell .simpeg-utility:hover,
 .simpeg-dashboard-shell .simpeg-theme-toggle:hover {
-    background: #f4f4f5 !important;
-    border-color: #a1a1aa !important;
+    background: var(--simpeg-hover-surface) !important;
+    border-color: var(--simpeg-hover-border) !important;
 }
 
 html.dark .simpeg-dashboard-shell .simpeg-utility,
 html.dark .simpeg-dashboard-shell .simpeg-theme-toggle {
-    border-color: #3f3f46 !important;
-    color: #f4f4f5 !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
 }
 
 html.dark .simpeg-dashboard-shell .simpeg-utility:hover,
 html.dark .simpeg-dashboard-shell .simpeg-theme-toggle:hover {
-    background: #18181b !important;
-    border-color: #52525b !important;
+    background: var(--simpeg-hover-surface) !important;
+    border-color: var(--simpeg-hover-border) !important;
 }
 
 .simpeg-dashboard-shell .simpeg-track {
-    background: #e4e4e7 !important;
+    background: var(--simpeg-track) !important;
 }
 
 html.dark .simpeg-dashboard-shell .simpeg-track {
-    background: #27272a !important;
+    background: var(--simpeg-track) !important;
 }
 
 .simpeg-dashboard-shell .simpeg-progress-fill {
@@ -231,7 +232,7 @@ html.dark .simpeg-dashboard-shell .simpeg-track {
 }
 
 html.dark .simpeg-dashboard-shell [class~="bg-[#F7F5F0]/70"] {
-    background: #18181b !important;
+    background: var(--simpeg-card-soft) !important;
 }
 
 /* Quiet metric cards and compact status badges, following the reference layout. */
@@ -265,8 +266,8 @@ html.dark .simpeg-dashboard-shell [class~="bg-[#F7F5F0]/70"] {
 }
 
 html.dark .simpeg-dashboard-shell .simpeg-tenure-dialog {
-    background: #101012;
-    border-color: #27272a;
-    box-shadow: 0 24px 72px rgb(0 0 0 / 0.5);
+    background: var(--simpeg-card);
+    border-color: var(--simpeg-border);
+    box-shadow: var(--simpeg-shadow-modal);
 }
 }

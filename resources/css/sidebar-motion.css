@@ -1,0 +1,113 @@
+/* Keep the desktop rail animation predictable. The sidebar owns the flex
+ * basis as well as its visual width, so the content column follows it when
+ * the full navigation is restored. */
+@media (min-width: 1024px) {
+    .simpeg-app-canvas .simpeg-sidebar {
+        contain: layout paint;
+        flex: 0 0 18rem !important;
+        transition-property: width, flex-basis !important;
+        transition-duration: 220ms !important;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+        will-change: width, flex-basis;
+    }
+
+    /* Let the shell own the layout animation. Child width, padding, gap, and
+     * margin transitions multiply reflow work and create the laggy feeling. */
+    .simpeg-app-canvas .simpeg-sidebar :is(
+        .simpeg-sidebar-inner,
+        .simpeg-sidebar-brand,
+        .simpeg-sidebar-brand-link,
+        .simpeg-sidebar-logo,
+        .simpeg-sidebar-collapse-toggle,
+        .simpeg-sidebar-nav-scroll,
+        .simpeg-sidebar-nav,
+        .simpeg-sidebar-nav-link,
+        .simpeg-sidebar-group-trigger,
+        .simpeg-sidebar-profile,
+        .simpeg-sidebar-logout
+    ) {
+        transition-property: background-color, border-color, box-shadow, color, opacity, transform !important;
+        transition-duration: 160ms !important;
+        transition-timing-function: ease-out !important;
+    }
+
+    /* When the collapsed rail is opened, let the shell reflow with it instead
+     * of leaving the page underneath an overlay-sized sidebar. */
+    .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-hover-expanded {
+        width: 18rem !important;
+        flex: 0 0 18rem !important;
+        contain: layout paint;
+        overflow: hidden !important;
+        z-index: auto !important;
+        border-right-color: var(--simpeg-border) !important;
+    }
+
+    .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-hover-expanded > .simpeg-sidebar-inner {
+        width: 18rem;
+        min-width: 18rem;
+        max-width: 18rem;
+        flex: 1 0 18rem;
+        overflow-x: hidden;
+        background: var(--simpeg-sidebar) !important;
+        border-right: 1px solid var(--simpeg-border);
+        box-shadow: none;
+    }
+
+    .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-collapsed > .simpeg-sidebar-inner {
+        width: 4.5rem;
+        min-width: 4.5rem;
+        max-width: 4.5rem;
+        flex-basis: 4.5rem;
+        overflow-x: hidden;
+        transition-property: width, min-width, max-width, flex-basis !important;
+        transition-duration: 220ms !important;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
+
+    .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-hover-expanded > .simpeg-sidebar-inner {
+        transition-property: width, min-width, max-width, flex-basis !important;
+        transition-duration: 220ms !important;
+        transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
+
+    .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-collapsed {
+        width: 4.5rem !important;
+        flex: 0 0 4.5rem !important;
+    }
+
+    .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-hover-expanded :is(
+        .simpeg-sidebar-brand-details,
+        .simpeg-sidebar-section-label,
+        .simpeg-sidebar-nav-label,
+        .simpeg-sidebar-group-label,
+        .simpeg-sidebar-group-chevron,
+        .simpeg-sidebar-profile-details,
+        .simpeg-sidebar-logout-label
+    ) {
+        transition-delay: 70ms;
+    }
+
+    .simpeg-app-canvas .simpeg-sidebar :is(
+        .simpeg-sidebar-brand-details,
+        .simpeg-sidebar-section-label,
+        .simpeg-sidebar-nav-label,
+        .simpeg-sidebar-group-label,
+        .simpeg-sidebar-group-chevron,
+        .simpeg-sidebar-active-indicator,
+        .simpeg-sidebar-profile-details,
+        .simpeg-sidebar-logout-label
+    ) {
+        transition-property: opacity, visibility, transform !important;
+        transition-duration: 140ms !important;
+        transition-timing-function: ease-out !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .simpeg-app-canvas .simpeg-sidebar,
+    .simpeg-app-canvas .simpeg-sidebar * {
+        transition-duration: 1ms !important;
+        animation-duration: 1ms !important;
+        scroll-behavior: auto !important;
+    }
+}

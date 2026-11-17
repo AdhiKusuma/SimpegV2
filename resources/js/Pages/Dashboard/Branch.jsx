@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import { Activity, ArrowUpRight, FileBarChart2, UsersRound } from 'lucide-react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import { Badge } from '../../Components/ui/badge';
-import { buttonVariants } from '../../Components/ui/button';
+import { Button, buttonVariants } from '../../Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../Components/ui/card';
 import { NumberTicker } from '../../Components/ui/number-ticker';
 
@@ -47,10 +47,12 @@ export default function BranchDashboard({ stats = [], tenure = [], year, unit, s
                             <h1 id="branch-dashboard-title" className="simpeg-text text-3xl font-medium sm:text-4xl">Ruang kerja kepala cabang</h1>
                             <p className="simpeg-muted mt-3 max-w-2xl text-sm leading-6 sm:text-base">Ringkasan unit kerja {unit || 'belum ditentukan'} untuk tahun {year}.</p>
                         </div>
-                        <Link href="/laporan/nominatif" className={buttonVariants({ variant: 'default', className: 'simpeg-dashboard-action' })}>
-                            <FileBarChart2 className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                            Laporan nominatif
-                        </Link>
+                        <Button asChild variant="outline" className="simpeg-dashboard-action whitespace-nowrap">
+                            <Link href="/laporan/nominatif">
+                                <FileBarChart2 className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                                Laporan nominatif
+                            </Link>
+                        </Button>
                     </div>
                 </section>
 

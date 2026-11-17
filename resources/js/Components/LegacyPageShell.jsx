@@ -1,15 +1,14 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    Activity,
+    ArrowLeft,
+    ArrowRight,
     Banknote,
     Bell,
     BriefcaseBusiness,
-    Building2,
     ChevronDown,
     ChevronRight,
     ClipboardCheck,
     ClipboardList,
-    CalendarClock,
     FileBarChart2,
     FileText,
     GraduationCap,
@@ -18,11 +17,12 @@ import {
     Menu,
     PanelLeftClose,
     PanelLeftOpen,
+    Palette,
     Search,
     Settings2,
     ShieldAlert,
-    ShieldCheck,
     SlidersHorizontal,
+    RefreshCw,
     UserRound,
     UsersRound,
     X,
@@ -34,7 +34,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '../Components/ui/input';
 import LiveDateTime from './LiveDateTime';
 import ProfileAvatar from './ProfileAvatar';
-import ThemeToggle from './ThemeToggle';
+import SectionTabs from './SectionTabs';
+import ThemeToggle, { applyAppearancePreferences, applyConfiguredTheme } from './ThemeToggle';
 
 const navItem = (href, label, icon, options = {}) => ({ href, label, icon, permission: permissionForHref(href), ...options });
 
@@ -59,12 +60,16 @@ function permissionForHref(href) {
     if (href === '/payroll/edit') return 'payroll.view';
     if (href === '/payroll/approvals') return 'payroll.approval.manage';
     if (href === '/payroll/publications') return 'payroll.view';
-    if (href === '/files') return 'profile.view';
+    // Slip Gaji is an administrative payroll view. Keep it separate from
+    // personal profile/data-diri permissions so a role cannot see the menu
+    // and then receive a controller-level 403 merely because it lacks payroll.view.
+    if (href === '/files') return 'payroll.view';
     if (href === '/files/data-diri') return 'profile.view';
     if (href === '/profile/data-diri') return 'profile.view';
     if (href === '/profile/slip-gaji') return 'profile.view';
     if (href === '/users') return 'users.view';
     if (href === '/users/access') return 'users.manage';
+    if (href === '/audit-log') return 'audit.view';
     if (href === '/config/aplikasi') return 'config.manage';
     if (href === '/config/kuota-jabatan') return 'positions.quota.manage';
     if (href === '/otorisasi') return 'authorization.view';
@@ -87,6 +92,11 @@ function filterNavigation(items, permissions, role = '') {
         if (item.items && children.length === 0) {
             return filtered;
         }
+        const resolvedHref = item.hrefOptions?.find((href) => {
+            const permission = permissionForHref(href);
+
+            return !permission || permissions.includes(permission);
+        }) || item.href;
         const hasPermission = Array.isArray(item.permission)
             ? item.permission.some((permission) => permissions.includes(permission))
             : permissions.includes(item.permission);
@@ -94,100 +104,212 @@ function filterNavigation(items, permissions, role = '') {
             return filtered;
         }
 
-        filtered.push({ ...item, ...(item.items ? { items: children } : {}) });
+        filtered.push({ ...item, ...(resolvedHref ? { href: resolvedHref } : {}), ...(item.items ? { items: children } : {}) });
 
         return filtered;
     }, []);
 }
 
-const navigationCatalog = [
-    navItem('/dashboard', 'Dashboard', LayoutDashboard),
+const sectionTabGroups = [
     {
-        label: 'Data Pegawai',
-        icon: UsersRound,
+        ariaLabel: 'Status data pegawai',
+        matches: ['/pegawai'],
         items: [
-            navItem('/pegawai', 'Daftar Pegawai', UsersRound),
-            navItem('/pengangkatan', 'Pengangkatan Pegawai', BriefcaseBusiness),
-            navItem('/mutasi', 'Penonaktifan', UserRound),
+            { href: '/pegawai?tab=active', label: 'Aktif', activePaths: ['/pegawai'], activeWhen: (url) => (new URLSearchParams(String(url || '').split('?')[1] || '').get('tab') || 'active') === 'active', permission: 'employees.view' },
+            { href: '/pegawai?tab=nonjob', label: 'Belum Ada Jabatan', activePaths: ['/pegawai'], activeWhen: (url) => new URLSearchParams(String(url || '').split('?')[1] || '').get('tab') === 'nonjob', permission: 'employees.view' },
+            { href: '/pegawai?tab=purna', label: 'Purna', activePaths: ['/pegawai'], activeWhen: (url) => new URLSearchParams(String(url || '').split('?')[1] || '').get('tab') === 'purna', permission: 'employees.view' },
         ],
     },
     {
-        label: 'Master Data',
-        icon: Building2,
+        ariaLabel: 'Data keluarga',
+        matches: ['/keluarga'],
+        items: [
+            { href: '/keluarga/anak', label: 'Data Anak', preserveQuery: ['uid'], permission: 'family.view' },
+            { href: '/keluarga/suami-istri', label: 'Suami/Istri', preserveQuery: ['uid'], permission: 'family.view' },
+            { href: '/keluarga/orang-tua', label: 'Orang Tua', preserveQuery: ['uid'], permission: 'family.view' },
+        ],
+    },
+    {
+        ariaLabel: 'Mutasi kepegawaian',
+        matches: ['/pengangkatan', '/mutasi'],
+        items: [
+            { href: '/pengangkatan', label: 'Pengangkatan', permission: 'appointments.view' },
+            { href: '/mutasi', label: 'Penonaktifan', permission: 'mutations.view' },
+        ],
+    },
+    {
+        ariaLabel: 'Pengembangan kompetensi',
+        matches: ['/diklat', '/biaya-pendidikan', '/sertifikasi'],
+        items: [
+            { href: '/diklat', label: 'Pelatihan', permission: 'training.view' },
+            { href: '/biaya-pendidikan', label: 'Kegiatan Diklat', permission: 'training_costs.view' },
+            { href: '/sertifikasi', label: 'Sertifikasi', permission: 'certifications.view' },
+        ],
+    },
+    {
+        ariaLabel: 'Laporan kepegawaian',
+        matches: ['/laporan/nominatif', '/laporan/keadaan', '/laporan/formasi'],
+        items: [
+            { href: '/laporan/nominatif', label: 'Laporan Kepegawaian', permission: 'reports.nominative' },
+            { href: '/laporan/keadaan', label: 'Keadaan Pegawai', permission: 'reports.condition' },
+            { href: '/laporan/formasi', label: 'Formasi Jabatan', permission: 'reports.formation' },
+        ],
+    },
+    {
+        ariaLabel: 'Laporan diklat',
+        matches: ['/laporan/rekap-diklat', '/laporan/rekap-biaya-pendidikan'],
+        items: [
+            { href: '/laporan/rekap-diklat', label: 'Pelatihan Pegawai', permission: 'reports.training' },
+            { href: '/laporan/rekap-biaya-pendidikan', label: 'Daftar Diklat', permission: 'reports.education' },
+        ],
+    },
+    {
+        ariaLabel: 'Manajemen payroll',
+        matches: ['/payroll'],
         items: [
             {
-                label: 'Keluarga',
-                icon: UsersRound,
-                items: [
-                    navItem('/keluarga/suami-istri', 'Suami Istri', UsersRound),
-                    navItem('/keluarga/anak', 'Anak', UsersRound),
-                    navItem('/keluarga/orang-tua', 'Orang Tua', UsersRound),
-                ],
+                href: '/payroll',
+                label: 'Payroll',
+                permission: 'payroll.view',
+                activePaths: ['/payroll'],
+                excludePaths: ['/payroll/edit', '/payroll/approvals', '/payroll/publications'],
             },
-            navItem('/jabatan', 'Jabatan', BriefcaseBusiness),
-            navItem('/pendidikan', 'Pendidikan', GraduationCap),
-            navItem('/diklat', 'Pelatihan', GraduationCap),
-            navItem('/biaya-pendidikan', 'Daftar Kegiatan Diklat', ClipboardList),
-            navItem('/sertifikasi', 'Sertifikasi', ShieldCheck),
-            navItem('/pelanggaran', 'Pelanggaran', ShieldAlert),
+            { href: '/payroll/edit', label: 'Edit Payroll', permission: 'payroll.view' },
+            { href: '/payroll/approvals', label: 'Approval Payroll', permission: 'payroll.approval.manage' },
+            { href: '/payroll/publications', label: 'Publikasi Slip', permission: 'payroll.view' },
         ],
     },
     {
-        label: 'Laporan',
-        icon: FileBarChart2,
+        ariaLabel: 'Dokumen pegawai',
+        matches: ['/files'],
         items: [
-            navItem('/laporan/nominatif', 'Kepegawaian', FileBarChart2),
-            navItem('/laporan/keadaan', 'Keadaan Pegawai', Activity),
-            navItem('/laporan/formasi', 'Formasi Jabatan', BriefcaseBusiness),
-            navItem('/laporan/rekap-diklat', 'Pelatihan Pegawai', GraduationCap),
-            navItem('/laporan/rekap-biaya-pendidikan', 'Daftar Diklat', ClipboardList),
+            { href: '/files', label: 'Slip Gaji', permission: 'payroll.view', activePaths: ['/files'], excludePaths: ['/files/data-diri'] },
+            { href: '/files/data-diri', label: 'Data Diri', permission: 'profile.view' },
         ],
     },
     {
-        label: 'Master Gaji',
-        icon: Banknote,
+        ariaLabel: 'Manajemen user',
+        matches: ['/users'],
         items: [
-            navItem('/payroll', 'Payroll', Banknote),
-            navItem('/payroll/edit', 'Edit Payroll', Banknote),
-            navItem('/payroll/approvals', 'Approval Payroll', ClipboardCheck),
-            navItem('/payroll/publications', 'Publikasi & Pengiriman Slip', CalendarClock),
+            { href: '/users', label: 'Daftar User', permission: 'users.view', activePaths: ['/users'], excludePaths: ['/users/access'] },
+            { href: '/users/access', label: 'Matriks Akses', permission: 'users.manage' },
         ],
     },
     {
-        label: 'FILES',
-        icon: FileText,
+        ariaLabel: 'Profil saya',
+        matches: ['/profile', '/pengajuan'],
         items: [
-            navItem('/files', 'Slip Gaji', FileText, { matchDescendants: true, excludeDescendants: ['/files/data-diri'] }),
-            navItem('/files/data-diri', 'Data Diri', FileText, { matchDescendants: true }),
-        ],
-    },
-    navItem('/otorisasi', 'Approval Pengajuan', ClipboardCheck),
-    navItem('/pengajuan', 'Riwayat Pengajuan', ClipboardList),
-    {
-        label: 'Data User',
-        icon: UserRound,
-        items: [
-            navItem('/users', 'Daftar User', UserRound),
-            navItem('/users/access', 'Matriks akses', ShieldCheck),
-        ],
-    },
-    navItem('/config/aplikasi', 'Pengaturan Aplikasi', Settings2),
-    navItem('/config/kuota-jabatan', 'Kuota Jabatan', SlidersHorizontal),
-    {
-        label: 'Profil Saya',
-        icon: UserRound,
-        items: [
-            navItem('/profile', 'Biodata Saya', UserRound),
-            navItem('/profile/data-diri', 'Data Diri Saya', FileText, { matchDescendants: true, roles: ['admin', 'superadmin', 'kepala'] }),
-            navItem('/profile/slip-gaji', 'Slip Gaji Saya', FileText, { matchDescendants: true, roles: ['admin', 'superadmin', 'kepala'] }),
+            { href: '/profile', label: 'Biodata Saya', permission: 'profile.view', activePaths: ['/profile'], excludePaths: ['/profile/data-diri', '/profile/slip-gaji'] },
+            { href: '/profile/data-diri', label: 'Data Diri Saya', permission: 'profile.view', roles: ['admin', 'superadmin', 'kepala'] },
+            { href: '/pengajuan', label: 'Riwayat Pengajuan', permission: 'authorization.history' },
+            { href: '/profile/slip-gaji', label: 'Slip Gaji Saya', permission: 'profile.view', roles: ['admin', 'superadmin', 'kepala'] },
         ],
     },
 ];
 
-function routeIsActive(url, href, allowDescendantMatch = false, excludeDescendants = []) {
+function sectionTabsForPath(url, permissions, role) {
+    const path = String(url || '').split('?')[0].replace(/\/$/, '') || '/';
+    const group = sectionTabGroups.find((candidate) => candidate.matches.some((prefix) => path === prefix || path.startsWith(`${prefix}/`)));
+
+    if (!group) return null;
+
+    const visibleItems = group.items.filter((item) => {
+        const roleAllowed = !item.roles || item.roles.includes(String(role || '').toLowerCase());
+        return roleAllowed && permissions.includes(item.permission);
+    });
+
+    return visibleItems.length > 1 ? { ...group, items: visibleItems } : null;
+}
+
+const navigationCatalog = [
+    navItem('/dashboard', 'Dashboard', LayoutDashboard),
+    {
+        label: 'Kepegawaian',
+        icon: UsersRound,
+        items: [
+            navItem('/pegawai', 'Data Pegawai', UsersRound),
+            navItem('/mutasi', 'Mutasi Kepegawaian', BriefcaseBusiness, {
+                permission: ['appointments.view', 'mutations.view'],
+                hrefOptions: ['/mutasi', '/pengangkatan'],
+                activePrefixes: ['/pengangkatan', '/mutasi'],
+                matchDescendants: true,
+            }),
+            // Satu pintu untuk seluruh data keluarga. Tab Anak, Suami/Istri,
+            // dan Orang Tua tetap tersedia di dalam halaman Keluarga.
+            navItem('/keluarga/suami-istri', 'Keluarga', UsersRound, { activePrefixes: ['/keluarga/'], matchDescendants: true }),
+            navItem('/jabatan', 'Jabatan', BriefcaseBusiness),
+            navItem('/pendidikan', 'Pendidikan', GraduationCap),
+            navItem('/pelanggaran', 'Pelanggaran', ShieldAlert),
+        ],
+    },
+    {
+        label: 'Diklat',
+        icon: GraduationCap,
+        items: [
+            navItem('/diklat', 'Pengembangan Kompetensi', GraduationCap, {
+                permission: ['training.view', 'training_costs.view', 'certifications.view'],
+                hrefOptions: ['/diklat', '/biaya-pendidikan', '/sertifikasi'],
+                activePrefixes: ['/diklat', '/biaya-pendidikan', '/sertifikasi'],
+                matchDescendants: true,
+            }),
+            navItem('/laporan/rekap-diklat', 'Laporan Diklat', FileBarChart2, {
+                permission: ['reports.training', 'reports.education'],
+                hrefOptions: ['/laporan/rekap-diklat', '/laporan/rekap-biaya-pendidikan'],
+                activePrefixes: ['/laporan/rekap-diklat', '/laporan/rekap-biaya-pendidikan'],
+                matchDescendants: true,
+            }),
+        ],
+    },
+    navItem('/laporan/nominatif', 'Laporan', FileBarChart2, {
+        permission: ['reports.nominative', 'reports.condition', 'reports.formation'],
+        hrefOptions: ['/laporan/nominatif', '/laporan/keadaan', '/laporan/formasi'],
+        activePrefixes: ['/laporan/nominatif', '/laporan/keadaan', '/laporan/formasi'],
+        matchDescendants: true,
+    }),
+    navItem('/payroll', 'Payroll', Banknote, {
+        permission: ['payroll.view', 'payroll.approval.manage'],
+        hrefOptions: ['/payroll', '/payroll/edit', '/payroll/approvals', '/payroll/publications'],
+        activePrefixes: ['/payroll'],
+        matchDescendants: true,
+    }),
+    navItem('/files', 'Files', FileText, {
+        permission: ['payroll.view', 'profile.view'],
+        hrefOptions: ['/files', '/files/data-diri'],
+        activePrefixes: ['/files'],
+        matchDescendants: true,
+        excludeDescendants: ['/files/data-diri'],
+    }),
+    {
+        label: 'Administrasi',
+        icon: Settings2,
+        items: [
+            navItem('/otorisasi', 'Approval Pengajuan', ClipboardCheck),
+            navItem('/users', 'Data User', UserRound, {
+                permission: ['users.view', 'users.manage'],
+                hrefOptions: ['/users', '/users/access'],
+                activePrefixes: ['/users'],
+                matchDescendants: true,
+            }),
+            navItem('/config/kuota-jabatan', 'Kuota Jabatan', SlidersHorizontal),
+            navItem('/audit-log', 'Audit Log', ClipboardList),
+        ],
+    },
+    // Tampilan & tema is a standalone destination so appearance controls
+    // are discoverable without expanding the administration group.
+    navItem('/config/aplikasi', 'Tampilan & Tema', Palette),
+    navItem('/profile', 'Profil Saya', UserRound, {
+        permission: ['profile.view', 'authorization.history'],
+        hrefOptions: ['/profile', '/pengajuan'],
+        activePrefixes: ['/profile', '/pengajuan'],
+        matchDescendants: true,
+    }),
+];
+
+function routeIsActive(url, href, allowDescendantMatch = false, excludeDescendants = [], activePrefixes = []) {
     const path = (url || '').split('?')[0];
 
     if (path === href) return true;
+    if (activePrefixes.some((prefix) => path === prefix || path.startsWith(prefix))) return true;
     if (!allowDescendantMatch || !path.startsWith(`${href}/`)) return false;
 
     return !excludeDescendants.some((excludedPath) => path === excludedPath || path.startsWith(`${excludedPath}/`));
@@ -196,7 +318,7 @@ function routeIsActive(url, href, allowDescendantMatch = false, excludeDescendan
 function navigationItemIsActive(item, url, allowDescendantMatch = false) {
     return item.items
         ? item.items.some((child) => navigationItemIsActive(child, url, true))
-        : routeIsActive(url, item.href, allowDescendantMatch || item.matchDescendants === true, item.excludeDescendants || []);
+        : routeIsActive(url, item.href, allowDescendantMatch || item.matchDescendants === true, item.excludeDescendants || [], item.activePrefixes || []);
 }
 
 function NavigationEntry({ item, url, onNavigate, onExpandSidebar, depth = 0, sidebarCollapsed = false }) {
@@ -279,6 +401,20 @@ export default function LegacyPageShell({ title, children }) {
     const [searchOpen, setSearchOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [globalSearch, setGlobalSearch] = useState('');
+    const [isDarkTheme, setIsDarkTheme] = useState(() => typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
+
+    useEffect(() => {
+        if (typeof document === 'undefined') {
+            return undefined;
+        }
+
+        const syncTheme = () => setIsDarkTheme(document.documentElement.classList.contains('dark'));
+        const observer = new MutationObserver(syncTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        syncTheme();
+
+        return () => observer.disconnect();
+    }, []);
     const user = auth?.user ?? {};
     const permissions = user.permissions || [];
     const canSearchEmployees = permissions.includes('employees.view');
@@ -290,13 +426,23 @@ export default function LegacyPageShell({ title, children }) {
         ? '/dashboard'
         : '/profile';
     const navigation = filterNavigation(navigationCatalog, permissions, user.hak_akses);
+    const sectionTabs = useMemo(() => sectionTabsForPath(url, permissions, user.hak_akses), [url, permissions, user.hak_akses]);
     const displayName = user.nama_user || 'Pengguna SIMPEG';
-    const roleLabel = user.hak_akses || 'Pengguna';
+    const roleLabel = user.role_label || user.hak_akses || 'Pengguna';
     const appName = appConfig?.name || 'SIMPEG';
-    const appAlias = appConfig?.alias || 'SIMPEG';
-    const appDescription = appConfig?.description || 'Kepegawaian';
-    const appLogoUrl = appConfig?.logoUrl || '/images/logo-simpeg-256.png';
-    const darkAppLogoUrl = appConfig?.darkLogoUrl || '/images/logo-simpeg-256-dark.png';
+    const websiteUrl = appConfig?.websiteUrl || '';
+    const footerText = appConfig?.footerText || `${appName} · Sistem Kepegawaian`;
+    const appLogoUrl = appConfig?.sidebarLogoUrl || appConfig?.logoUrl || '/images/bkk-simpeg-blue-logo.png';
+    const darkAppLogoUrl = appConfig?.sidebarDarkLogoUrl || appConfig?.darkLogoUrl || '/images/bkk-simpeg-dark-logo.png';
+    const sidebarColor = ['theme', 'ink', 'navy', 'light'].includes(appConfig?.sidebarColor)
+        ? appConfig.sidebarColor
+        : 'theme';
+    const fontSize = ['compact', 'normal', 'large'].includes(appConfig?.fontSize)
+        ? appConfig.fontSize
+        : 'normal';
+    const density = ['compact', 'comfortable', 'spacious'].includes(appConfig?.density)
+        ? appConfig.density
+        : 'comfortable';
     const profileHref = '/profile';
     const profileLabel = 'Profil Saya';
     const pageLabel = useMemo(() => title || 'SIMPEG', [title]);
@@ -331,6 +477,31 @@ export default function LegacyPageShell({ title, children }) {
             // The collapse control still works for the current page when storage is unavailable.
         }
     }, [sidebarCollapsed]);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        if (fontSize === 'normal') {
+            delete document.documentElement.dataset.simpegFontSize;
+        } else {
+            document.documentElement.dataset.simpegFontSize = fontSize;
+        }
+    }, [fontSize]);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        document.documentElement.dataset.simpegDensity = density;
+    }, [density]);
+
+    useEffect(() => {
+        applyConfiguredTheme(appConfig, { isLogin: false });
+        applyAppearancePreferences(appConfig);
+    }, [appConfig?.allowUserTheme, appConfig?.defaultTheme, appConfig?.reduceMotion]);
 
     useEffect(() => {
         if (!mobileNavOpen && !profileOpen && !searchOpen && !notificationsOpen) {
@@ -369,6 +540,7 @@ export default function LegacyPageShell({ title, children }) {
 
     function toggleNotifications() {
         const nextOpen = !notificationsOpen;
+        setProfileOpen(false);
         setNotificationsOpen(nextOpen);
 
         if (nextOpen && unreadCount > 0) {
@@ -395,24 +567,21 @@ export default function LegacyPageShell({ title, children }) {
     }
 
     const sidebar = (
-        <aside id="primary-navigation" onMouseEnter={handleSidebarMouseEnter} onMouseLeave={handleSidebarMouseLeave} className={`simpeg-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[18rem] flex-col overflow-hidden border-r shadow-xl transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:inset-x-auto lg:bottom-auto lg:z-auto lg:h-dvh lg:min-h-0 lg:w-[17rem] lg:self-start lg:translate-x-0 lg:shadow-none ${sidebarIsCollapsed ? 'simpeg-sidebar-collapsed' : ''} ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <aside id="primary-navigation" data-sidebar-color={sidebarColor} onMouseEnter={handleSidebarMouseEnter} onMouseLeave={handleSidebarMouseLeave} className={`simpeg-sidebar fixed inset-y-0 left-0 z-50 flex h-dvh w-[18rem] flex-col overflow-hidden border-r shadow-xl transition-[width,transform] duration-300 lg:sticky lg:top-0 lg:inset-x-auto lg:bottom-auto lg:z-auto lg:h-dvh lg:min-h-0 lg:w-[17rem] lg:self-start lg:translate-x-0 lg:shadow-none ${sidebarIsCollapsed ? 'simpeg-sidebar-collapsed' : ''} ${sidebarHoverExpanded ? 'simpeg-sidebar-hover-expanded' : ''} ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
             <div className="simpeg-sidebar-inner flex min-h-0 flex-1 flex-col p-4 sm:p-5">
-                <div className="simpeg-sidebar-brand relative flex items-center gap-2">
-                    <Link href={homeHref} onClick={() => setMobileNavOpen(false)} className="simpeg-sidebar-brand-link flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-2 py-2 pr-12 text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 lg:pr-2">
-                        <span className="simpeg-sidebar-logo flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[16px]">
-                            <img src={appLogoUrl} alt={`Logo ${appName}`} width="44" height="44" decoding="async" className="simpeg-theme-logo-light h-full w-full object-contain" />
-                            <img src={darkAppLogoUrl} alt="" aria-hidden="true" width="44" height="44" decoding="async" className="simpeg-theme-logo-dark h-full w-full object-contain" />
-                        </span>
-                        <span className="simpeg-sidebar-brand-details min-w-0">
-                            <span className="block truncate text-base font-medium">{appAlias || appName}</span>
-                            <span className="simpeg-muted block truncate text-xs">{appDescription}</span>
+                <div className="simpeg-sidebar-brand relative flex items-center justify-between gap-2">
+                    <Link href={homeHref} onClick={() => setMobileNavOpen(false)} aria-label={`Buka beranda ${appName}`} className="simpeg-sidebar-brand-link simpeg-sidebar-brand-link--logo-only flex shrink-0 items-center text-left focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70">
+                        <span className="simpeg-sidebar-logo flex shrink-0 items-center justify-center overflow-hidden">
+                            <img src={isDarkTheme ? darkAppLogoUrl : appLogoUrl} alt={`Logo ${appName}`} width="310" height="126" decoding="async" className="simpeg-sidebar-logo-image h-full w-full object-contain" />
                         </span>
                     </Link>
-                    <button type="button" className="simpeg-sidebar-collapse-toggle simpeg-utility hidden min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border lg:inline-flex" onClick={toggleSidebar} aria-label={sidebarIsCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'} aria-expanded={!sidebarIsCollapsed} aria-controls="primary-navigation" title={sidebarIsCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'}>
-                        {sidebarIsCollapsed ? <PanelLeftOpen className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
-                    </button>
                     <button type="button" className="simpeg-utility absolute right-0 top-0 inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border lg:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup navigasi">
                         <X className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
+                    </button>
+                </div>
+                <div className="simpeg-sidebar-collapse-row hidden lg:flex" aria-label="Kontrol sidebar">
+                    <button type="button" className="simpeg-sidebar-collapse-toggle simpeg-utility inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border" onClick={toggleSidebar} aria-label={sidebarIsCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'} aria-expanded={!sidebarIsCollapsed} aria-controls="primary-navigation" title={sidebarIsCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'}>
+                        {sidebarIsCollapsed ? <PanelLeftOpen className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
                     </button>
                 </div>
 
@@ -423,7 +592,7 @@ export default function LegacyPageShell({ title, children }) {
                     </nav>
                 </div>
 
-                <div className="simpeg-border mt-auto shrink-0 border-t pt-4">
+                <div className="mt-auto shrink-0 pt-3">
                     <div className="simpeg-sidebar-profile mb-3 flex items-center gap-3 rounded-2xl bg-slate-100 p-3 dark:bg-slate-800">
                         <span className="flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-900 text-xs font-medium text-[#FAD873] dark:bg-slate-700">
                             <ProfileAvatar gender={user.jk} photoUrl={user.foto_url} alt={`Avatar ${displayName}`} />
@@ -433,7 +602,7 @@ export default function LegacyPageShell({ title, children }) {
                             <p className="simpeg-muted truncate text-xs">{roleLabel}</p>
                         </div>
                     </div>
-                    <Link href="/logout" method="post" as="button" className="simpeg-sidebar-logout inline-flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70 dark:text-rose-300 dark:hover:bg-rose-950/40">
+                    <Link href="/logout" method="post" as="button" className="simpeg-sidebar-logout inline-flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-[#FAD873]/70">
                         <LogOut className="h-[1.05rem] w-[1.05rem]" strokeWidth={1.8} aria-hidden="true" />
                         <span className="simpeg-sidebar-logout-label">Keluar</span>
                     </Link>
@@ -451,7 +620,7 @@ export default function LegacyPageShell({ title, children }) {
                     {mobileNavOpen && <button type="button" className="fixed inset-0 z-40 bg-[#131822]/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu" />}
 
                     <div className="simpeg-shell-content min-w-0 flex-1">
-                    <header className="simpeg-header sticky top-0 z-30 border-b backdrop-blur-xl">
+                    <header className={`simpeg-header sticky top-0 z-30 border-b backdrop-blur-xl ${notificationsOpen || profileOpen ? 'simpeg-header-popover-open' : ''}`}>
                         <div className="mx-auto flex min-h-[4.75rem] min-w-0 max-w-[1600px] items-center gap-3 px-3 sm:px-6 lg:px-8">
                             <Button type="button" variant="outline" size="icon" className="simpeg-utility shrink-0 lg:hidden" onClick={() => setMobileNavOpen(true)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" aria-label="Buka navigasi">
                                 <Menu className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
@@ -463,13 +632,25 @@ export default function LegacyPageShell({ title, children }) {
 
                             <LiveDateTime />
 
-                            {canSearchEmployees && <button type="button" className="simpeg-search-trigger min-w-0 max-w-xl flex-1" onClick={() => setSearchOpen(true)} aria-label="Buka pencarian pegawai">
+                            {canSearchEmployees && <button type="button" className="simpeg-search-trigger min-w-0 max-w-xl flex-1" onClick={() => { setProfileOpen(false); setNotificationsOpen(false); setSearchOpen(true); }} aria-label="Buka pencarian pegawai">
                                 <Search className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
                                 <span className="min-w-0 flex-1 truncate text-left">{globalSearch || 'Cari nama / ID pegawai'}</span>
                             </button>}
 
                             <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-                            <ThemeToggle />
+                            <nav className="simpeg-history-controls" aria-label="Navigasi halaman">
+                                <button type="button" className="simpeg-history-control" onClick={() => window.history.back()} aria-label="Kembali ke halaman sebelumnya" title="Kembali">
+                                    <ArrowLeft className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
+                                </button>
+                                <button type="button" className="simpeg-history-control" onClick={() => window.history.forward()} aria-label="Maju ke halaman berikutnya" title="Maju">
+                                    <ArrowRight className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
+                                </button>
+                                <button type="button" className="simpeg-history-control" onClick={() => window.location.reload()} aria-label="Muat ulang halaman" title="Muat ulang">
+                                    <RefreshCw className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
+                                </button>
+                            </nav>
+
+                            <ThemeToggle defaultTheme={appConfig?.defaultTheme} allowUserTheme={appConfig?.allowUserTheme !== false} />
 
                             {canViewNotifications && <div className="relative shrink-0" data-notification-popover>
                                 <button
@@ -523,7 +704,7 @@ export default function LegacyPageShell({ title, children }) {
 
                             <div className="relative shrink-0">
                                 <DropdownMenu open={profileOpen} onOpenChange={setProfileOpen}>
-                                    <DropdownMenuTrigger asChild>
+                                    <DropdownMenuTrigger asChild onClick={() => { setNotificationsOpen(false); setSearchOpen(false); }}>
                                         <button type="button" className="simpeg-utility inline-flex min-h-11 max-w-[11rem] items-center gap-2 rounded-2xl border px-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#F5CE59]/70 sm:gap-3 sm:px-3">
                                             <span className="flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-900 text-[0.625rem] font-medium text-[#FAD873] dark:bg-slate-700">
                                                 <ProfileAvatar gender={user.jk} photoUrl={user.foto_url} alt={`Avatar ${displayName}`} />
@@ -565,7 +746,14 @@ export default function LegacyPageShell({ title, children }) {
                         </div>
                     </header>
 
-                    <main className="mx-auto min-w-0 max-w-[1600px] px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">{children}</main>
+                    <main data-simpeg-export-root className="mx-auto min-w-0 max-w-[1600px] px-3 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+                        {sectionTabs && <SectionTabs items={sectionTabs.items} ariaLabel={sectionTabs.ariaLabel} />}
+                        {children}
+                    </main>
+                    <footer className="simpeg-shell-footer simpeg-border simpeg-muted mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t px-3 py-4 text-xs sm:px-6 lg:px-8">
+                        <span>{footerText}</span>
+                        {websiteUrl && <a href={websiteUrl} target="_blank" rel="noreferrer" className="text-[var(--simpeg-link)] underline-offset-4 hover:underline">Kunjungi website</a>}
+                    </footer>
                     </div>
                 </div>
             </div>

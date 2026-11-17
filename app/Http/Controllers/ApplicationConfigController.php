@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbConfig;
 use App\Services\ApplicationLogoService;
+use App\Services\RbacService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -38,6 +39,13 @@ class ApplicationConfigController extends Controller
             'anchor_app' => ['nullable', 'string', 'max:64'],
             'logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
             'logo_dark' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+            'sidebar_color' => ['required', 'string', 'in:theme,ink,navy,light'],
+            'font_size' => ['required', 'string', 'in:compact,normal,large'],
+            'density' => ['required', 'string', 'in:compact,comfortable,spacious'],
+            'default_theme' => ['required', 'string', 'in:light,dark,system'],
+            'allow_user_theme' => ['required', 'boolean'],
+            'reduce_motion' => ['required', 'boolean'],
+            'apply_login_theme' => ['required', 'boolean'],
         ]);
 
         unset($data['logo']);
@@ -91,6 +99,13 @@ class ApplicationConfigController extends Controller
             'logo_url' => app(ApplicationLogoService::class)->url($config->logo),
             'logo_dark' => $config->logo_dark,
             'logo_dark_url' => app(ApplicationLogoService::class)->darkUrl($config->logo_dark),
+            'sidebar_color' => $config->sidebar_color ?: 'theme',
+            'font_size' => $config->font_size ?: 'normal',
+            'density' => $config->density ?: 'comfortable',
+            'default_theme' => $config->default_theme ?: 'light',
+            'allow_user_theme' => $config->allow_user_theme === null ? true : (bool) $config->allow_user_theme,
+            'reduce_motion' => (bool) $config->reduce_motion,
+            'apply_login_theme' => $config->apply_login_theme === null ? true : (bool) $config->apply_login_theme,
         ];
     }
 
@@ -115,6 +130,6 @@ class ApplicationConfigController extends Controller
 
     private function ensureAdmin(Request $request): void
     {
-        abort_unless(strtolower((string) $request->session()->get('hak_akses')) === 'admin', 403);
+        abort_unless(app(RbacService::class)->can($request, 'config.manage'), 403);
     }
 }

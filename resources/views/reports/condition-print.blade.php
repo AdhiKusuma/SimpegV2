@@ -24,7 +24,9 @@
 <body>
     <h1>Laporan Keadaan Pegawai</h1>
     <p>Kantor: {{ $filters['kantor'] ?: 'Semua kantor' }} | Tahun hukuman: {{ $year }}</p>
-    <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @if (!($pdf ?? false))
+        <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+    @endif
     <table>
         <thead>
         <tr>

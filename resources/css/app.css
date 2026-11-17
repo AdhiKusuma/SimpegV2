@@ -10,6 +10,18 @@
 @import './laravel-starter-overrides.css';
 @import './simpeg-ui.css';
 @import './sidebar-theme-fix.css';
+@import './visual-polish.css';
+@import './sidebar-submenu-fix.css';
+@import './workspace-background.css';
+@import './login-dark-theme.css';
+@import './dashboard-hero-theme.css';
+@import './application-settings.css';
+@import './application-settings-density.css';
+@import './sidebar-state-final.css';
+@import './dark-mode-final.css';
+@import './sidebar-motion.css';
+@import './pagination.css';
+@import './dropdown-theme.css';
 
 @source '../js/**/*.jsx';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

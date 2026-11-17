@@ -1331,7 +1331,7 @@ class PayrollMasterController extends Controller
 
     private function willRequireApproval(Request $request, RbacService $rbac): bool
     {
-        return strtolower((string) $request->session()->get('hak_akses')) !== 'admin'
+        return ! in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'it_admin'], true)
             && ! $rbac->can($request, 'payroll.approval.bypass');
     }
 
@@ -1363,7 +1363,7 @@ class PayrollMasterController extends Controller
     private function officeScope(Request $request): array
     {
         $role = strtolower((string) $request->session()->get('hak_akses'));
-        if (in_array($role, ['admin', 'superadmin'], true)) {
+        if (in_array($role, ['admin', 'superadmin', 'it_admin'], true)) {
             return ['restricted' => false, 'codes' => [], 'label' => null];
         }
 

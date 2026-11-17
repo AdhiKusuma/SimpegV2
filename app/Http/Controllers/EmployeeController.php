@@ -183,7 +183,7 @@ class EmployeeController extends Controller
                 'divisi' => $division,
                 'jabatan' => $position,
             ],
-            'canManage' => $role === 'admin',
+            'canManage' => in_array($role, ['admin', 'it_admin'], true),
             'role' => $role,
         ]);
     }
@@ -333,7 +333,7 @@ class EmployeeController extends Controller
                     'jml_jam' => $record->jml_jam,
                 ])->values(),
             ],
-            'canManage' => strtolower((string) $request->session()->get('hak_akses')) === 'admin',
+            'canManage' => in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'it_admin'], true),
         ]);
     }
 
@@ -1209,11 +1209,11 @@ class EmployeeController extends Controller
 
     private function ensureAdmin(Request $request): void
     {
-        abort_unless(strtolower((string) $request->session()->get('hak_akses')) === 'admin', 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'it_admin'], true), 403);
     }
 
     private function ensureStaffAccess(Request $request): void
     {
-        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala'], true), 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'kepala', 'it_admin'], true), 403);
     }
 }

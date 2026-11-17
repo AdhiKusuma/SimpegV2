@@ -22,6 +22,150 @@ class RbacService
         return Schema::hasTable(self::PERMISSIONS_TABLE) && Schema::hasTable(self::RULES_TABLE);
     }
 
+    public function roleDefinitions(): array
+    {
+        $configured = collect(config('rbac.roles', []))
+            ->map(fn (string $name, string $code): array => [
+                'code' => $code,
+                'name' => $name,
+                'description' => null,
+                'is_system' => true,
+                'active' => true,
+            ])
+            ->keyBy('code');
+
+        if (! Schema::hasTable('rbac_roles')) {
+            return $configured->values()->all();
+        }
+
+        return DB::table('rbac_roles')
+            ->where('active', true)
+            ->orderBy('name')
+            ->get(['code', 'name', 'description', 'is_system', 'active'])
+            ->map(fn ($role): array => [
+                'code' => strtolower((string) $role->code),
+                'name' => (string) $role->name,
+                'description' => $role->description,
+                'is_system' => (bool) $role->is_system,
+                'active' => (bool) $role->active,
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function roleCodes(): array
+    {
+        return collect($this->roleDefinitions())->pluck('code')->values()->all();
+    }
+
+    public function permissionCatalog(): array
+    {
+        $this->ensureDefaults();
+        $catalog = config('rbac.permissions', []);
+
+        return collect($catalog)
+            ->sortBy('sort')
+            ->map(fn (array $definition, string $code): array => [
+                'code' => $code,
+                'label' => $definition['label'],
+                'group' => $definition['group'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function isValidRole(string $role): bool
+    {
+        return in_array(strtolower(trim($role)), $this->roleCodes(), true);
+    }
+
+    public function managedRoles(): array
+    {
+        $this->ensureDefaults();
+        $catalog = config('rbac.permissions', []);
+        $definitions = $this->roleDefinitions();
+        $permissionCodesByRole = [];
+
+        if ($this->available()) {
+            $permissionCodesByRole = DB::table(self::RULES_TABLE.' as rules')
+                ->join(self::PERMISSIONS_TABLE.' as permissions', 'permissions.id', '=', 'rules.permission_id')
+                ->where('rules.subject_type', 'role')
+                ->where('rules.allowed', true)
+                ->where('permissions.active', true)
+                ->get(['rules.subject_value', 'permissions.code'])
+                ->groupBy(fn ($row): string => strtolower((string) $row->subject_value))
+                ->map(fn ($rows): array => $rows->pluck('code')->all())
+                ->all();
+        }
+
+        $defaultPermissions = config('rbac.default_role_permissions', []);
+        $usersByRole = TbUser::query()
+            ->selectRaw('LOWER(hak_akses) as role_code, COUNT(*) as total')
+            ->groupBy('role_code')
+            ->pluck('total', 'role_code')
+            ->all();
+
+        return collect($definitions)->map(function (array $role) use ($catalog, $permissionCodesByRole, $defaultPermissions, $usersByRole): array {
+            $code = strtolower($role['code']);
+            $enabled = $permissionCodesByRole[$code] ?? ($defaultPermissions[$code] ?? []);
+            if ($enabled === '*') {
+                $enabled = array_keys($catalog);
+            }
+            $enabled = array_fill_keys($enabled, true);
+            $permissions = collect($catalog)
+                ->sortBy('sort')
+                ->keys()
+                ->filter(fn (string $permission): bool => isset($enabled[$permission]))
+                ->map(fn (string $permission): array => [
+                    'code' => $permission,
+                    'label' => $catalog[$permission]['label'],
+                ])
+                ->values()
+                ->all();
+
+            return [
+                ...$role,
+                'code' => $code,
+                'user_count' => (int) ($usersByRole[$code] ?? 0),
+                'permissions' => $permissions,
+            ];
+        })->values()->all();
+    }
+
+    public function createRole(string $code, string $name, ?string $description, array $permissionCodes): void
+    {
+        abort_unless(Schema::hasTable('rbac_roles'), 503, 'Tabel role RBAC belum tersedia. Jalankan migrasi database terlebih dahulu.');
+
+        DB::transaction(function () use ($code, $name, $description, $permissionCodes): void {
+            DB::table('rbac_roles')->insert([
+                'code' => strtolower(trim($code)),
+                'name' => trim($name),
+                'description' => $description !== null ? trim($description) : null,
+                'is_system' => false,
+                'active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $this->saveMatrix('role', $code, $permissionCodes);
+        });
+    }
+
+    public function updateRole(string $code, string $name, ?string $description, array $permissionCodes): void
+    {
+        abort_unless(Schema::hasTable('rbac_roles'), 503, 'Tabel role RBAC belum tersedia. Jalankan migrasi database terlebih dahulu.');
+
+        DB::transaction(function () use ($code, $name, $description, $permissionCodes): void {
+            DB::table('rbac_roles')
+                ->where('code', strtolower(trim($code)))
+                ->update([
+                    'name' => trim($name),
+                    'description' => $description !== null ? trim($description) : null,
+                    'updated_at' => now(),
+                ]);
+            $this->saveMatrix('role', $code, $permissionCodes);
+        });
+    }
+
     public function ensureDefaults(): void
     {
         if (! $this->available() || self::$defaultsChecked) {
@@ -162,20 +306,11 @@ class RbacService
 
     public function subjects(): array
     {
-        $roles = TbUser::query()
-            ->whereNotNull('hak_akses')
-            ->select('hak_akses')
-            ->distinct()
-            ->orderBy('hak_akses')
-            ->pluck('hak_akses')
-            ->map(fn ($role): array => ['value' => strtolower((string) $role), 'label' => config('rbac.roles.'.strtolower((string) $role), $role)])
-            ->values()
-            ->all();
-
-        $roles = collect($roles)
-            ->concat(collect(config('rbac.roles', []))->map(fn (string $label, string $value): array => ['value' => $value, 'label' => $label]))
-            ->unique('value')
-            ->sortBy('label')
+        $roles = collect($this->roleDefinitions())
+            ->map(fn (array $role): array => [
+                'value' => $role['code'],
+                'label' => $role['name'],
+            ])
             ->values()
             ->all();
 

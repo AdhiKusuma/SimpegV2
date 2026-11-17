@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccessMatrixController;
 use App\Http\Controllers\ApplicationConfigController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuthorizationController;
 use App\Http\Controllers\BahasaController;
@@ -54,6 +55,7 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/employee-trend', [DashboardController::class, 'employeeTrend'])->name('dashboard.employee-trend');
     Route::get('/dashboard/tenure/{range}', [DashboardController::class, 'tenureEmployees'])->name('dashboard.tenure.employees');
 
     Route::get('/dashboard/cabang', [DashboardController::class, 'branch'])->name('dashboard.cabang');
@@ -76,7 +78,7 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::get('/payroll/import/preview', [PayrollController::class, 'previewImportGet'])->name('payroll.import.preview.form');
     Route::post('/payroll/import/preview', [PayrollController::class, 'previewImport'])->name('payroll.import.preview');
     Route::post('/payroll/import', [PayrollController::class, 'import'])->name('payroll.import.store');
-    Route::delete('/payroll/history', [PayrollController::class, 'clearDevelopmentHistory'])->name('payroll.history.clear');
+    Route::delete('/payroll/history', [PayrollController::class, 'clearHistory'])->name('payroll.history.clear');
     Route::get('/payroll/publications', [PayrollPublicationController::class, 'index'])->name('payroll.publications.index');
     Route::post('/payroll/publications/{publication}/schedule', [PayrollPublicationController::class, 'schedule'])->whereNumber('publication')->name('payroll.publications.schedule');
     Route::post('/payroll/publications/{publication}/send', [PayrollPublicationController::class, 'send'])->whereNumber('publication')->name('payroll.publications.send');
@@ -259,9 +261,16 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
     Route::get('/users/access', [AccessMatrixController::class, 'index'])->name('users.access');
     Route::put('/users/access', [AccessMatrixController::class, 'update'])->name('users.access.update');
+    Route::post('/users/access/roles', [AccessMatrixController::class, 'storeRole'])->name('users.roles.store');
+    Route::put('/users/access/roles/{role}', [AccessMatrixController::class, 'updateRole'])
+        ->where('role', '[A-Za-z0-9._-]+')
+        ->name('users.roles.update');
     Route::get('/users/{id}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
     Route::put('/users/{id}', [UserManagementController::class, 'update'])->name('users.update');
     Route::delete('/users/{id}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+    Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit.index');
+    Route::get('/audit-log/cleanup-preview', [AuditLogController::class, 'cleanupPreview'])->name('audit.cleanup.preview');
+    Route::post('/audit-log/cleanup', [AuditLogController::class, 'cleanup'])->name('audit.cleanup');
 
     Route::get('/config/aplikasi', [ApplicationConfigController::class, 'edit'])->name('config.application.edit');
     Route::post('/config/aplikasi', [ApplicationConfigController::class, 'update'])->name('config.application.update');

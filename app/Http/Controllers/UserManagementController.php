@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbRecycleBin;
 use App\Models\Legacy\TbUser;
+use App\Services\RbacService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,8 +17,6 @@ use Inertia\Response;
 
 class UserManagementController extends Controller
 {
-    private const ROLES = ['admin', 'superadmin', 'kepala', 'user'];
-
     public function index(Request $request): Response
     {
         $this->ensureViewAccess($request);
@@ -47,7 +46,7 @@ class UserManagementController extends Controller
         return Inertia::render('Users/Index', [
             'users' => $users,
             'filters' => ['role' => $role, 'search' => $search],
-            'canManage' => strtolower((string) $request->session()->get('hak_akses')) === 'admin',
+            'canManage' => app(RbacService::class)->can($request, 'users.manage'),
         ]);
     }
 
@@ -55,7 +54,7 @@ class UserManagementController extends Controller
     {
         $this->ensureAdmin($request);
 
-        return Inertia::render('Users/Form', ['mode' => 'create', 'record' => null, 'employees' => $this->employees(), 'roles' => self::ROLES]);
+        return Inertia::render('Users/Form', ['mode' => 'create', 'record' => null, 'employees' => $this->employees(), 'roles' => $this->availableRoles()]);
     }
 
     public function edit(Request $request, string $id): Response
@@ -74,7 +73,7 @@ class UserManagementController extends Controller
             'mode' => 'edit',
             'record' => ['id_user' => $record->id_user, 'nama_user' => $record->nama_user, 'hak_akses' => strtolower((string) $record->hak_akses), 'status_aktif' => $record->status_aktif, 'id_pegawai' => $record->id_pegawai],
             'employees' => $employees,
-            'roles' => self::ROLES,
+            'roles' => $this->availableRoles(),
         ]);
     }
 
@@ -134,7 +133,7 @@ class UserManagementController extends Controller
         $rules = [
             'id_user' => $idRule,
             'nama_user' => ['required', 'string', 'max:64'],
-            'hak_akses' => ['required', Rule::in(self::ROLES)],
+            'hak_akses' => ['required', Rule::in($this->availableRoles())],
             'password' => [$isEdit ? 'nullable' : 'required', 'string', 'max:255'],
             'status_aktif' => ['required', Rule::in(['Y', 'N'])],
             'id_pegawai' => $employeeRule,
@@ -153,13 +152,18 @@ class UserManagementController extends Controller
         return TbPegawai::query()->where('status_aktif', 1)->orderBy('nama')->get(['id_peg', 'nama'])->map(fn (TbPegawai $employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])->all();
     }
 
+    private function availableRoles(): array
+    {
+        return app(RbacService::class)->roleCodes();
+    }
+
     private function ensureAdmin(Request $request): void
     {
-        abort_unless(strtolower((string) $request->session()->get('hak_akses')) === 'admin', 403);
+        abort_unless(app(RbacService::class)->can($request, 'users.manage'), 403);
     }
 
     private function ensureViewAccess(Request $request): void
     {
-        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin'], true), 403);
+        abort_unless(app(RbacService::class)->can($request, 'users.view'), 403);
     }
 }

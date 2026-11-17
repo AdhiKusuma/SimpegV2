@@ -1,8 +1,9 @@
+import { Children, cloneElement } from 'react';
 import { cn } from '../../lib/utils';
 
 const variants = {
-    default: 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm active:scale-[0.98] hover:opacity-90',
-    dark: 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm hover:opacity-90',
+    default: 'simpeg-primary bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm active:scale-[0.98] hover:opacity-90',
+    dark: 'simpeg-primary bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm hover:opacity-90',
     outline: 'border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]',
     ghost: 'bg-transparent text-[var(--foreground)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)]',
     destructive: 'bg-[var(--destructive)] text-[var(--destructive-foreground)] shadow-sm hover:opacity-90',
@@ -24,6 +25,18 @@ export function buttonVariants({ variant = 'default', size = 'default', classNam
     );
 }
 
-export function Button({ className, variant = 'default', size = 'default', type = 'button', ...props }) {
-    return <button data-slot="button" type={type} className={buttonVariants({ variant, size, className })} {...props} />;
+export function Button({ asChild = false, className, variant = 'default', size = 'default', type = 'button', children, ...props }) {
+    const classes = buttonVariants({ variant, size, className });
+
+    if (asChild) {
+        const child = Children.only(children);
+
+        return cloneElement(child, {
+            ...props,
+            'data-slot': 'button',
+            className: cn(classes, child.props.className),
+        });
+    }
+
+    return <button data-slot="button" type={type} className={classes} {...props}>{children}</button>;
 }

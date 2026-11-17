@@ -1,0 +1,54 @@
+/* Density is previewed live on the Appearance Settings page and persisted
+ * through the shared html data attribute after saving. */
+.simpeg-settings-page {
+    --settings-density-gap: 1.25rem;
+    --settings-density-card-heading-y: 1.35rem;
+    --settings-density-section-y: 1rem;
+}
+
+html[data-simpeg-density='compact'] .simpeg-settings-page {
+    --settings-density-gap: 0.75rem;
+    --settings-density-card-heading-y: 0.95rem;
+    --settings-density-section-y: 0.7rem;
+}
+
+html[data-simpeg-density='spacious'] .simpeg-settings-page {
+    --settings-density-gap: 1.75rem;
+    --settings-density-card-heading-y: 1.8rem;
+    --settings-density-section-y: 1.35rem;
+}
+
+html[data-simpeg-density='compact'] .simpeg-settings-page .simpeg-settings-layout,
+html[data-simpeg-density='spacious'] .simpeg-settings-page .simpeg-settings-layout {
+    gap: var(--settings-density-gap) !important;
+}
+
+html[data-simpeg-density='compact'] .simpeg-settings-page .simpeg-settings-main,
+html[data-simpeg-density='compact'] .simpeg-settings-page .simpeg-settings-aside,
+html[data-simpeg-density='spacious'] .simpeg-settings-page .simpeg-settings-main,
+html[data-simpeg-density='spacious'] .simpeg-settings-page .simpeg-settings-aside {
+    gap: var(--settings-density-gap) !important;
+}
+
+html[data-simpeg-density='compact'] .simpeg-settings-page .simpeg-settings-card-heading,
+html[data-simpeg-density='spacious'] .simpeg-settings-page .simpeg-settings-card-heading {
+    padding-top: var(--settings-density-card-heading-y) !important;
+    padding-bottom: var(--settings-density-section-y) !important;
+}
+
+html[data-simpeg-density='compact'] .simpeg-settings-page .simpeg-settings-logo-grid,
+html[data-simpeg-density='compact'] .simpeg-settings-page .simpeg-settings-fields-grid,
+html[data-simpeg-density='spacious'] .simpeg-settings-page .simpeg-settings-logo-grid,
+html[data-simpeg-density='spacious'] .simpeg-settings-page .simpeg-settings-fields-grid {
+    gap: var(--settings-density-gap) !important;
+}
+
+html[data-simpeg-density='compact'] .simpeg-settings-page .simpeg-settings-toggle-row {
+    padding-top: 0.55rem !important;
+    padding-bottom: 0.55rem !important;
+}
+
+html[data-simpeg-density='spacious'] .simpeg-settings-page .simpeg-settings-toggle-row {
+    padding-top: 1.15rem !important;
+    padding-bottom: 1.15rem !important;
+}

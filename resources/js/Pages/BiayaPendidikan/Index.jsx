@@ -1,5 +1,6 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SelectCombobox from '../../Components/SelectCombobox';
@@ -85,9 +86,9 @@ export default function BiayaPendidikanIndex({ items, years, categories = [], pa
                     <p className="mt-2 max-w-2xl text-slate-500">Kelola kegiatan pengembangan SDM dan pantau anggarannya.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <a href={withFilters('/biaya-pendidikan/export')} className="inline-flex min-h-11 items-center rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">Export XLSX</a>
+                    <ExportDropdown items={[{ href: withFilters('/biaya-pendidikan/export'), label: 'Export XLSX' }]} />
                     {canManage && <Link href="/biaya-pendidikan/import" className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Import data</Link>}
-                    {canManage && <Link href="/biaya-pendidikan/create" className="inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Tambah kegiatan</Link>}
+                    {canManage && <Link href="/biaya-pendidikan/create" className="simpeg-action-primary inline-flex min-h-11 items-center rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">Tambah kegiatan</Link>}
                 </div>
             </div>
 
@@ -96,14 +97,14 @@ export default function BiayaPendidikanIndex({ items, years, categories = [], pa
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <form onSubmit={submitFilters} className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel grid gap-4 border-b border-slate-100 p-4 xl:grid-cols-[minmax(140px,0.8fr)_minmax(160px,1fr)_minmax(180px,1.2fr)_minmax(180px,1.2fr)_minmax(220px,1.6fr)_auto] xl:items-end">
-                    <MobileFilterGroup id="training-cost-mobile-filters" activeCount={Number(Boolean(filters.tahun && filters.tahun !== 'Semua')) + Number(Boolean(filters.kuartal && filters.kuartal !== 'Semua')) + Number(Boolean(filters.kode_pengembangan)) + Number(Boolean(filters.kode_pihak))} toggleClassName="simpeg-mobile-filter-toggle--after-search">
+                    <MobileFilterGroup id="training-cost-mobile-filters" activeCount={Number(Boolean(filters.search)) + Number(Boolean(filters.tahun && filters.tahun !== 'Semua')) + Number(Boolean(filters.kuartal && filters.kuartal !== 'Semua')) + Number(Boolean(filters.kode_pengembangan)) + Number(Boolean(filters.kode_pihak))}>
+                        <div className="simpeg-mobile-filter-search"><label htmlFor="biaya-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Pencarian</label><input id="biaya-search" name="search" defaultValue={filters.search} placeholder="Nama kegiatan, pelaksana, atau kategori" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
                         <SelectCombobox id="biaya-year" name="tahun" label="Tahun" value={filters.tahun} options={years} emptyLabel="Semua tahun" />
                         <SelectCombobox id="biaya-quarter" name="kuartal" label="Kuartal" value={filters.kuartal} options={quarterOptions.map(([value, label]) => ({ value, label }))} emptyLabel="Semua kuartal" />
                         <SelectCombobox id="biaya-category" name="kode_pengembangan" label="Kategori pengembangan" value={filters.kode_pengembangan || ''} options={categories} optionValue={(option) => option.code} optionLabel={(option) => `${option.code} - ${option.name}`} emptyLabel="Semua kategori" />
                         <SelectCombobox id="biaya-party" name="kode_pihak" label="Jenis pihak pelaksana" value={filters.kode_pihak || ''} options={parties} optionValue={(option) => option.code} optionLabel={(option) => `${option.code} - ${option.name}`} emptyLabel="Semua jenis pihak" />
                         <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply">Terapkan</button>
                     </MobileFilterGroup>
-                    <div className="simpeg-mobile-filter-search"><label htmlFor="biaya-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Pencarian</label><input id="biaya-search" name="search" defaultValue={filters.search} placeholder="Nama kegiatan, pelaksana, atau kategori" className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
                     <button type="submit" className="simpeg-desktop-filter-apply h-11 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
                 </form>
 

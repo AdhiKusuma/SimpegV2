@@ -1,0 +1,26 @@
+/* Keep inactive navigation groups neutral. Only the active/expanded group
+   should look selected; a pointer hover must not make another section appear
+   active after navigating to a different menu. */
+html body .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-link,
+html body .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-link:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--sb-text, var(--simpeg-sidebar-ink, #fff)) !important;
+}
+
+html body .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-link svg,
+html body .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-link svg * {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Preserve a distinct surface for the route that owns the current page. */
+html body .simpeg-sidebar .simpeg-sidebar-group-trigger.simpeg-nav-group-active {
+  background: var(--sb-hover, var(--simpeg-nav-active, rgba(255, 255, 255, .12))) !important;
+  background-color: var(--sb-hover, var(--simpeg-nav-active, rgba(255, 255, 255, .12))) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\AuditLogMiddleware;
 use App\Http\Middleware\RequireLegacySession;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -16,7 +17,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Existing SIMPEG middleware
-        $middleware->web(append: [HandleInertiaRequests::class]);
+        $middleware->web(append: [HandleInertiaRequests::class, AuditLogMiddleware::class]);
 
         $middleware->alias([
             'legacy.auth' => RequireLegacySession::class,
@@ -38,6 +39,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('notifications:prune --execute --days=90 --batch=500')
             ->dailyAt('02:30')
+            ->withoutOverlapping(10);
+        $schedule->command('audit:prune --execute --batch=1000')
+            ->dailyAt('03:00')
             ->withoutOverlapping(10);
         $schedule->command('payroll:dispatch-publications --limit=100')
             ->everyMinute()

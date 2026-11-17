@@ -3,22 +3,40 @@ import { useEffect, useState } from 'react';
 
 export const THEME_STORAGE_KEY = 'simpeg-theme';
 export const THEME_PREFERENCE_KEY = 'simpeg-theme-explicit-choice-v1';
-export const DEFAULT_THEME = 'dark';
+export const THEME_MODE_STORAGE_KEY = 'simpeg-theme-mode';
+export const DEFAULT_THEME = 'light';
 
 export const THEME_OPTIONS = [
-    { value: 'light', label: 'Terang', swatches: ['#ffffff', '#d7dde5'] },
-    { value: 'dark', label: 'Gelap', swatches: ['#080808', '#f5f5f5'] },
+    { value: 'light', label: 'Terang', swatches: ['#F5F8FE', '#0D5FE0'] },
+    { value: 'dark', label: 'Gelap', swatches: ['#1B2A4A', '#0D5FE0'] },
 ];
 
 const THEME_VALUES = new Set(THEME_OPTIONS.map((option) => option.value));
 
-export function resolveTheme() {
+function resolveSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function configuredTheme(theme) {
+    return theme === 'system' ? resolveSystemTheme() : THEME_VALUES.has(theme) ? theme : DEFAULT_THEME;
+}
+
+export function resolveTheme({ fallbackTheme = DEFAULT_THEME, allowUserTheme = true } = {}) {
     if (typeof window === 'undefined') {
-        return DEFAULT_THEME;
+        return configuredTheme(fallbackTheme);
     }
 
+    if (!allowUserTheme) {
+        return configuredTheme(fallbackTheme);
+    }
+
+    const storedMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
     const hasUserChoice = window.localStorage.getItem(THEME_PREFERENCE_KEY) === '1';
+
+    if (storedMode === 'system') {
+        return resolveSystemTheme();
+    }
 
     if (THEME_VALUES.has(stored) && hasUserChoice) {
         return stored;
@@ -29,7 +47,7 @@ export function resolveTheme() {
         window.localStorage.removeItem(THEME_STORAGE_KEY);
     }
 
-    return DEFAULT_THEME;
+    return configuredTheme(fallbackTheme);
 }
 
 export function applyTheme(theme) {
@@ -40,93 +58,84 @@ export function applyTheme(theme) {
     const nextTheme = THEME_VALUES.has(theme) ? theme : DEFAULT_THEME;
 
     document.documentElement.classList.toggle('dark', nextTheme === 'dark');
-    document.documentElement.dataset.theme = nextTheme;
     document.documentElement.style.colorScheme = nextTheme === 'dark' ? 'dark' : 'light';
 }
 
-export default function ThemeToggle({ className = '' }) {
-    const [theme, setTheme] = useState(() => resolveTheme());
-    const [menuOpen, setMenuOpen] = useState(false);
+export function applyAppearancePreferences(config = {}) {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    document.documentElement.toggleAttribute('data-simpeg-reduce-motion', Boolean(config.reduceMotion));
+    if (config.reduceMotion) {
+        document.documentElement.dataset.simpegReduceMotion = '1';
+    } else {
+        delete document.documentElement.dataset.simpegReduceMotion;
+    }
+}
+
+export function applyConfiguredTheme(config = {}, { isLogin = false } = {}) {
+    const loginThemeDisabled = isLogin && config.applyLoginTheme === false;
+    const allowUserTheme = !loginThemeDisabled && config.allowUserTheme !== false;
+    const fallbackTheme = loginThemeDisabled ? DEFAULT_THEME : config.defaultTheme || DEFAULT_THEME;
+    const theme = resolveTheme({ fallbackTheme, allowUserTheme });
+
+    applyTheme(theme);
+    applyAppearancePreferences(config);
+
+    return theme;
+}
+
+export default function ThemeToggle({ className = '', defaultTheme = DEFAULT_THEME, allowUserTheme = true }) {
+    const [theme, setTheme] = useState(() => resolveTheme({ fallbackTheme: defaultTheme, allowUserTheme }));
 
     useEffect(() => {
-        const initialTheme = resolveTheme();
+        const initialTheme = resolveTheme({ fallbackTheme: defaultTheme, allowUserTheme });
         setTheme(initialTheme);
         applyTheme(initialTheme);
-    }, []);
 
-    useEffect(() => {
-        if (!menuOpen) {
-            return undefined;
-        }
-
-        function closeOnOutsideClick(event) {
-            if (!(event.target instanceof Element) || !event.target.closest('[data-theme-picker]')) {
-                setMenuOpen(false);
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleSystemThemeChange = () => {
+            if (window.localStorage.getItem(THEME_MODE_STORAGE_KEY) !== 'system') {
+                return;
             }
-        }
 
-        function closeOnEscape(event) {
-            if (event.key === 'Escape') {
-                setMenuOpen(false);
-            }
-        }
-
-        document.addEventListener('pointerdown', closeOnOutsideClick);
-        document.addEventListener('keydown', closeOnEscape);
-
-        return () => {
-            document.removeEventListener('pointerdown', closeOnOutsideClick);
-            document.removeEventListener('keydown', closeOnEscape);
+            const nextTheme = resolveSystemTheme();
+            setTheme(nextTheme);
+            applyTheme(nextTheme);
         };
-    }, [menuOpen]);
 
-    function selectTheme(nextTheme) {
+        mediaQuery.addEventListener?.('change', handleSystemThemeChange);
+
+        return () => mediaQuery.removeEventListener?.('change', handleSystemThemeChange);
+    }, [allowUserTheme, defaultTheme]);
+
+    if (!allowUserTheme) {
+        return null;
+    }
+
+    function toggleTheme() {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
         setTheme(nextTheme);
         window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
         window.localStorage.setItem(THEME_PREFERENCE_KEY, '1');
+        window.localStorage.setItem(THEME_MODE_STORAGE_KEY, 'explicit');
         applyTheme(nextTheme);
-        setMenuOpen(false);
     }
 
     const activeOption = THEME_OPTIONS.find((option) => option.value === theme) || THEME_OPTIONS[0];
-    const label = `Pilih tema. Tema aktif: ${activeOption.label}`;
+    const nextOption = THEME_OPTIONS.find((option) => option.value !== activeOption.value) || THEME_OPTIONS[0];
+    const label = `Ganti ke mode ${nextOption.label}. Mode aktif: ${activeOption.label}`;
 
     return (
-        <div className="relative" data-theme-picker>
-            <button
-                type="button"
-                onClick={() => setMenuOpen((open) => !open)}
-                className={`simpeg-theme-toggle inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--simpeg-hover-border)] ${className}`}
-                aria-label={label}
-                title={label}
-                aria-expanded={menuOpen}
-                aria-haspopup="menu"
-            >
-                {theme === 'dark' ? <Moon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <Sun className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
-            </button>
-
-            {menuOpen && <div className="simpeg-theme-menu absolute right-0 top-[calc(100%+0.5rem)] z-50 w-52 rounded-2xl border p-2 shadow-2xl" role="menu" aria-label="Pilih tema aplikasi">
-                <p className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--simpeg-subtle)]">Tema tampilan</p>
-                {THEME_OPTIONS.map((option) => {
-                    const active = option.value === theme;
-
-                    return <button
-                        key={option.value}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={active}
-                        onClick={() => selectTheme(option.value)}
-                        className={`simpeg-theme-option flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold transition ${active ? 'simpeg-theme-option-active' : ''}`}
-                    >
-                        <span className="flex h-4 w-4 shrink-0 overflow-hidden rounded-full border border-black/10" aria-hidden="true">
-                            <span className="h-full w-1/2" style={{ backgroundColor: option.swatches[0] }} />
-                            <span className="h-full w-1/2" style={{ backgroundColor: option.swatches[1] }} />
-                        </span>
-                        <span className="flex-1">{option.label}</span>
-                        {active && <span className="text-xs" aria-hidden="true">✓</span>}
-                    </button>;
-                })}
-            </div>}
-        </div>
+        <button
+            type="button"
+            onClick={toggleTheme}
+            className={`simpeg-theme-toggle inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--simpeg-hover-border)] ${className}`}
+            aria-label={label}
+            title={label}
+        >
+            {theme === 'dark' ? <Moon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <Sun className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
+        </button>
     );
 }

@@ -45,7 +45,7 @@ class RequireLegacySession
         $sessionEmployeeId = (string) $session->get('id_pegawai', '');
 
         if ($user->status_aktif === 'N'
-            || ! in_array($databaseRole, ['admin', 'superadmin', 'kepala', 'user'], true)
+            || ! $this->rbac->isValidRole($databaseRole)
             || $databaseRole !== $sessionRole
             || $databaseEmployeeId !== $sessionEmployeeId) {
             return $this->invalidate($request);

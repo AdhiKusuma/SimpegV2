@@ -138,9 +138,10 @@ class QuotaJabatanController extends Controller
                 'kode_cabang' => (string) $quota->kode_cabang,
                 'nama_cabang' => $branch['nama_cabang'] ?? (string) $quota->kode_cabang,
                 'jabatan_id' => $positionId !== '' ? (int) $quota->jabatan_id : null,
+                'kode_custom' => $positionId === '' ? $quota->kode_jabatan : null,
                 'nama_jabatan' => $customName !== '' ? $customName : ($position['nama_jabatan'] ?? 'Jabatan tidak ditemukan'),
-                'lingkup' => $position['lingkup'] ?? '-',
-                'group_jabatan' => $position['group_jabatan'] ?? ($positionId === '' ? 'Custom' : null),
+                'lingkup' => $position['lingkup'] ?? ($quota->lingkup ?: ($branch['level'] ?? '-')),
+                'group_jabatan' => $position['group_jabatan'] ?? $quota->group_jabatan,
                 'kuota_pegawai' => (int) $quota->kuota_pegawai,
                 'updated_at' => $quota->updated_at?->format('d-m-Y H:i'),
             ]);
@@ -197,7 +198,9 @@ class QuotaJabatanController extends Controller
                 'quotas' => ['required', 'array', 'min:1'],
                 'quotas.*.id' => ['nullable', 'integer'],
                 'quotas.*.jabatan_id' => ['nullable', 'integer', Rule::exists($this->positionMasterTable(), 'kode_jabatan')],
+                'quotas.*.kode_jabatan' => ['nullable', 'string', 'max:50'],
                 'quotas.*.nama_jabatan' => ['nullable', 'string', 'max:100'],
+                'quotas.*.group_jabatan' => ['nullable', 'string', Rule::in(['PE', 'PS'])],
                 'quotas.*.kuota_pegawai' => ['required', 'integer', 'min:0', 'max:100000'],
             ]);
 
@@ -205,10 +208,24 @@ class QuotaJabatanController extends Controller
             foreach ($validated['quotas'] as $quota) {
                 $hasMasterPosition = ($quota['jabatan_id'] ?? null) !== null;
                 $hasCustomPosition = trim((string) ($quota['nama_jabatan'] ?? '')) !== '';
+                $customCode = trim((string) ($quota['kode_jabatan'] ?? ''));
+                $customGroup = trim((string) ($quota['group_jabatan'] ?? ''));
 
                 if (! $hasMasterPosition && ! $hasCustomPosition) {
                     throw ValidationException::withMessages([
                         'quotas' => 'Setiap kuota harus memiliki jabatan master atau nama jabatan custom.',
+                    ]);
+                }
+
+                if ($hasCustomPosition && ! in_array($customGroup, ['PE', 'PS'], true)) {
+                    throw ValidationException::withMessages([
+                        'quotas' => 'Pilih label PE atau PS untuk setiap jabatan custom.',
+                    ]);
+                }
+
+                if (! $hasMasterPosition && $customCode === '') {
+                    throw ValidationException::withMessages([
+                        'quotas' => 'Isi kode jabatan custom untuk setiap jabatan custom.',
                     ]);
                 }
 
@@ -225,6 +242,11 @@ class QuotaJabatanController extends Controller
                         trim((string) $quota['nama_jabatan']),
                         ! empty($quota['id']) ? (int) $quota['id'] : null,
                     );
+                    $this->ensureCustomCodeAvailable(
+                        $validated['kode_cabang'],
+                        $customCode,
+                        ! empty($quota['id']) ? (int) $quota['id'] : null,
+                    );
                 }
             }
 
@@ -238,6 +260,7 @@ class QuotaJabatanController extends Controller
                             ],
                             [
                                 'nama_jabatan' => trim((string) ($quota['nama_jabatan'] ?? '')) ?: null,
+                                'kode_jabatan' => null,
                                 'kuota_pegawai' => (int) $quota['kuota_pegawai'],
                             ],
                         );
@@ -248,7 +271,10 @@ class QuotaJabatanController extends Controller
                     $customValues = [
                         'kode_cabang' => $validated['kode_cabang'],
                         'jabatan_id' => null,
+                        'kode_jabatan' => trim((string) $quota['kode_jabatan']),
                         'nama_jabatan' => trim((string) $quota['nama_jabatan']),
+                        'group_jabatan' => trim((string) $quota['group_jabatan']),
+                        'lingkup' => $this->branchLevel($validated['kode_cabang']),
                         'kuota_pegawai' => (int) $quota['kuota_pegawai'],
                     ];
                     $customQuota = ! empty($quota['id'])
@@ -257,6 +283,12 @@ class QuotaJabatanController extends Controller
                             ->where('kode_cabang', $validated['kode_cabang'])
                             ->first()
                         : null;
+
+                    $customQuota ??= $this->findInactiveCustomQuota(
+                        $validated['kode_cabang'],
+                        trim((string) $quota['nama_jabatan']),
+                        trim((string) $quota['kode_jabatan']),
+                    );
 
                     if ($customQuota) {
                         $customQuota->update($customValues);
@@ -275,20 +307,37 @@ class QuotaJabatanController extends Controller
         $validated = $request->validate([
             'kode_cabang' => ['required', 'string', 'max:20', 'exists:tb_kantor,kode_cabang'],
             'jabatan_id' => ['nullable', 'integer', Rule::exists($this->positionMasterTable(), 'kode_jabatan')],
+            'kode_jabatan' => ['nullable', 'string', 'max:50'],
             'nama_jabatan' => ['nullable', 'string', 'max:100'],
+            'group_jabatan' => ['nullable', 'string', Rule::in(['PE', 'PS'])],
             'kuota_pegawai' => ['required', 'integer', 'min:0', 'max:100000'],
         ]);
 
         $positionId = $validated['jabatan_id'] ?? null;
+        $customCode = trim((string) ($validated['kode_jabatan'] ?? ''));
         $customName = trim((string) ($validated['nama_jabatan'] ?? ''));
+        $customGroup = trim((string) ($validated['group_jabatan'] ?? ''));
         if ($positionId === null && $customName === '') {
             throw ValidationException::withMessages([
                 'nama_jabatan' => 'Isi nama jabatan custom atau pilih jabatan master.',
             ]);
         }
 
+        if ($positionId === null && ! in_array($customGroup, ['PE', 'PS'], true)) {
+            throw ValidationException::withMessages([
+                'group_jabatan' => 'Pilih label PE atau PS untuk jabatan custom.',
+            ]);
+        }
+
+        if ($positionId === null && $customCode === '') {
+            throw ValidationException::withMessages([
+                'kode_jabatan' => 'Isi kode jabatan custom.',
+            ]);
+        }
+
         if ($positionId === null) {
             $this->ensureCustomNameAvailable($validated['kode_cabang'], $customName);
+            $this->ensureCustomCodeAvailable($validated['kode_cabang'], $customCode);
         }
 
         if ($positionId !== null) {
@@ -299,16 +348,27 @@ class QuotaJabatanController extends Controller
                 ],
                 [
                     'nama_jabatan' => $customName !== '' ? $customName : null,
+                    'kode_jabatan' => null,
                     'kuota_pegawai' => (int) $validated['kuota_pegawai'],
                 ],
             );
         } else {
-            QuotaJabatan::query()->create([
+            $customValues = [
                 'kode_cabang' => $validated['kode_cabang'],
                 'jabatan_id' => null,
+                'kode_jabatan' => $customCode,
                 'nama_jabatan' => $customName,
+                'group_jabatan' => $customGroup,
+                'lingkup' => $this->branchLevel($validated['kode_cabang']),
                 'kuota_pegawai' => (int) $validated['kuota_pegawai'],
-            ]);
+            ];
+            $customQuota = $this->findInactiveCustomQuota($validated['kode_cabang'], $customName, $customCode);
+
+            if ($customQuota) {
+                $customQuota->update($customValues);
+            } else {
+                QuotaJabatan::query()->create($customValues);
+            }
         }
 
         $message = $positionId === null
@@ -328,15 +388,31 @@ class QuotaJabatanController extends Controller
         $validated = $request->validate([
             'kode_cabang' => ['required', 'string', 'max:20', 'exists:tb_kantor,kode_cabang'],
             'jabatan_id' => ['nullable', 'integer', Rule::exists($this->positionMasterTable(), 'kode_jabatan')],
+            'kode_jabatan' => ['nullable', 'string', 'max:50'],
             'nama_jabatan' => ['nullable', 'string', 'max:100'],
+            'group_jabatan' => ['nullable', 'string', Rule::in(['PE', 'PS'])],
             'kuota_pegawai' => ['required', 'integer', 'min:0', 'max:100000'],
         ]);
 
         $positionId = $validated['jabatan_id'] ?? null;
+        $customCode = trim((string) ($validated['kode_jabatan'] ?? ''));
         $customName = trim((string) ($validated['nama_jabatan'] ?? ''));
+        $customGroup = trim((string) ($validated['group_jabatan'] ?? ''));
         if ($positionId === null && $customName === '') {
             throw ValidationException::withMessages([
                 'nama_jabatan' => 'Isi nama jabatan custom atau pilih jabatan master.',
+            ]);
+        }
+
+        if ($positionId === null && ! in_array($customGroup, ['PE', 'PS'], true)) {
+            throw ValidationException::withMessages([
+                'group_jabatan' => 'Pilih label PE atau PS untuk jabatan custom.',
+            ]);
+        }
+
+        if ($positionId === null && $customCode === '') {
+            throw ValidationException::withMessages([
+                'kode_jabatan' => 'Isi kode jabatan custom.',
             ]);
         }
 
@@ -352,12 +428,16 @@ class QuotaJabatanController extends Controller
 
         if ($positionId === null) {
             $this->ensureCustomNameAvailable($validated['kode_cabang'], $customName, $quota->getKey());
+            $this->ensureCustomCodeAvailable($validated['kode_cabang'], $customCode, $quota->getKey());
         }
 
         $quota->update([
             'kode_cabang' => $validated['kode_cabang'],
             'jabatan_id' => $positionId !== null ? (int) $positionId : null,
+            'kode_jabatan' => $positionId === null ? $customCode : null,
             'nama_jabatan' => $customName !== '' ? $customName : null,
+            'group_jabatan' => $positionId === null ? $customGroup : null,
+            'lingkup' => $positionId === null ? $this->branchLevel($validated['kode_cabang']) : null,
             'kuota_pegawai' => (int) $validated['kuota_pegawai'],
         ]);
 
@@ -379,6 +459,7 @@ class QuotaJabatanController extends Controller
         $query = QuotaJabatan::query()
             ->where('kode_cabang', $branchCode)
             ->whereNull('jabatan_id')
+            ->where('kuota_pegawai', '>', 0)
             ->whereRaw('LOWER(TRIM(nama_jabatan)) = ?', [$normalized]);
 
         if ($ignoreId !== null) {
@@ -390,6 +471,42 @@ class QuotaJabatanController extends Controller
                 'nama_jabatan' => 'Nama jabatan custom tersebut sudah memiliki kuota pada kantor ini.',
             ]);
         }
+    }
+
+    private function ensureCustomCodeAvailable(string $branchCode, string $code, ?int $ignoreId = null): void
+    {
+        $normalized = mb_strtolower(trim($code));
+        $query = QuotaJabatan::query()
+            ->where('kode_cabang', $branchCode)
+            ->whereNull('jabatan_id')
+            ->where('kuota_pegawai', '>', 0)
+            ->whereRaw('LOWER(TRIM(kode_jabatan)) = ?', [$normalized]);
+
+        if ($ignoreId !== null) {
+            $query->where((new QuotaJabatan)->getKeyName(), '<>', $ignoreId);
+        }
+
+        if ($query->exists()) {
+            throw ValidationException::withMessages([
+                'kode_jabatan' => 'Kode jabatan custom tersebut sudah digunakan pada kantor ini.',
+            ]);
+        }
+    }
+
+    private function findInactiveCustomQuota(string $branchCode, string $name, string $code): ?QuotaJabatan
+    {
+        $normalizedName = mb_strtolower(trim($name));
+        $normalizedCode = mb_strtolower(trim($code));
+
+        return QuotaJabatan::query()
+            ->where('kode_cabang', $branchCode)
+            ->whereNull('jabatan_id')
+            ->where('kuota_pegawai', 0)
+            ->where(function ($query) use ($normalizedName, $normalizedCode): void {
+                $query->whereRaw('LOWER(TRIM(nama_jabatan)) = ?', [$normalizedName])
+                    ->orWhereRaw('LOWER(TRIM(kode_jabatan)) = ?', [$normalizedCode]);
+            })
+            ->first();
     }
 
     private function branchOptions(): array
@@ -404,6 +521,7 @@ class QuotaJabatanController extends Controller
             })
             ->select('kode_cabang')
             ->selectRaw('MIN(nama_kantor) as nama_kantor')
+            ->selectRaw("CASE WHEN MAX(CASE WHEN level = 'KP' THEN 1 ELSE 0 END) = 1 THEN 'KP' ELSE 'KC' END as level")
             ->groupBy('kode_cabang')
             ->orderBy('kode_cabang')
             ->get()
@@ -411,6 +529,7 @@ class QuotaJabatanController extends Controller
                 'kode_cabang' => (string) $branch->kode_cabang,
                 'nama_cabang' => trim((string) ($branch->nama_kantor ?: 'Cabang '.$branch->kode_cabang)),
                 'label' => sprintf('%s - %s', $branch->kode_cabang, trim((string) ($branch->nama_kantor ?: 'Cabang'))),
+                'level' => (string) ($branch->level ?: 'KC'),
             ])
             ->values()
             ->all();
@@ -534,6 +653,21 @@ class QuotaJabatanController extends Controller
         return Schema::hasTable('tb_master_jabatan') ? 'tb_master_jabatan' : 'tb_ref_jabatan';
     }
 
+    private function branchLevel(string $branchCode): string
+    {
+        $level = TbKantor::query()
+            ->where('kode_cabang', $branchCode)
+            ->where(function ($query): void {
+                $query
+                    ->whereIn('level', ['KP', 'KC'])
+                    ->orWhereRaw("RIGHT(kode_kantor_detail, 3) = '000'");
+            })
+            ->orderByRaw("CASE WHEN level = 'KP' THEN 0 ELSE 1 END")
+            ->value('level');
+
+        return in_array($level, ['KP', 'KC'], true) ? (string) $level : '-';
+    }
+
     private function normalisePositionId(mixed $value): string
     {
         $value = trim((string) $value);
@@ -543,7 +677,7 @@ class QuotaJabatanController extends Controller
 
     private function ensureAdmin(Request $request): void
     {
-        abort_unless(strtolower((string) $request->session()->get('hak_akses')) === 'admin', 403);
+        abort_unless(in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'it_admin'], true), 403);
     }
 
     private function quotaKey(string $branchCode, string $positionId): string
