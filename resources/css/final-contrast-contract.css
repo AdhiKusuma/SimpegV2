@@ -1,0 +1,148 @@
+/* -------------------------------------------------------------------------
+ * Final contrast contract
+ *
+ * Floating menus are rendered by several shared primitives and some pages
+ * still add legacy utility classes around them. Keep their foreground and
+ * interaction states deterministic at the last point in the cascade so a
+ * role-specific page cannot turn readable text into near-white text on a
+ * light surface.
+ * ------------------------------------------------------------------------- */
+
+html body .simpeg-app-canvas .simpeg-export-menu {
+    color: #0b1f4b !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-title,
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item,
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item :is(*, svg *) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(
+    :hover,
+    :focus,
+    :focus-visible,
+    [data-highlighted='true'],
+    [data-state='active'],
+    [aria-selected='true']
+) {
+    background: #0d5fe0 !important;
+    background-color: #0d5fe0 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(
+    :hover,
+    :focus,
+    :focus-visible,
+    [data-highlighted='true'],
+    [data-state='active'],
+    [aria-selected='true']
+) :is(*, svg *) {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(
+    :disabled,
+    [disabled],
+    [aria-disabled='true'],
+    [data-disabled='true']
+),
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(
+    :disabled,
+    [disabled],
+    [aria-disabled='true'],
+    [data-disabled='true']
+) :is(*, svg *) {
+    background: #eef3fb !important;
+    background-color: #eef3fb !important;
+    color: #4a6088 !important;
+    -webkit-text-fill-color: #4a6088 !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-title,
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item,
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item :is(*, svg *) {
+    color: #f1f5f9 !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(
+    :hover,
+    :focus,
+    :focus-visible,
+    [data-highlighted='true'],
+    [data-state='active'],
+    [aria-selected='true']
+) {
+    background: #2a426c !important;
+    background-color: #2a426c !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(
+    :hover,
+    :focus,
+    :focus-visible,
+    [data-highlighted='true'],
+    [data-state='active'],
+    [aria-selected='true']
+) :is(*, svg *) {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(
+    :disabled,
+    [disabled],
+    [aria-disabled='true'],
+    [data-disabled='true']
+),
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(
+    :disabled,
+    [disabled],
+    [aria-disabled='true'],
+    [data-disabled='true']
+) :is(*, svg *) {
+    background: #23385d !important;
+    background-color: #23385d !important;
+    color: #a5b2c2 !important;
+    -webkit-text-fill-color: #a5b2c2 !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+/* The combobox is portalled to document.body, so it needs the same final
+ * guarantee outside the shell subtree as well. */
+html body .simpeg-combobox-menu .simpeg-combobox-option,
+html body .simpeg-combobox-menu .simpeg-combobox-option :is(*, svg *) {
+    color: var(--simpeg-text) !important;
+    -webkit-text-fill-color: var(--simpeg-text) !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus, :focus-visible, .simpeg-combobox-option-active),
+html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus, :focus-visible, .simpeg-combobox-option-active) :is(*, svg *) {
+    color: var(--simpeg-hover-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-hover-ink) !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
