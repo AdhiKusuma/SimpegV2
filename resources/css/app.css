@@ -24,6 +24,7 @@
 @import './dropdown-theme.css';
 @import './dashboard-responsive-fixes.css';
 @import './action-system.css';
+@import './mobile-responsive.css';
 
 @source '../js/**/*.jsx';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

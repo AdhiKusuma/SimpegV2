@@ -705,7 +705,7 @@ export default function LegacyPageShell({ title, children }) {
                             <div className="relative shrink-0">
                                 <DropdownMenu open={profileOpen} onOpenChange={setProfileOpen}>
                                     <DropdownMenuTrigger asChild onClick={() => { setNotificationsOpen(false); setSearchOpen(false); }}>
-                                        <button type="button" className="simpeg-utility inline-flex min-h-11 max-w-[11rem] items-center gap-2 rounded-2xl border px-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#F5CE59]/70 sm:gap-3 sm:px-3">
+                                        <button type="button" className="simpeg-profile-trigger simpeg-utility inline-flex min-h-11 max-w-[11rem] items-center gap-2 rounded-2xl border px-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#F5CE59]/70 sm:gap-3 sm:px-3">
                                             <span className="flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-900 text-[0.625rem] font-medium text-[#FAD873] dark:bg-slate-700">
                                                 <ProfileAvatar gender={user.jk} photoUrl={user.foto_url} alt={`Avatar ${displayName}`} />
                                             </span>

@@ -1,0 +1,248 @@
+/* -------------------------------------------------------------------------
+ * Mobile responsive contract
+ *
+ * The authenticated shell uses CSS zoom for the desktop density. Safari on
+ * narrow viewports must not inherit that desktop scale: it makes the header
+ * controls compete for width and allows the dashboard illustration to cover
+ * the copy. This file is intentionally imported last so every page gets the
+ * same mobile rules without changing route or component behaviour.
+ * ------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .simpeg-app-canvas {
+        zoom: 1 !important;
+        width: 100% !important;
+        min-height: 100dvh !important;
+        max-width: 100% !important;
+        overflow-x: clip !important;
+    }
+
+    .simpeg-app-canvas > .simpeg-shell-frame,
+    .simpeg-shell-content,
+    .simpeg-shell-content > main {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .simpeg-app-canvas > .simpeg-shell-frame,
+    .simpeg-shell-content {
+        min-height: 100dvh !important;
+    }
+
+    .simpeg-app-canvas .simpeg-sidebar {
+        width: min(18rem, calc(100vw - 1.5rem)) !important;
+        height: 100dvh !important;
+    }
+
+    .simpeg-shell-content > .simpeg-header {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden;
+    }
+
+    .simpeg-shell-content > .simpeg-header > div {
+        width: 100% !important;
+        min-height: 4rem !important;
+        max-width: 100% !important;
+        gap: 0.5rem !important;
+        padding: 0.625rem 0.75rem !important;
+    }
+
+    .simpeg-header > div > .simpeg-utility,
+    .simpeg-header .simpeg-theme-toggle,
+    .simpeg-header .simpeg-profile-trigger,
+    .simpeg-header [data-notification-popover] > .simpeg-utility {
+        width: 2.75rem !important;
+        min-width: 2.75rem !important;
+        height: 2.75rem !important;
+        min-height: 2.75rem !important;
+        max-width: 2.75rem !important;
+        padding: 0 !important;
+    }
+
+    .simpeg-header .simpeg-history-controls {
+        display: none !important;
+    }
+
+    .simpeg-header .simpeg-search-trigger {
+        flex: 0 0 2.75rem !important;
+        width: 2.75rem !important;
+        min-width: 2.75rem !important;
+        max-width: 2.75rem !important;
+        height: 2.75rem !important;
+        min-height: 2.75rem !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        padding: 0 !important;
+    }
+
+    .simpeg-header .simpeg-search-trigger > span {
+        display: none !important;
+    }
+
+    .simpeg-header .simpeg-profile-trigger {
+        justify-content: center !important;
+        gap: 0 !important;
+        border-radius: 0.875rem !important;
+    }
+
+    .simpeg-header .simpeg-profile-trigger > span:not(:first-child),
+    .simpeg-header .simpeg-profile-trigger > svg {
+        display: none !important;
+    }
+
+    .simpeg-header > div > .ml-auto {
+        min-width: 0 !important;
+        gap: 0.4rem !important;
+    }
+
+    .simpeg-header .simpeg-notification-popover {
+        top: calc(4rem + 0.5rem) !important;
+    }
+
+    .simpeg-shell-content > main {
+        padding: 0.875rem 0.75rem calc(1.5rem + env(safe-area-inset-bottom)) !important;
+    }
+
+    /* Tables remain data-complete, but their outer viewport becomes a native
+     * horizontal scroller instead of expanding the page itself. */
+    .simpeg-shell-content main :is(
+        .overflow-x-auto,
+        .simpeg-table-scroll,
+        .simpeg-table-wrap,
+        .simpeg-profile-table-wrap,
+        .simpeg-audit-table-card,
+        .simpeg-role-table-card,
+        .simpeg-quota-table-wrap,
+        .simpeg-access-matrix__table-scroll
+    ) {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .simpeg-shell-content main :is(table, [data-slot='table']) {
+        max-width: none;
+    }
+
+    .simpeg-shell-content main :is(
+        .simpeg-card,
+        .simpeg-card-soft,
+        .simpeg-form-card,
+        .simpeg-filter-toolbar,
+        .simpeg-audit-cleanup-card,
+        .simpeg-audit-filter-card,
+        .simpeg-audit-table-card,
+        .simpeg-role-table-card,
+        .simpeg-role-empty-card,
+        .simpeg-special-card
+    ) {
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .simpeg-section-tabs {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .simpeg-section-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .simpeg-section-tabs > * {
+        flex: 0 0 auto;
+    }
+
+    .simpeg-export-dropdown {
+        max-width: 100%;
+    }
+
+    .simpeg-export-menu {
+        right: 0 !important;
+        width: min(18rem, calc(100vw - 1.5rem)) !important;
+        max-width: calc(100vw - 1.5rem) !important;
+    }
+
+    /* On phones the hero copy owns the vertical flow. The building is a
+     * decorative desktop treatment and must not sit above text or buttons. */
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+        display: block !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        padding: 1.25rem !important;
+        background-color: var(--surface-alt, #f5f8fe) !important;
+        background-image: linear-gradient(180deg, #f8fbff 0%, #edf4fd 100%) !important;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::before,
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+        display: none !important;
+        content: none !important;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__copy,
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__title {
+        max-width: 100% !important;
+        font-size: clamp(2rem, 10vw, 2.75rem) !important;
+        line-height: 1.08 !important;
+        overflow-wrap: anywhere;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__description {
+        max-width: 100% !important;
+        font-size: 0.95rem !important;
+        line-height: 1.5 !important;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__actions {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 0.75rem !important;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__actions > *,
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-region {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action {
+        min-height: 3rem !important;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-chart-card,
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-chart-card .simpeg-dashboard-card-content,
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-chart-card .simpeg-dashboard-card-header {
+        min-width: 0 !important;
+    }
+
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-summary-chart-card .simpeg-violation-trend-plot-wrap,
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-employee-trend-card .simpeg-employee-trend-plot-wrap {
+        height: clamp(11rem, 55vw, 14rem) !important;
+        min-height: clamp(11rem, 55vw, 14rem) !important;
+        max-height: clamp(11rem, 55vw, 14rem) !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-stats {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
