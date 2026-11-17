@@ -25,7 +25,10 @@ class ApplicationLogoService
         }
 
         if (File::isFile(public_path('uploads/config/'.$filename))) {
-            return route('config.application.logo', ['filename' => $filename], false);
+            // Uploaded logos are public presentation assets. Serving them
+            // directly avoids colliding with a server-level `/config` deny
+            // rule while keeping the existing basename/path validation above.
+            return asset('uploads/config/'.$filename);
         }
 
         return $fallback;
