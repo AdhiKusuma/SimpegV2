@@ -136,3 +136,17 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-empl
         opacity: 0.14 !important;
     }
 }
+
+/* Shared mobile-filter count badge. The broad utility text rules intentionally
+ * style the surrounding button, but must never replace the white foreground
+ * of a blue numeric badge. MobileFilterGroup is reused across the system, so
+ * this contract fixes every page at once. */
+html body .simpeg-app-canvas .simpeg-shell-content main .simpeg-mobile-filter-toggle .simpeg-filter-active-count,
+html body .simpeg-app-canvas .simpeg-filter-active-count {
+    background: #0D5FE0 !important;
+    background-color: #0D5FE0 !important;
+    border-color: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    opacity: 1 !important;
+}
