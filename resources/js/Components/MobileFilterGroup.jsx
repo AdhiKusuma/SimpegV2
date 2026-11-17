@@ -66,7 +66,19 @@ export default function MobileFilterGroup({ id, activeCount = 0, children, toggl
             >
                 <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
                 <span>Filter</span>
-                {activeCount > 0 && <span className="simpeg-filter-active-count">{activeCount}</span>}
+                {activeCount > 0 && (
+                    <span
+                        className="simpeg-filter-active-count"
+                        style={{
+                            backgroundColor: '#0D5FE0',
+                            borderColor: '#0D5FE0',
+                            color: '#FFFFFF',
+                            WebkitTextFillColor: '#FFFFFF',
+                        }}
+                    >
+                        {activeCount}
+                    </span>
+                )}
             </button>
             <div id={id} className={`simpeg-mobile-filter-fields simpeg-filter-dropdown-panel ${open ? 'is-open' : ''} ${fieldsClassName}`.trim()}>
                 {children}
