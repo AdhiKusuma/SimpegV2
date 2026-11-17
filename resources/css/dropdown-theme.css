@@ -63,7 +63,7 @@ html.dark body .simpeg-app-canvas :is(
     .simpeg-theme-menu,
     .simpeg-export-menu
 ),
-.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+html.dark .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
     .simpeg-combobox-menu,
     .simpeg-account-menu,
     .simpeg-notification-popover,
@@ -85,7 +85,7 @@ html.dark body .simpeg-app-canvas :is(
     .simpeg-theme-option *,
     .simpeg-export-menu-title
 ),
-.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+html.dark .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
     .simpeg-combobox-option,
     .simpeg-combobox-option *,
     .simpeg-menu-item,
@@ -108,7 +108,7 @@ html.dark body .simpeg-app-canvas :is(
     .simpeg-theme-option:focus-visible,
     .simpeg-theme-option-active
 ),
-.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+html.dark .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
     .simpeg-combobox-option:hover,
     .simpeg-combobox-option:focus-visible,
     .simpeg-combobox-option-active,
@@ -134,7 +134,7 @@ html.dark body .simpeg-app-canvas :is(
     .simpeg-theme-option:focus-visible,
     .simpeg-theme-option-active
 ) :where(*),
-.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+html.dark .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
     .simpeg-combobox-option:hover,
     .simpeg-combobox-option:focus-visible,
     .simpeg-combobox-option-active,
@@ -154,7 +154,7 @@ html.dark body .simpeg-app-canvas :is(
     .simpeg-account-menu .simpeg-muted,
     .simpeg-notification-popover .simpeg-muted
 ),
-.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+html.dark .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
     .simpeg-combobox-option .simpeg-muted,
     .simpeg-account-menu .simpeg-muted,
     .simpeg-notification-popover .simpeg-muted
@@ -191,7 +191,7 @@ html.dark body .simpeg-app-canvas :is(
     .simpeg-theme-option:focus-visible,
     .simpeg-theme-option-active
 ) :is(.simpeg-text, .simpeg-muted, .simpeg-menu-item, .simpeg-theme-option, .simpeg-export-menu-title, svg, svg *),
-.simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
+html.dark .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) :is(
     .simpeg-combobox-option:hover,
     .simpeg-combobox-option:focus-visible,
     .simpeg-combobox-option-active,
@@ -371,4 +371,66 @@ html.dark body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus-v
     color: #F1F5F9 !important;
     -webkit-text-fill-color: #F1F5F9 !important;
     stroke: currentColor !important;
+}
+
+/* Export menus share the same light floating surface as the final combobox
+ * contract. The older sidebar-ink selector above must not make idle items
+ * pale merely because the sidebar palette is dark; that selector describes
+ * the rail, not the active appearance mode. */
+html body .simpeg-app-canvas .simpeg-export-menu,
+html body .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) .simpeg-export-menu,
+html.dark body .simpeg-app-canvas .simpeg-export-menu {
+    isolation: isolate;
+    opacity: 1 !important;
+    mix-blend-mode: normal !important;
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu-title,
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item,
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item :is(svg, svg *, span),
+html body .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) .simpeg-export-menu-title,
+html body .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) .simpeg-export-menu .simpeg-menu-item,
+html body .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) .simpeg-export-menu .simpeg-menu-item :is(svg, svg *, span),
+html.dark body .simpeg-app-canvas .simpeg-export-menu-title,
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item,
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item :is(svg, svg *, span) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu-title,
+html body .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) .simpeg-export-menu-title,
+html.dark body .simpeg-app-canvas .simpeg-export-menu-title {
+    color: #55668A !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(:hover, :focus-visible),
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(:hover, :focus-visible) :is(svg, svg *, span),
+html body .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) .simpeg-export-menu .simpeg-menu-item:is(:hover, :focus-visible),
+html body .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color='ink']) .simpeg-export-menu .simpeg-menu-item:is(:hover, :focus-visible) :is(svg, svg *, span),
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(:hover, :focus-visible),
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item:is(:hover, :focus-visible) :is(svg, svg *, span) {
+    background: #2A426C !important;
+    background-color: #2A426C !important;
+    color: #F1F5F9 !important;
+    -webkit-text-fill-color: #F1F5F9 !important;
+    stroke: currentColor !important;
+}
+
+/* The filter toolbar is intentionally above normal page content, but an open
+ * export menu must sit above that toolbar so its Apply button cannot bleed
+ * through the menu. */
+html body .simpeg-app-canvas .simpeg-export-dropdown.is-open {
+    position: relative !important;
+    z-index: 80 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-dropdown.is-open .simpeg-export-menu {
+    position: absolute !important;
+    z-index: 81 !important;
 }

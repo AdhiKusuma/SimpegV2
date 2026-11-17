@@ -28,7 +28,7 @@ export default function ExportDropdown({ items = [], className = '', label = 'Ex
     }
 
     return (
-        <div className={`simpeg-export-dropdown ${className}`.trim()}>
+        <div className={`simpeg-export-dropdown ${open ? 'is-open' : ''} ${className}`.trim()}>
             <DropdownMenu open={open} onOpenChange={setOpen}>
                 <DropdownMenuTrigger asChild>
                     <button type="button" className="simpeg-export-trigger inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition focus:outline-none focus:ring-4">
