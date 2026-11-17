@@ -24,8 +24,8 @@ export default function SertifikasiForm({ mode, record, employees }) {
             <Head title={(isEdit ? 'Edit' : 'Tambah') + ' Data Sertifikasi'} />
             <div className="mx-auto max-w-4xl">
                 <div className="mb-6">
-                    <Link href="/sertifikasi" className="text-sm font-bold text-amber-600">← Kembali ke Sertifikasi</Link>
-                    <p className="mb-2 mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-amber-600">Kompetensi Pegawai</p>
+                    <Link href="/sertifikasi" className="text-sm font-bold text-blue-600">← Kembali ke Sertifikasi</Link>
+                    <p className="mb-2 mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Kompetensi Pegawai</p>
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{isEdit ? 'Edit' : 'Tambah'} data sertifikasi</h1>
                 </div>
                 <form onSubmit={submit} className="simpeg-form-card">
@@ -41,7 +41,7 @@ export default function SertifikasiForm({ mode, record, employees }) {
                     </div>
                     <div className="mt-8 flex justify-end gap-3">
                         <Link href="/sertifikasi" className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-600">Batal</Link>
-                        <button type="submit" disabled={form.processing} className="rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-bold text-white">{form.processing ? 'Menyimpan...' : isEdit ? 'Update Data' : 'Simpan Data'}</button>
+                        <button type="submit" disabled={form.processing} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white">{form.processing ? 'Menyimpan...' : isEdit ? 'Update Data' : 'Simpan Data'}</button>
                     </div>
                 </form>
             </div>

@@ -141,8 +141,8 @@ const sectionTabGroups = [
         ariaLabel: 'Pengembangan kompetensi',
         matches: ['/diklat', '/biaya-pendidikan', '/sertifikasi'],
         items: [
-            { href: '/diklat', label: 'Pelatihan', permission: 'training.view' },
             { href: '/biaya-pendidikan', label: 'Kegiatan Diklat', permission: 'training_costs.view' },
+            { href: '/diklat', label: 'Pelatihan', permission: 'training.view' },
             { href: '/sertifikasi', label: 'Sertifikasi', permission: 'certifications.view' },
         ],
     },
