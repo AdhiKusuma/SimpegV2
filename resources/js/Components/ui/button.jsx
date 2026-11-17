@@ -18,7 +18,7 @@ const sizes = {
 
 export function buttonVariants({ variant = 'default', size = 'default', className } = {}) {
     return cn(
-        'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--simpeg-focus-ring)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--simpeg-focus-ring)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
         variants[variant] || variants.default,
         sizes[size] || sizes.default,
         className,

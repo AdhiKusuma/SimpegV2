@@ -1,0 +1,320 @@
+/*
+ * SIMPEG action system
+ *
+ * The application-settings Reset / Simpan Perubahan pair is the visual
+ * reference for every ordinary action: white/navy secondary controls and a
+ * blue/white primary control. This file is imported last so legacy utility
+ * classes cannot reintroduce low-contrast text on another page or role.
+ */
+:root {
+    --simpeg-action-primary: #0D5FE0;
+    --simpeg-action-primary-hover: #0A4DB8;
+    --simpeg-action-primary-ink: #FFFFFF;
+    --simpeg-action-secondary: #FFFFFF;
+    --simpeg-action-secondary-hover: #E8F0FD;
+    --simpeg-action-secondary-border: #D6E2F5;
+    --simpeg-action-secondary-border-hover: #B8CCEA;
+    --simpeg-action-secondary-ink: #0B1F4B;
+    --simpeg-action-danger: #DC2626;
+    --simpeg-action-danger-hover: #B91C1C;
+    --simpeg-action-radius: 0.8rem;
+    --simpeg-action-focus: rgb(13 95 224 / 0.32);
+    --simpeg-action-shadow: 0 0.45rem 1rem rgb(13 95 224 / 0.20);
+}
+
+/* Shared geometry and typography for named action components. */
+html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-config-primary-action,
+    .simpeg-settings-save,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    .simpeg-condition-filter__apply,
+    .simpeg-audit-apply,
+    .simpeg-quota-filter-apply,
+    .simpeg-quota-save,
+    .simpeg-quota-name-save,
+    .simpeg-role-button--primary,
+    .simpeg-dashboard-action--primary,
+    [data-dashboard-action='primary']
+),
+html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+    .simpeg-settings-reset,
+    .simpeg-config-secondary-action,
+    .simpeg-role-button--secondary,
+    .simpeg-role-edit-button,
+    .simpeg-audit-fullscreen,
+    .simpeg-audit-reset,
+    .simpeg-audit-preview-button,
+    .simpeg-quota-filter-reset,
+    .simpeg-quota-name-cancel,
+    .simpeg-dashboard-action--secondary,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-mobile-filter-toggle
+) {
+    min-height: 2.75rem !important;
+    border-radius: var(--simpeg-action-radius) !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease !important;
+}
+
+/* Primary action contract. */
+html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-config-primary-action,
+    .simpeg-settings-save,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    .simpeg-condition-filter__apply,
+    .simpeg-audit-apply,
+    .simpeg-quota-filter-apply,
+    .simpeg-quota-save,
+    .simpeg-quota-name-save,
+    .simpeg-role-button--primary,
+    .simpeg-dashboard-action--primary,
+    [data-dashboard-action='primary']
+) {
+    border: 1px solid var(--simpeg-action-primary) !important;
+    background: var(--simpeg-action-primary) !important;
+    background-color: var(--simpeg-action-primary) !important;
+    color: var(--simpeg-action-primary-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-action-primary-ink) !important;
+    box-shadow: var(--simpeg-action-shadow) !important;
+}
+
+html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-config-primary-action,
+    .simpeg-settings-save,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    .simpeg-condition-filter__apply,
+    .simpeg-audit-apply,
+    .simpeg-quota-filter-apply,
+    .simpeg-quota-save,
+    .simpeg-quota-name-save,
+    .simpeg-role-button--primary,
+    .simpeg-dashboard-action--primary,
+    [data-dashboard-action='primary']
+):is(:hover, :focus-visible):not(:disabled):not([aria-disabled='true']) {
+    border-color: var(--simpeg-action-primary-hover) !important;
+    background: var(--simpeg-action-primary-hover) !important;
+    background-color: var(--simpeg-action-primary-hover) !important;
+    color: var(--simpeg-action-primary-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-action-primary-ink) !important;
+    box-shadow: 0 0.6rem 1.25rem rgb(13 95 224 / 0.26) !important;
+    transform: translateY(-1px);
+}
+
+html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+    .simpeg-primary,
+    .simpeg-action-primary,
+    .simpeg-config-primary-action,
+    .simpeg-settings-save,
+    .simpeg-desktop-filter-apply,
+    .simpeg-mobile-filter-apply,
+    .simpeg-condition-filter__apply,
+    .simpeg-audit-apply,
+    .simpeg-quota-filter-apply,
+    .simpeg-quota-save,
+    .simpeg-quota-name-save,
+    .simpeg-role-button--primary,
+    .simpeg-dashboard-action--primary,
+    [data-dashboard-action='primary']
+) :is(svg, svg *, span, strong) {
+    color: var(--simpeg-action-primary-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-action-primary-ink) !important;
+    stroke: currentColor !important;
+}
+
+/* Secondary action contract, based on Reset. */
+html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+    .simpeg-settings-reset,
+    .simpeg-config-secondary-action,
+    .simpeg-role-button--secondary,
+    .simpeg-role-edit-button,
+    .simpeg-audit-fullscreen,
+    .simpeg-audit-reset,
+    .simpeg-audit-preview-button,
+    .simpeg-quota-filter-reset,
+    .simpeg-quota-name-cancel,
+    .simpeg-dashboard-action--secondary,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-mobile-filter-toggle
+) {
+    border: 1px solid var(--simpeg-action-secondary-border) !important;
+    background: var(--simpeg-action-secondary) !important;
+    background-color: var(--simpeg-action-secondary) !important;
+    color: var(--simpeg-action-secondary-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-action-secondary-ink) !important;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05) !important;
+}
+
+html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+    .simpeg-settings-reset,
+    .simpeg-config-secondary-action,
+    .simpeg-role-button--secondary,
+    .simpeg-role-edit-button,
+    .simpeg-audit-fullscreen,
+    .simpeg-audit-reset,
+    .simpeg-audit-preview-button,
+    .simpeg-quota-filter-reset,
+    .simpeg-quota-name-cancel,
+    .simpeg-dashboard-action--secondary,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-mobile-filter-toggle
+):is(:hover, :focus-visible):not(:disabled):not([aria-disabled='true']) {
+    border-color: var(--simpeg-action-secondary-border-hover) !important;
+    background: var(--simpeg-action-secondary-hover) !important;
+    background-color: var(--simpeg-action-secondary-hover) !important;
+    color: var(--simpeg-action-secondary-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-action-secondary-ink) !important;
+    box-shadow: 0 0.35rem 0.8rem rgb(13 95 224 / 0.12) !important;
+}
+
+html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+    .simpeg-settings-reset,
+    .simpeg-config-secondary-action,
+    .simpeg-role-button--secondary,
+    .simpeg-role-edit-button,
+    .simpeg-audit-fullscreen,
+    .simpeg-audit-reset,
+    .simpeg-audit-preview-button,
+    .simpeg-quota-filter-reset,
+    .simpeg-quota-name-cancel,
+    .simpeg-dashboard-action--secondary,
+    .simpeg-filter-dropdown-trigger,
+    .simpeg-mobile-filter-toggle
+) :is(svg, svg *, span, strong) {
+    color: var(--simpeg-action-secondary-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-action-secondary-ink) !important;
+    stroke: currentColor !important;
+}
+
+/* Destructive actions remain red, but use the same geometry and readable
+ * foreground as the primary action. */
+html body .simpeg-app-canvas :is(button, a):is(
+    .simpeg-audit-delete-button,
+    .simpeg-action-danger,
+    [class~='bg-red-600'],
+    [class~='bg-red-700']
+) {
+    border: 1px solid var(--simpeg-action-danger) !important;
+    background: var(--simpeg-action-danger) !important;
+    background-color: var(--simpeg-action-danger) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html body .simpeg-app-canvas :is(button, a):is(
+    .simpeg-audit-delete-button,
+    .simpeg-action-danger,
+    [class~='bg-red-600'],
+    [class~='bg-red-700']
+):is(:hover, :focus-visible):not(:disabled):not([aria-disabled='true']) {
+    border-color: var(--simpeg-action-danger-hover) !important;
+    background: var(--simpeg-action-danger-hover) !important;
+    background-color: var(--simpeg-action-danger-hover) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* Legacy pages use palette-specific blue/cyan/amber/emerald utilities for
+ * ordinary submit/create actions. Normalize only actual buttons and links;
+ * status badges and table cells are left untouched. */
+html body .simpeg-app-canvas .simpeg-shell-content main :is(button, a):is(
+    [class~='bg-blue-600'],
+    [class~='bg-blue-700'],
+    [class~='bg-cyan-700'],
+    [class~='bg-emerald-700'],
+    [class~='bg-amber-600'],
+    [class~='bg-indigo-600']
+):not(.simpeg-audit-delete-button) {
+    border: 1px solid var(--simpeg-action-primary) !important;
+    border-radius: var(--simpeg-action-radius) !important;
+    background: var(--simpeg-action-primary) !important;
+    background-color: var(--simpeg-action-primary) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-weight: 700 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content main :is(button, a):is(
+    [class~='bg-blue-600'],
+    [class~='bg-blue-700'],
+    [class~='bg-cyan-700'],
+    [class~='bg-emerald-700'],
+    [class~='bg-amber-600'],
+    [class~='bg-indigo-600']
+):not(.simpeg-audit-delete-button):is(:hover, :focus-visible):not(:disabled):not([aria-disabled='true']) {
+    border-color: var(--simpeg-action-primary-hover) !important;
+    background: var(--simpeg-action-primary-hover) !important;
+    background-color: var(--simpeg-action-primary-hover) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* Consistent tab states and pagination states. */
+html body .simpeg-app-canvas .simpeg-section-tab {
+    border-radius: var(--simpeg-action-radius) !important;
+    color: var(--simpeg-action-secondary-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-action-secondary-ink) !important;
+    font-weight: 700 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-section-tab:not(.simpeg-section-tab--active):is(:hover, :focus-visible) {
+    background: var(--simpeg-action-secondary-hover) !important;
+    color: var(--simpeg-action-secondary-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-action-secondary-ink) !important;
+}
+
+html body .simpeg-app-canvas .simpeg-section-tab--active,
+html body .simpeg-app-canvas .simpeg-section-tab--active:is(:hover, :focus-visible) {
+    background: var(--simpeg-action-primary) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html body .simpeg-app-canvas .simpeg-section-tab--active :is(svg, svg *, span),
+html body .simpeg-app-canvas .simpeg-section-tab--active:is(:hover, :focus-visible) :is(svg, svg *, span) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-filter-active-count {
+    background: var(--simpeg-action-primary) !important;
+    border-color: var(--simpeg-action-primary) !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    font-weight: 800 !important;
+    opacity: 1 !important;
+}
+
+/* Disabled controls keep readable text instead of becoming white-on-white. */
+html body .simpeg-app-canvas :is(button, a, input)[disabled],
+html body .simpeg-app-canvas :is(button, a, input)[aria-disabled='true'] {
+    cursor: not-allowed;
+}
+
+html body .simpeg-app-canvas :is(button, a, input)[disabled] :is(svg, svg *, span, strong),
+html body .simpeg-app-canvas :is(button, a, input)[aria-disabled='true'] :is(svg, svg *, span, strong) {
+    opacity: 1 !important;
+}
+
+@media (max-width: 639px) {
+    html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='button']):is(
+        .simpeg-settings-reset,
+        .simpeg-settings-save,
+        .simpeg-config-primary-action,
+        .simpeg-config-secondary-action,
+        .simpeg-quota-save
+    ) {
+        flex: 1 1 10rem;
+        min-width: 0;
+    }
+}
