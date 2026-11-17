@@ -44,10 +44,10 @@ export default function ExportDropdown({ items = [], className = '', label = 'Ex
                         const key = item.key || `${item.href}-${index}`;
 
                         if (item.action) {
-                            return <DropdownMenuItem key={key} onClick={item.action}><Icon aria-hidden="true" className="h-4 w-4" />{item.label}</DropdownMenuItem>;
+                            return <DropdownMenuItem key={key} className="simpeg-export-menu-item" onClick={item.action}><Icon aria-hidden="true" className="h-4 w-4" />{item.label}</DropdownMenuItem>;
                         }
 
-                        return <DropdownMenuItem key={key} asChild><a href={item.href} target={item.target} rel={item.rel || (item.target === '_blank' ? 'noreferrer' : undefined)}><Icon aria-hidden="true" className="h-4 w-4" />{item.label}</a></DropdownMenuItem>;
+                        return <DropdownMenuItem key={key} asChild className="simpeg-export-menu-item"><a href={item.href} target={item.target} rel={item.rel || (item.target === '_blank' ? 'noreferrer' : undefined)}><Icon aria-hidden="true" className="h-4 w-4" />{item.label}</a></DropdownMenuItem>;
                     })}
                 </DropdownMenuContent>
             </DropdownMenu>
