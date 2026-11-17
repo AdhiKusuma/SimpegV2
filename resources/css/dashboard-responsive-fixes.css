@@ -1,0 +1,124 @@
+/* -------------------------------------------------------------------------
+ * Dashboard responsive contract
+ *
+ * This file is imported last on purpose. The dashboard has accumulated
+ * several historical theme overrides; these rules keep the two pieces that
+ * are sensitive to viewport width deterministic after all theme layers have
+ * been composed.
+ * ------------------------------------------------------------------------- */
+
+/* The PNG used by the hero contains an opaque light canvas. Blend it into a
+ * single continuous gradient instead of painting that canvas as a separate
+ * rectangular background layer (which creates a vertical seam on zoom-out). */
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+    isolation: isolate !important;
+    background-color: #F5F8FE !important;
+    background-image: linear-gradient(90deg, #F5F8FE 0%, #F1F6FE 52%, #E8F0FD 100%) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100% !important;
+    box-shadow: none !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::before {
+    display: none !important;
+    content: none !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 0 0 auto !important;
+    width: min(68%, 72rem) !important;
+    height: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    content: '' !important;
+    background: url('/images/dashboard-building-modern.png') no-repeat right center / auto 100% !important;
+    box-shadow: none !important;
+    filter: none !important;
+    mix-blend-mode: multiply !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    transform: none !important;
+    z-index: 0 !important;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.72) 24%, #000 38%, #000 100%) !important;
+    mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.72) 24%, #000 38%, #000 100%) !important;
+    -webkit-mask-position: center !important;
+    mask-position: center !important;
+    -webkit-mask-repeat: no-repeat !important;
+    mask-repeat: no-repeat !important;
+    -webkit-mask-size: 100% 100% !important;
+    mask-size: 100% 100% !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__copy,
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Keep the hand-drawn trend chart inside its card at wide desktop widths.
+ * The wrapper gives the SVG a real containing block, so its viewBox cannot
+ * grow with the card width and spill below the fixed card height. */
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-summary-chart-card .simpeg-violation-trend {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-summary-chart-card .simpeg-violation-trend-plot-wrap {
+    flex: 0 0 13rem !important;
+    height: 13rem !important;
+    min-height: 13rem !important;
+    max-height: 13rem !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-summary-chart-card .simpeg-violation-trend-plot {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-summary-chart-card .simpeg-violation-trend > p {
+    flex: 0 0 auto !important;
+}
+
+@media (max-width: 1023px) {
+    html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+        grid-template-columns: minmax(0, 1fr) !important;
+        min-height: 0 !important;
+        background-image: linear-gradient(180deg, #F5F8FE 0%, #EDF4FD 100%) !important;
+    }
+
+    html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+        inset: auto 0 0 auto !important;
+        width: 100% !important;
+        height: 58% !important;
+        opacity: 0.22 !important;
+        background-position: right bottom !important;
+        background-size: auto 100% !important;
+        -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.22) 45%, #000 100%) !important;
+        mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.22) 45%, #000 100%) !important;
+    }
+
+    html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-summary-chart-card .simpeg-violation-trend-plot-wrap {
+        flex-basis: clamp(10rem, 55vw, 13rem) !important;
+        height: clamp(10rem, 55vw, 13rem) !important;
+        min-height: clamp(10rem, 55vw, 13rem) !important;
+        max-height: clamp(10rem, 55vw, 13rem) !important;
+    }
+}
+
+@media (max-width: 639px) {
+    html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+        height: 48% !important;
+        opacity: 0.14 !important;
+    }
+}

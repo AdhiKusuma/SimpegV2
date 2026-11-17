@@ -22,6 +22,7 @@
 @import './sidebar-motion.css';
 @import './pagination.css';
 @import './dropdown-theme.css';
+@import './dashboard-responsive-fixes.css';
 
 @source '../js/**/*.jsx';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

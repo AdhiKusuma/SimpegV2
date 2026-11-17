@@ -269,33 +269,35 @@ function TrendChart({ data }) {
 
     return (
         <div className="simpeg-violation-trend">
-            <svg
-                viewBox={`0 0 ${width} ${height}`}
-                className="simpeg-violation-trend-plot block w-full"
-                preserveAspectRatio="none"
-                role="img"
-                aria-label={`Tren pelanggaran tahun ${data?.year || ''}`}
-            >
-                {[0, 0.5, 1].map((ratio) => {
-                    const y = padding.top + plotHeight * ratio;
-                    const gridValue = Math.round(maximum * (1 - ratio));
-                    return (
-                        <g key={ratio}>
-                            <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="var(--simpeg-chart-grid)" strokeDasharray="4 4" />
-                            <text x={padding.left - 8} y={y + 4} textAnchor="end" fill="var(--simpeg-chart-label)" className="text-[10px]">{gridValue}</text>
+            <div className="simpeg-violation-trend-plot-wrap">
+                <svg
+                    viewBox={`0 0 ${width} ${height}`}
+                    className="simpeg-violation-trend-plot block w-full"
+                    preserveAspectRatio="none"
+                    role="img"
+                    aria-label={`Tren pelanggaran tahun ${data?.year || ''}`}
+                >
+                    {[0, 0.5, 1].map((ratio) => {
+                        const y = padding.top + plotHeight * ratio;
+                        const gridValue = Math.round(maximum * (1 - ratio));
+                        return (
+                            <g key={ratio}>
+                                <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="var(--simpeg-chart-grid)" strokeDasharray="4 4" />
+                                <text x={padding.left - 8} y={y + 4} textAnchor="end" fill="var(--simpeg-chart-label)" className="text-[10px]">{gridValue}</text>
+                            </g>
+                        );
+                    })}
+                    <path d={path} fill="none" stroke="var(--simpeg-chart-1)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+                    {points.map((point, index) => (
+                        <g key={labels[index]}>
+                            <circle cx={point.x} cy={point.y} r="5" fill="var(--simpeg-surface)" stroke={index === highestIndex ? 'var(--simpeg-chart-highlight)' : 'var(--simpeg-chart-1)'} strokeWidth="3">
+                                <title>{`${labels[index]}: ${number(point.value)} kasus`}</title>
+                            </circle>
+                            <text x={point.x} y={height - 12} textAnchor="middle" fill="var(--simpeg-chart-label)" className="text-[10px]">{labels[index]}</text>
                         </g>
-                    );
-                })}
-                <path d={path} fill="none" stroke="var(--simpeg-chart-1)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
-                {points.map((point, index) => (
-                    <g key={labels[index]}>
-                        <circle cx={point.x} cy={point.y} r="5" fill="var(--simpeg-surface)" stroke={index === highestIndex ? 'var(--simpeg-chart-highlight)' : 'var(--simpeg-chart-1)'} strokeWidth="3">
-                            <title>{`${labels[index]}: ${number(point.value)} kasus`}</title>
-                        </circle>
-                        <text x={point.x} y={height - 12} textAnchor="middle" fill="var(--simpeg-chart-label)" className="text-[10px]">{labels[index]}</text>
-                    </g>
-                ))}
-            </svg>
+                    ))}
+                </svg>
+            </div>
             <p className="simpeg-muted mt-2 text-center text-xs">Data pelanggaran per bulan, {data?.year}</p>
         </div>
     );
