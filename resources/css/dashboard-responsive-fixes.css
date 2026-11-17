@@ -90,6 +90,20 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-summ
     flex: 0 0 auto !important;
 }
 
+/* Employee trend uses the same full-width plot contract. Without an explicit
+ * stretch, the SVG's default preserveAspectRatio letterboxes its 720x260
+ * viewBox in the middle of very wide cards. */
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-employee-trend-card .simpeg-employee-trend,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-employee-trend-card .simpeg-employee-trend-plot-wrap,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-employee-trend-card .simpeg-employee-trend-plot {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-employee-trend-card .simpeg-employee-trend-plot-wrap {
+    align-self: stretch !important;
+}
+
 @media (max-width: 1023px) {
     html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
         grid-template-columns: minmax(0, 1fr) !important;

@@ -330,7 +330,7 @@ function CombinedEmployeeTrendPlot({ labels = [], series = [], ariaLabel }) {
 
     return (
         <div className="simpeg-employee-trend-plot-wrap">
-            <svg viewBox={`0 0 ${width} ${height}`} className="simpeg-employee-trend-plot block w-full" role="img" aria-label={ariaLabel}>
+            <svg viewBox={`0 0 ${width} ${height}`} className="simpeg-employee-trend-plot block w-full" preserveAspectRatio="none" role="img" aria-label={ariaLabel}>
                 <text x={padding.left} y="12" fill="var(--simpeg-muted)" className="text-[10px]">{axis === 'total' ? 'Jumlah pegawai' : 'Pegawai per bulan'}</text>
                 {[0, 0.5, 1].map((ratio) => {
                     const y = padding.top + plotHeight * ratio;
