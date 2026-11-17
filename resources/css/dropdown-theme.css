@@ -508,3 +508,26 @@ html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-it
     -webkit-text-fill-color: #A5B2C2 !important;
     stroke: currentColor !important;
 }
+
+/* Interaction states must win even when a browser/primitive marks an item as
+ * disabled or highlighted. Never leave white ink on the pale light hover
+ * surface. */
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active'], [aria-selected='true']),
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active'], [aria-selected='true']) :is(*, svg *) {
+    background: #0D5FE0 !important;
+    background-color: #0D5FE0 !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active'], [aria-selected='true']),
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active'], [aria-selected='true']) :is(*, svg *) {
+    background: #2A426C !important;
+    background-color: #2A426C !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
