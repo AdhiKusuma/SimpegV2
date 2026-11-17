@@ -439,8 +439,8 @@ html body .simpeg-app-canvas .simpeg-export-dropdown.is-open .simpeg-export-menu
  * primitive, whose generic accent rules can otherwise win over the semantic
  * export palette. Keep idle text dark on the light surface, and always switch
  * the text and every icon to white when the blue interaction row is active. */
-html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item,
-html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item :is(*, svg *) {
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item),
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item) :is(*, svg *) {
     color: #0B1F4B !important;
     -webkit-text-fill-color: #0B1F4B !important;
     stroke: currentColor !important;
@@ -452,8 +452,8 @@ html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-title {
     -webkit-text-fill-color: #0B1F4B !important;
 }
 
-html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item:is(:hover, :focus-visible, [data-state='active'], [aria-selected='true']),
-html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item:is(:hover, :focus-visible, [data-state='active'], [aria-selected='true']) :is(*, svg *) {
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus-visible, [data-state='active'], [aria-selected='true']),
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus-visible, [data-state='active'], [aria-selected='true']) :is(*, svg *) {
     background: #0D5FE0 !important;
     background-color: #0D5FE0 !important;
     color: #FFFFFF !important;
@@ -461,13 +461,14 @@ html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item:is(:ho
     stroke: currentColor !important;
 }
 
-html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item[aria-disabled='true'],
-html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item[aria-disabled='true'] :is(*, svg *) {
-    background: #F5F8FE !important;
-    background-color: #F5F8FE !important;
-    color: #8A9ABA !important;
-    -webkit-text-fill-color: #8A9ABA !important;
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item)[aria-disabled='true'],
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item)[aria-disabled='true'] :is(*, svg *) {
+    background: #EEF3FB !important;
+    background-color: #EEF3FB !important;
+    color: #4A6088 !important;
+    -webkit-text-fill-color: #4A6088 !important;
     stroke: currentColor !important;
+    opacity: 1 !important;
 }
 
 html.dark body .simpeg-app-canvas .simpeg-export-menu {
@@ -477,8 +478,8 @@ html.dark body .simpeg-app-canvas .simpeg-export-menu {
     color: #F1F5F9 !important;
 }
 
-html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item,
-html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item :is(*, svg *) {
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item),
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item) :is(*, svg *) {
     color: #F1F5F9 !important;
     -webkit-text-fill-color: #F1F5F9 !important;
     stroke: currentColor !important;
@@ -490,8 +491,8 @@ html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-title 
     -webkit-text-fill-color: #F1F5F9 !important;
 }
 
-html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item:is(:hover, :focus-visible, [data-state='active'], [aria-selected='true']),
-html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item:is(:hover, :focus-visible, [data-state='active'], [aria-selected='true']) :is(*, svg *) {
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus-visible, [data-state='active'], [aria-selected='true']),
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus-visible, [data-state='active'], [aria-selected='true']) :is(*, svg *) {
     background: #2A426C !important;
     background-color: #2A426C !important;
     color: #FFFFFF !important;
@@ -499,8 +500,8 @@ html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item:i
     stroke: currentColor !important;
 }
 
-html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item[aria-disabled='true'],
-html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-item[aria-disabled='true'] :is(*, svg *) {
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item)[aria-disabled='true'],
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item)[aria-disabled='true'] :is(*, svg *) {
     background: #23385D !important;
     background-color: #23385D !important;
     color: #A5B2C2 !important;
