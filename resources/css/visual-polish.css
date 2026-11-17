@@ -7755,9 +7755,9 @@ html body .simpeg-login-page :is(
 }
 
 html body .simpeg-login-page .simpeg-login-clean-form .simpeg-input {
-    background: var(--simpeg-input) !important;
-    border-color: var(--simpeg-border) !important;
-    color: var(--simpeg-text) !important;
+    background: #FFFFFF !important;
+    border-color: #B8CCEA !important;
+    color: #0B1F4B !important;
 }
 
 html body .simpeg-login-page :is(.simpeg-login-resource-dialog, .simpeg-login-rate-limit-dialog) {

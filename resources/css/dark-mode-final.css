@@ -1490,19 +1490,22 @@ html.dark body .simpeg-login-page .simpeg-login-topbar {
 }
 
 html.dark body .simpeg-login-page .simpeg-login-clean-form {
-    background: #1B2A4A !important;
-    border-color: rgb(214 226 245 / 0.28) !important;
-    color: #F1F5F9 !important;
+    background: #FFFFFF !important;
+    border-color: #D6E2F5 !important;
+    color: #0B1F4B !important;
+    box-shadow: 0 1.5rem 3.5rem rgb(0 0 0 / 0.30) !important;
 }
 
 html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-input {
-    background: #243A62 !important;
-    border-color: rgb(214 226 245 / 0.28) !important;
-    color: #F1F5F9 !important;
+    background: #FFFFFF !important;
+    border-color: #B8CCEA !important;
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
 }
 
 html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-input::placeholder {
-    color: #AEB7C2 !important;
+    color: #6C7FA3 !important;
+    -webkit-text-fill-color: #6C7FA3 !important;
 }
 
 html.dark body .simpeg-login-page :is(
@@ -1516,6 +1519,25 @@ html.dark body .simpeg-login-page :is(
     .simpeg-login-password-toggle
 ) {
     color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form :is(
+    .simpeg-login-form-heading h2,
+    .simpeg-login-label,
+    .simpeg-login-field-heading,
+    .simpeg-login-form-footer,
+    .simpeg-login-remember,
+    .simpeg-login-password-toggle
+) {
+    color: #0B1F4B !important;
+    -webkit-text-fill-color: #0B1F4B !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-login-form-heading > p:last-child,
+html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-login-form-footer p,
+html.dark body .simpeg-login-page .simpeg-login-clean-form .simpeg-login-form-footer a {
+    color: #55668A !important;
+    -webkit-text-fill-color: #55668A !important;
 }
 
 html.dark body .simpeg-login-page :is(
