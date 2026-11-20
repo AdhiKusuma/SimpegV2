@@ -607,6 +607,43 @@ function SearchableTable({ rows, columns, searchPlaceholder, emptyMessage, input
     );
 }
 
+function PositionSummaryCard({ title, rows }) {
+    const summary = useMemo(() => asList(rows).reduce((totals, row) => ({
+        positions: totals.positions + 1,
+        filled: totals.filled + (Number(row.terisi) || 0),
+        quota: totals.quota + (Number(row.kuota) || 0),
+        remaining: totals.remaining + (Number(row.sisa) || 0),
+    }), { positions: 0, filled: 0, quota: 0, remaining: 0 }), [rows]);
+
+    return (
+        <Card className="simpeg-dashboard-position-summary-card min-w-0 border shadow-sm">
+            <CardContent className="simpeg-dashboard-position-summary-content">
+                <div className="simpeg-dashboard-position-summary-identity">
+                    <span className="simpeg-dashboard-chart-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                        <BriefcaseBusiness className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
+                    </span>
+                    <div className="simpeg-dashboard-position-summary-copy">
+                        <h3 className="simpeg-text" title={title}>{title}</h3>
+                        <span className="simpeg-dashboard-chart-meta">{number(summary.positions)} jabatan terdaftar</span>
+                    </div>
+                </div>
+                <div className="simpeg-dashboard-position-summary-metrics">
+                    {[
+                        ['Terisi', summary.filled],
+                        ['Kuota', summary.quota],
+                        ['Sisa', summary.remaining],
+                    ].map(([label, value]) => (
+                        <div key={label} className="simpeg-dashboard-position-summary-metric">
+                            <span className="simpeg-muted">{label}</span>
+                            <strong className="simpeg-text">{number(value)}</strong>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 function PositionAvailabilityTable({ title, description, rows, searchId }) {
     return (
         <ChartCard id={searchId} title={title} description={description} icon={BriefcaseBusiness}>
@@ -680,9 +717,15 @@ export function DashboardCharts({ charts = {}, retirement = [], executivePositio
                 />
             </ChartCard>
 
-            <section className="grid min-w-0 gap-6 lg:grid-cols-12" aria-label="Ketersediaan jabatan">
-                <div className="lg:col-span-6"><PositionAvailabilityTable title="Jabatan Eksekutif" description="Ketersediaan posisi dan kuota jabatan kelompok PE." rows={executivePositions} searchId="executive-positions-title" /></div>
-                <div className="lg:col-span-6"><PositionAvailabilityTable title="Jabatan Struktural" description="Ketersediaan posisi dan kuota jabatan kelompok PS." rows={structuralPositions} searchId="structural-positions-title" /></div>
+            <section aria-label="Ketersediaan jabatan">
+                <div className="mb-4 grid min-w-0 gap-4 xl:grid-cols-2">
+                    <PositionSummaryCard title="Jabatan Eksekutif" rows={executivePositions} />
+                    <PositionSummaryCard title="Jabatan Struktural" rows={structuralPositions} />
+                </div>
+                <div className="grid min-w-0 gap-6">
+                    <PositionAvailabilityTable title="Jabatan Eksekutif" description="Ketersediaan posisi dan kuota jabatan kelompok PE." rows={executivePositions} searchId="executive-positions-title" />
+                    <PositionAvailabilityTable title="Jabatan Struktural" description="Ketersediaan posisi dan kuota jabatan kelompok PS." rows={structuralPositions} searchId="structural-positions-title" />
+                </div>
             </section>
         </div>
     );

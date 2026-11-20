@@ -7,3 +7,113 @@
         box-shadow: none !important;
     }
 }
+
+/* Position summaries use a stable information hierarchy: identity first,
+ * followed by three equally weighted metrics. */
+.simpeg-dashboard-position-summary-card .simpeg-dashboard-position-summary-content {
+    display: grid !important;
+    grid-template-columns: minmax(13rem, 1.15fr) minmax(18rem, 1.65fr) !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
+    min-height: 7.5rem;
+    padding: 1.15rem 1.35rem !important;
+}
+
+.simpeg-dashboard-position-summary-identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: .9rem;
+}
+
+.simpeg-dashboard-position-summary-copy {
+    min-width: 0;
+}
+
+.simpeg-dashboard-position-summary-copy h3 {
+    overflow: hidden;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.simpeg-dashboard-position-summary-copy .simpeg-dashboard-chart-meta {
+    display: block;
+    margin-top: .3rem;
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.simpeg-dashboard-position-summary-metrics {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-left: 1px solid var(--simpeg-border, #d6e2f5);
+}
+
+.simpeg-dashboard-position-summary-metric {
+    min-width: 0;
+    padding: .15rem 1rem;
+}
+
+.simpeg-dashboard-position-summary-metric + .simpeg-dashboard-position-summary-metric {
+    border-left: 1px solid var(--simpeg-border, #d6e2f5);
+}
+
+.simpeg-dashboard-position-summary-metric > span,
+.simpeg-dashboard-position-summary-metric > strong {
+    display: block;
+}
+
+.simpeg-dashboard-position-summary-metric > span {
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.simpeg-dashboard-position-summary-metric > strong {
+    margin-top: .35rem;
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1279px) {
+    .simpeg-dashboard-position-summary-card .simpeg-dashboard-position-summary-content {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 1rem !important;
+    }
+
+    .simpeg-dashboard-position-summary-metrics {
+        padding-top: 1rem;
+        border-top: 1px solid var(--simpeg-border, #d6e2f5);
+        border-left: 0;
+    }
+
+    .simpeg-dashboard-position-summary-metric:first-child {
+        padding-left: 0;
+    }
+
+    .simpeg-dashboard-position-summary-metric:last-child {
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .simpeg-dashboard-position-summary-card .simpeg-dashboard-position-summary-content {
+        padding: 1rem !important;
+    }
+
+    .simpeg-dashboard-position-summary-metric {
+        padding-inline: .7rem;
+    }
+
+    .simpeg-dashboard-position-summary-metric > strong {
+        font-size: 1.4rem;
+    }
+}
