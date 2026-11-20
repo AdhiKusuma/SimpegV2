@@ -27,6 +27,7 @@
 @import './mobile-responsive.css';
 @import './final-contrast-contract.css';
 @import './dashboard-tenure-contrast.css';
+@import './dashboard-availability-surface.css';
 
 @source '../js/**/*.jsx';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
