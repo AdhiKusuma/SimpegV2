@@ -1,11 +1,17 @@
 /* Match the light dashboard surface used in dark mode, including on hover. */
 html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-tenure-card .simpeg-dashboard-tenure-grid > button {
+    --simpeg-card-soft: #e8f0fd !important;
+    --simpeg-text: #0b1f4b !important;
+    --simpeg-muted: #55668a !important;
+    --simpeg-border: #d6e2f5 !important;
     background: #e8f0fd !important;
+    background-color: #e8f0fd !important;
     border-color: #d6e2f5 !important;
     color: #0b1f4b !important;
 }
 
 html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-tenure-card .simpeg-dashboard-tenure-grid > button:is(:hover, :focus-visible) {
     background: #dceaff !important;
+    background-color: #dceaff !important;
     border-color: #9bbcf1 !important;
 }
