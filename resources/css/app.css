@@ -29,6 +29,7 @@
 @import './dashboard-tenure-contrast.css';
 @import './dashboard-availability-surface.css';
 @import './dashboard-readability.css';
+@import './page-size-select.css';
 
 @source '../js/**/*.jsx';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
