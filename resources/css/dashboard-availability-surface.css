@@ -85,7 +85,7 @@
 
 /* Search placeholders must remain readable on the white availability cards.
  * Some global input rules lower placeholder opacity too aggressively. */
-.simpeg-dashboard-availability-card input[type='search']::placeholder {
+.simpeg-dashboard-shell input[type='search']::placeholder {
     color: #657696 !important;
     opacity: 1 !important;
     -webkit-text-fill-color: #657696 !important;
