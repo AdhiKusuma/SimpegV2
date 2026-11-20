@@ -43,7 +43,7 @@ class HandleInertiaRequests extends Middleware
 
             $authUser['jk'] = $employee?->jk;
             $authUser['foto_url'] = $employee?->foto
-                ? route('employees.photo', ['filename' => $employee->foto])
+                ? route('employees.photo', ['filename' => basename((string) $employee->foto)])
                 : null;
         }
 

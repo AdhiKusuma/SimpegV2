@@ -126,7 +126,7 @@ class ProfileController extends Controller
             'status_kepeg' => $employee->status_kepeg,
             'tmt_kerja' => $this->formatDate($employee->tmt_kerja),
             'tgl_pensiun' => $this->formatDate($employee->tgl_pensiun),
-            'foto_url' => $employee->foto ? route('employees.photo', ['filename' => $employee->foto]) : null,
+            'foto_url' => $employee->foto ? route('employees.photo', ['filename' => basename((string) $employee->foto)]) : null,
         ];
     }
 
