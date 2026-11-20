@@ -230,7 +230,9 @@ class EmployeeController extends Controller
         $this->ensureStaffAccess($request);
 
         $query = TbPegawai::query()->where('id_peg', $id)->with([
-            'jabatan' => fn ($relation) => $relation->orderBy('tmt_jabatan'),
+            'jabatan' => fn ($relation) => $relation
+                ->orderByRaw("CASE WHEN status_jab = 'Aktif' THEN 0 ELSE 1 END")
+                ->orderByDesc('tmt_jabatan'),
             'pangkat' => fn ($relation) => $relation->orderBy('tgl_sk'),
             'penghargaan' => fn ($relation) => $relation->orderByDesc('tahun'),
             'penugasan' => fn ($relation) => $relation->orderByDesc('tahun'),
