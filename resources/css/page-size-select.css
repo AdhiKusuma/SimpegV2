@@ -1,4 +1,6 @@
 .simpeg-page-size-toolbar {
+    position: relative;
+    z-index: 20;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -11,12 +13,12 @@
 
 .simpeg-page-size { display: inline-flex; align-items: center; gap: .65rem; color: var(--simpeg-muted, #55668a); font-size: .8125rem; font-weight: 700; white-space: nowrap; }
 .simpeg-page-size > span { line-height: 1; }
-.simpeg-page-size__control { width: 6.75rem; flex: none; }
+.simpeg-page-size__control { position: relative; width: 6.75rem; flex: none; }
 .simpeg-page-size__control summary { display: flex; align-items: center; justify-content: space-between; min-height: 2.4rem; padding: 0 .75rem; border: 1px solid var(--simpeg-border, #d6e2f5); border-radius: .7rem; background: var(--simpeg-input, #fff); color: var(--simpeg-text, #0b1f4b); cursor: pointer; list-style: none; }
 .simpeg-page-size__control summary::-webkit-details-marker { display: none; }
 .simpeg-page-size__control summary:focus-visible, .simpeg-page-size__options button:focus-visible { outline: 2px solid #0d5fe0; outline-offset: 2px; }
 .simpeg-page-size__control[open] summary svg { transform: rotate(180deg); }
-.simpeg-page-size__options { margin-top: .35rem; padding: .25rem; border: 1px solid var(--simpeg-border, #d6e2f5); border-radius: .7rem; background: var(--simpeg-card, #fff); }
+.simpeg-page-size__options { position: absolute; z-index: 40; top: calc(100% + .35rem); right: 0; width: 100%; box-sizing: border-box; padding: .25rem; border: 1px solid var(--simpeg-border, #d6e2f5); border-radius: .7rem; background: var(--simpeg-card, #fff); box-shadow: 0 14px 28px rgb(15 35 75 / 0.14); }
 .simpeg-page-size__options button { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: .5rem .65rem; border: 0; border-radius: .5rem; color: var(--simpeg-text, #0b1f4b); background: transparent; cursor: pointer; }
 .simpeg-page-size__options button:is(:hover, .is-selected) { background: var(--simpeg-hover-surface, #e8f0fd); color: var(--simpeg-primary, #0b1f4b); }
 
