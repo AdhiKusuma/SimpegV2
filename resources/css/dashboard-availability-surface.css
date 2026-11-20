@@ -1,7 +1,9 @@
 /* The section is a layout wrapper; the individual cards own their surfaces. */
-html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-shell-content main section[aria-label='Ketersediaan jabatan']:has(table) {
-    background: transparent !important;
-    background-color: transparent !important;
-    border: 0 !important;
-    box-shadow: none !important;
+@layer utilities {
+    html.dark body .simpeg-app-canvas .simpeg-dashboard-shell .simpeg-dashboard-deferred section[aria-label='Ketersediaan jabatan'] {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
 }
