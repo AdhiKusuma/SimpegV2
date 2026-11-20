@@ -260,6 +260,7 @@ class EmployeeController extends Controller
                 'tempat_lhr' => $employee->tempat_lhr,
                 'tgl_lhr' => $employee->tgl_lhr?->format('d-m-Y'),
                 'jk' => $employee->jk,
+                'foto_url' => $employee->foto ? route('employees.photo', ['filename' => basename((string) $employee->foto)]) : null,
                 'status_kepeg' => $employee->status_kepeg,
                 'alamat' => $employee->alamat,
                 'telp' => $employee->telp,
