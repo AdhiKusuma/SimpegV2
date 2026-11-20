@@ -83,6 +83,14 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* Search placeholders must remain readable on the white availability cards.
+ * Some global input rules lower placeholder opacity too aggressively. */
+.simpeg-dashboard-availability-card input[type='search']::placeholder {
+    color: #657696 !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: #657696 !important;
+}
+
 @media (max-width: 1279px) {
     .simpeg-dashboard-position-summary-card .simpeg-dashboard-position-summary-content {
         grid-template-columns: minmax(0, 1fr) !important;
