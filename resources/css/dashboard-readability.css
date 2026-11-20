@@ -1,0 +1,13 @@
+@layer utilities {
+    /* The summary label sits on the light dashboard canvas in both themes. */
+    html body .simpeg-dashboard-shell section[aria-labelledby='dashboard-summary-title'] .simpeg-dashboard-eyebrow {
+        color: #55668a !important;
+        -webkit-text-fill-color: #55668a !important;
+    }
+
+    /* The option itself owns the gradient; text and icons must not paint boxes over it. */
+    html body .simpeg-combobox-menu .simpeg-combobox-option :is(span, svg, svg *) {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+}
