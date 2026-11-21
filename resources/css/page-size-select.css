@@ -48,7 +48,8 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero
     pointer-events: none !important;
     user-select: none !important;
     mix-blend-mode: multiply !important;
-    opacity: 1 !important;
+    filter: brightness(1.08) saturate(.9) !important;
+    opacity: .78 !important;
 }
 
 /* Fallback selector for shells that are rendered without the canvas marker. */
@@ -64,7 +65,15 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero
     object-position: right center !important;
     pointer-events: none !important;
     mix-blend-mode: multiply !important;
-    opacity: 1 !important;
+    filter: brightness(1.08) saturate(.9) !important;
+    opacity: .78 !important;
+}
+
+/* The building is rendered by the explicit image above. Disable the legacy
+ * pseudo-element so production builds cannot render a darker duplicate. */
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+    display: none !important;
+    content: none !important;
 }
 
 html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__copy {
