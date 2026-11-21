@@ -76,6 +76,21 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero
     content: none !important;
 }
 
+/* Keep the building out of the hero background as well. Older theme rules
+ * still append the same asset to background-image, which makes it render a
+ * second time underneath the explicit image and look much darker. */
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+    background-color: #f5f8fe !important;
+    background-image:
+        radial-gradient(45% 75% at 80% 40%, rgb(43 123 240 / 0.18) 0%, rgb(43 123 240 / 0) 70%),
+        radial-gradient(30% 50% at 0% 0%, rgb(255 162 15 / 0.12) 0%, rgb(255 162 15 / 0) 70%),
+        linear-gradient(90deg, #f5f8fe 0%, rgb(245 248 254 / 0.98) 38%, rgb(245 248 254 / 0.68) 68%, rgb(245 248 254 / 0.16) 100%) !important;
+    background-position: center, center, center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100%, 100% 100%, 100% 100% !important;
+    background-blend-mode: normal !important;
+}
+
 html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__copy {
     position: relative !important;
     z-index: 3 !important;
