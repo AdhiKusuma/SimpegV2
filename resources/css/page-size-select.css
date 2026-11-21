@@ -71,7 +71,7 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero
 
 /* The building is rendered by the explicit image above. Disable the legacy
  * pseudo-element so production builds cannot render a darker duplicate. */
-html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+html body .simpeg-dashboard-hero::after {
     display: none !important;
     content: none !important;
 }
@@ -96,7 +96,7 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero
     z-index: 3 !important;
 }
 
-@media (max-width: 1023px) and (min-width: 641px) {
+@media (max-width: 767px) and (min-width: 641px) {
     html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__building {
         width: 100% !important;
         height: 58% !important;
