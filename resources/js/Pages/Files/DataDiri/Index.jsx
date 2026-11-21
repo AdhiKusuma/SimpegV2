@@ -1,7 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Download, Eye, FileText, RefreshCw, Trash2, Upload, X } from 'lucide-react';
+import { Download, Eye, FileText, RefreshCw, Upload, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { EmployeeCombobox } from '../../../Components/SearchableCombobox';
+import IconAction from '../../../Components/IconAction';
 import SelectCombobox from '../../../Components/SelectCombobox';
 import { Button } from '../../../Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../Components/ui/card';
@@ -139,7 +140,7 @@ export default function DataDiriIndex({ documents = [], employees = [], selected
                                     {document && <>
                                         <button type="button" onClick={() => setPreview(document)} className="simpeg-utility inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-sm font-semibold"><Eye className="h-4 w-4" />Lihat</button>
                                         <a href={document.download_url} className="simpeg-utility inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-sm font-semibold"><Download className="h-4 w-4" />Export</a>
-                                        <button type="button" onClick={() => removeDocument(document)} className="simpeg-utility inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-200 px-3 text-sm font-semibold text-rose-700"><Trash2 className="h-4 w-4" />Hapus</button>
+                                        <IconAction variant="delete" onClick={() => removeDocument(document)} label={`Hapus dokumen ${document.label}`} />
                                     </>}
                                 </div>
                             </CardContent>

@@ -16,6 +16,8 @@ export default function MobileFilterGroup({ id, activeCount = 0, children, toggl
             return;
         }
 
+        form.classList.add('simpeg-unified-filter-form');
+
         shell.classList.add('simpeg-filter-list-shell');
 
         // Older list pages still put the filter and table in one card wrapper.
@@ -59,7 +61,7 @@ export default function MobileFilterGroup({ id, activeCount = 0, children, toggl
             <button
                 type="button"
                 ref={toggleRef}
-                className={`simpeg-mobile-filter-toggle simpeg-filter-dropdown-trigger simpeg-utility ${toggleClassName}`.trim()}
+                className={`simpeg-mobile-filter-toggle simpeg-filter-dropdown-trigger simpeg-unified-filter-trigger simpeg-utility ${toggleClassName}`.trim()}
                 aria-expanded={open}
                 aria-controls={id}
                 onClick={() => setOpen((current) => !current)}
@@ -80,7 +82,7 @@ export default function MobileFilterGroup({ id, activeCount = 0, children, toggl
                     </span>
                 )}
             </button>
-            <div id={id} className={`simpeg-mobile-filter-fields simpeg-filter-dropdown-panel ${open ? 'is-open' : ''} ${fieldsClassName}`.trim()}>
+            <div id={id} className={`simpeg-mobile-filter-fields simpeg-filter-dropdown-panel simpeg-unified-filter-panel ${open ? 'is-open' : ''} ${fieldsClassName}`.trim()}>
                 {children}
             </div>
         </>

@@ -34,6 +34,84 @@
         transform: scale(0.94);
     }
 
+    .simpeg-sidebar-history-nav {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.125rem;
+        align-self: center;
+        margin: 0.75rem auto 0.25rem;
+        border: 1px solid rgb(255 255 255 / 0.14);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 0.08);
+        padding: 0.2rem;
+    }
+
+    .simpeg-sidebar-history-button {
+        display: inline-flex;
+        width: 2.25rem;
+        height: 2.25rem;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 0.75rem;
+        background: transparent;
+        color: var(--simpeg-sidebar-ink, #fff);
+        cursor: pointer;
+        transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .simpeg-sidebar-history-button:hover,
+    .simpeg-sidebar-history-button:focus-visible {
+        background: rgb(255 255 255 / 0.16);
+        color: var(--simpeg-sidebar-ink, #fff);
+        outline: none;
+    }
+
+    .simpeg-sidebar-history-button:active {
+        transform: scale(0.94);
+    }
+
+    .simpeg-header-sidebar-toggle {
+        width: 2.5rem;
+        height: 2.5rem;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 0.75rem;
+        background: transparent;
+        color: var(--simpeg-text);
+        cursor: pointer;
+        transition: background-color 160ms ease, color 160ms ease;
+    }
+
+    .simpeg-header-sidebar-toggle:hover,
+    .simpeg-header-sidebar-toggle:focus-visible {
+        background: var(--simpeg-hover-surface);
+        color: var(--simpeg-text);
+        outline: none;
+    }
+
+    .simpeg-session-indicator {
+        display: inline-flex;
+        min-height: 2.25rem;
+        align-items: center;
+        gap: 0.45rem;
+        border: 1px solid var(--simpeg-border);
+        border-radius: 0.75rem;
+        background: var(--simpeg-card-soft);
+        padding: 0 0.65rem;
+        color: var(--simpeg-muted);
+        white-space: nowrap;
+        font-size: 0.8125rem;
+    }
+
+    .simpeg-session-time {
+        color: var(--simpeg-text);
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+    }
+
     .simpeg-app-canvas {
         background: var(--simpeg-canvas) !important;
         color: var(--simpeg-text);
@@ -201,6 +279,13 @@
             min-width: 2.75rem;
             margin-inline: 0.25rem;
             border-radius: 0.875rem;
+        }
+
+        .simpeg-sidebar-collapsed .simpeg-sidebar-history-nav {
+            align-self: center;
+            flex-direction: column;
+            margin: 0.5rem 0 0.75rem;
+            border-radius: 1rem;
         }
 
         .simpeg-sidebar-collapsed .simpeg-sidebar-nav-scroll {

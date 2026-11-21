@@ -189,7 +189,7 @@ html body .simpeg-app-canvas :is(button, a, input[type='submit'], input[type='bu
     .simpeg-dashboard-action--secondary,
     .simpeg-filter-dropdown-trigger,
     .simpeg-mobile-filter-toggle
-) :is(svg, svg *, span, strong) {
+) :is(svg, svg *, span:not(.simpeg-filter-active-count), strong) {
     color: var(--simpeg-action-secondary-ink) !important;
     -webkit-text-fill-color: var(--simpeg-action-secondary-ink) !important;
     stroke: currentColor !important;

@@ -53,9 +53,17 @@ $familyTypePattern = 'children|spouses|parents|anak|orang-tua|suami-istri';
 
 Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): void {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
+    Route::post('/session/activity', function () {
+        $timeoutSeconds = max(1, (int) ceil((float) config('session.lifetime') * 60));
+
+        return response()->json([
+            'expires_at' => now()->addSeconds($timeoutSeconds)->timestamp,
+        ]);
+    })->name('session.activity');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/employee-trend', [DashboardController::class, 'employeeTrend'])->name('dashboard.employee-trend');
+    Route::get('/dashboard/chart/{chart}', [DashboardController::class, 'chartData'])->name('dashboard.chart');
     Route::get('/dashboard/tenure/{range}', [DashboardController::class, 'tenureEmployees'])->name('dashboard.tenure.employees');
 
     Route::get('/dashboard/cabang', [DashboardController::class, 'branch'])->name('dashboard.cabang');
@@ -66,6 +74,7 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::post('/payroll/edit', [PayrollMasterController::class, 'store'])->name('payroll.master.store');
     Route::post('/payroll/edit/transfer', [PayrollMasterController::class, 'transfer'])->name('payroll.master.transfer');
     Route::get('/payroll/master/export', [PayrollMasterController::class, 'export'])->name('payroll.master.export');
+    Route::delete('/payroll/edit', [PayrollMasterController::class, 'destroyAll'])->name('payroll.master.destroy-all');
     Route::get('/payroll/edit/{employeeId}', [PayrollMasterController::class, 'edit'])->name('payroll.master.employee');
     Route::put('/payroll/edit/{employeeId}', [PayrollMasterController::class, 'update'])->name('payroll.master.update');
     Route::delete('/payroll/edit/{employeeId}', [PayrollMasterController::class, 'destroy'])->name('payroll.master.destroy');
@@ -320,6 +329,7 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::delete('/keluarga/{type}/{id}', [FamilyController::class, 'destroy'])->where('type', $familyTypePattern)->name('family.destroy');
 
     Route::get('/mutasi/export', [MutationController::class, 'export'])->name('mutasi.export');
+    Route::get('/mutasi/filter-options', [MutationController::class, 'filterOptions'])->name('mutasi.filter-options');
     Route::get('/mutasi', [MutationController::class, 'index'])->name('mutasi.index');
     Route::get('/mutasi/create', [MutationController::class, 'create'])->name('mutasi.create');
     Route::post('/mutasi', [MutationController::class, 'store'])->name('mutasi.store');
@@ -354,6 +364,8 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::delete('/diklat/{id}', [DiklatController::class, 'destroy'])->whereNumber('id')->name('diklat.destroy');
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::post('/profile/biodata-request', [ProfileController::class, 'requestBiodataUpdate'])->name('profile.biodata-request');
+    Route::put('/profile/biodata', [ProfileController::class, 'updateOwnBiodata'])->name('profile.biodata.update');
     Route::get('/profile/data-diri', [DataDiriController::class, 'mine'])->name('profile.data-diri');
     Route::get('/profile/slip-gaji', [FilesController::class, 'mine'])->name('profile.payslip');
     Route::get('/profile/slip-gaji/{payrollImport}/slip/{employeeId}', [FilesController::class, 'mineShow'])

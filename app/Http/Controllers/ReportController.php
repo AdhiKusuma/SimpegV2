@@ -228,7 +228,7 @@ class ReportController extends Controller
         $items = $query
             ->select(['d.biaya', 'p.nama', 'p.id_peg', 'k.nama_kantor'])
             ->orderBy('p.nama')
-            ->paginate(4, ['*'], 'page', $page);
+            ->paginate(10, ['*'], 'page', $page);
 
         return response()->json([
             'data' => $items->getCollection()->map(fn ($item): array => [

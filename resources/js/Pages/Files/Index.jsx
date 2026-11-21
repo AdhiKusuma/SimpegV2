@@ -1,5 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowRight, FileText, LockKeyhole } from 'lucide-react';
+import { FileText, LockKeyhole } from 'lucide-react';
+import IconAction from '../../Components/IconAction';
 import SelectCombobox from '../../Components/SelectCombobox';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
@@ -74,7 +75,7 @@ export default function FilesIndex({ slips, periods = [], filters = {}, isAdmini
                                 <td className="simpeg-text px-4 py-4">{slip.period}</td>
                                 <td className="simpeg-muted px-4 py-4">{slip.payment_date || '—'}</td>
                                 <td className="simpeg-text px-4 py-4 text-right font-semibold tabular-nums">{formatRupiah(slip.net_salary)}</td>
-                                <td className="px-5 py-4 text-right"><Link href={`${detailUrlPrefix}/${slip.payroll_import_id}/slip/${encodeURIComponent(slip.employee_id)}`} className="simpeg-primary inline-flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold">Buka <ArrowRight className="h-4 w-4" /></Link></td>
+                                <td className="px-5 py-4 text-right"><IconAction variant="view" href={`${detailUrlPrefix}/${slip.payroll_import_id}/slip/${encodeURIComponent(slip.employee_id)}`} label="Buka slip gaji" /></td>
                             </tr>)}
                         </tbody>
                     </table>

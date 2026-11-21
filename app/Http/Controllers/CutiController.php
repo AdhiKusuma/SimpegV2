@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbCuti;
+use App\Models\Legacy\TbKantor;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbRecycleBin;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,6 +24,8 @@ class CutiController extends Controller
         $unit = $role === 'kepala' ? (string) $request->session()->get('kode_kantor') : '';
         $search = $request->string('search')->trim()->value();
         $year = $request->string('tahun')->trim()->value();
+        $leaveType = $request->string('jenis_cuti')->trim()->value();
+        $office = $request->string('kantor')->trim()->value();
 
         $query = TbCuti::query()
             ->from('tb_cuti as cuti')
@@ -31,6 +34,10 @@ class CutiController extends Controller
                 $scope->selectRaw('1')->from('tb_jabatan as jabatan_scope')->whereColumn('jabatan_scope.id_peg', 'cuti.id_peg')->where('jabatan_scope.status_jab', 'Aktif')->where('jabatan_scope.unit_kerja', $unit);
             }))
             ->when($year !== '', fn (Builder $builder) => $builder->whereYear('cuti.tgl_mulai', $year))
+            ->when($leaveType !== '', fn (Builder $builder) => $builder->where('cuti.jns_cuti', $leaveType))
+            ->when($office !== '', fn (Builder $builder) => $builder->whereExists(function (QueryBuilder $scope) use ($office): void {
+                $scope->selectRaw('1')->from('tb_jabatan as jabatan_filter')->whereColumn('jabatan_filter.id_peg', 'cuti.id_peg')->where('jabatan_filter.status_jab', 'Aktif')->where('jabatan_filter.unit_kerja', $office);
+            }))
             ->when($search !== '', function (Builder $builder) use ($search): void {
                 $like = "%{$search}%";
                 $builder->where(function (QueryBuilder $scope) use ($like): void {
@@ -53,7 +60,9 @@ class CutiController extends Controller
         return Inertia::render('Cuti/Index', [
             'items' => $items,
             'years' => TbCuti::query()->whereNotNull('tgl_mulai')->selectRaw('YEAR(tgl_mulai) as tahun')->distinct()->orderByDesc('tahun')->pluck('tahun')->values(),
-            'filters' => ['search' => $search, 'tahun' => $year],
+            'leaveTypes' => TbCuti::query()->whereNotNull('jns_cuti')->where('jns_cuti', '<>', '')->distinct()->orderBy('jns_cuti')->pluck('jns_cuti')->values(),
+            'offices' => TbKantor::query()->whereIn('level', ['KC', 'KP'])->when($unit !== '', fn (Builder $builder) => $builder->where('kode_kantor_detail', $unit))->orderBy('nama_kantor')->get(['kode_kantor_detail', 'nama_kantor'])->map(fn (TbKantor $office): array => ['kode' => $office->kode_kantor_detail, 'nama' => $office->nama_kantor])->all(),
+            'filters' => ['search' => $search, 'tahun' => $year, 'jenis_cuti' => $leaveType, 'kantor' => $office],
             'canManage' => $this->canManage($request),
         ]);
     }

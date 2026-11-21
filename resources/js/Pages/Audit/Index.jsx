@@ -1,4 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import PageJumpControls from '../../Components/PageJumpControls';
 import { Expand, Search, ShieldAlert, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
@@ -275,10 +276,7 @@ export default function AuditLogIndex({ logs, filters, modules, actions }) {
                     <div className="simpeg-audit-pagination">
                         <span>Menampilkan {logs.from || 0}–{logs.to || 0} dari {logs.total} aktivitas</span>
                         <div className="simpeg-audit-pagination-links" aria-label="Paginasi audit log">
-                            {logs.links.filter((link) => link.url).map((link) => (
-                                <Link key={link.label} href={link.url} preserveState preserveScroll dangerouslySetInnerHTML={{ __html: link.label }} className={'simpeg-audit-page-link' + (link.active ? ' is-active' : '')} />
-                            ))}
-                        </div>
+                            <PageJumpControls paginator={logs} />                        </div>
                     </div>
                 </section>
             </div>

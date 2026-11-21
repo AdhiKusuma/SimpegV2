@@ -356,6 +356,53 @@ class PayrollWorkflowTest extends TestCase
         $this->assertDatabaseHas('payroll_imports', ['id' => $ids[2], 'is_current' => 1]);
     }
 
+    public function test_admin_can_delete_old_and_current_payroll_batches(): void
+    {
+        $this->seedPayrollDirectory();
+        $oldImportId = DB::table('payroll_imports')->insertGetId([
+            'tahun' => 2026,
+            'bulan' => 10,
+            'source_filename' => 'payroll-oktober.xlsx',
+            'source_sha256' => str_repeat('a', 64),
+            'source_row_count' => 1,
+            'source_summary_count' => 1,
+            'is_current' => true,
+            'imported_by' => 'test-admin',
+            'created_at' => now()->subMonth(),
+            'updated_at' => now()->subMonth(),
+        ]);
+        $latestImportId = DB::table('payroll_imports')->insertGetId([
+            'tahun' => 2026,
+            'bulan' => 11,
+            'source_filename' => 'payroll-november.xlsx',
+            'source_sha256' => str_repeat('b', 64),
+            'source_row_count' => 1,
+            'source_summary_count' => 1,
+            'is_current' => true,
+            'imported_by' => 'test-admin',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->withSession($this->adminSession())
+            ->delete('/payroll/history', ['confirmation' => 'HAPUS SEMUA PAYROLL']);
+
+        $response->assertRedirect('/payroll');
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('payroll_imports', ['id' => $oldImportId]);
+        $this->assertDatabaseMissing('payroll_imports', ['id' => $latestImportId]);
+        $this->assertDatabaseHas('payroll_history_cleanup_logs', [
+            'payroll_import_id' => $oldImportId,
+            'tahun' => 2026,
+            'bulan' => 10,
+        ]);
+        $this->assertDatabaseHas('payroll_history_cleanup_logs', [
+            'payroll_import_id' => $latestImportId,
+            'tahun' => 2026,
+            'bulan' => 11,
+        ]);
+    }
+
     public function test_admin_can_create_master_payroll_manually_and_export_it(): void
     {
         $this->seedPayrollDirectory();
@@ -541,6 +588,39 @@ class PayrollWorkflowTest extends TestCase
             'requested_by' => 'test-admin',
             'decided_by' => 'test-admin',
         ]);
+    }
+
+    public function test_admin_can_delete_all_master_rows_with_confirmation(): void
+    {
+        $this->seedPayrollDirectory();
+        $this->seedSalaryMaster();
+        DB::table('payroll_salary_masters')->insert([
+            'employee_id' => 'TEST-0002',
+            'office_code' => '000000',
+            'bank_office_code' => '001',
+            'no_rekening' => '00987654321',
+            'nama_nasabah' => 'SIMPEG TEST 2',
+            'tgl_gajian' => '2026-10-15',
+            'gaji_pokok' => '1300000.00',
+            'total' => '1300000.00',
+            'created_by' => 'test-admin',
+            'updated_by' => 'test-admin',
+        ]);
+
+        $response = $this->withSession($this->adminSession())
+            ->delete('/payroll/edit', ['confirmation' => 'HAPUS SEMUA']);
+
+        $response->assertRedirect('/payroll/edit');
+        $response->assertSessionHasNoErrors();
+        $this->assertSame(0, DB::table('payroll_salary_masters')->count());
+        $changeId = DB::table('payroll_change_requests')->where('change_type', 'manual_delete')->value('id');
+        $this->assertNotNull($changeId);
+        $this->assertDatabaseHas('payroll_change_requests', [
+            'id' => $changeId,
+            'status' => 'approved',
+            'requested_by' => 'test-admin',
+        ]);
+        $this->assertSame(2, DB::table('payroll_change_request_entries')->where('payroll_change_request_id', $changeId)->count());
     }
 
     public function test_master_delete_requires_exact_confirmation_and_permission(): void
@@ -1195,6 +1275,19 @@ class PayrollWorkflowTest extends TestCase
             $table->json('new_data');
             $table->timestamps();
             $table->unique(['payroll_change_request_id', 'employee_id']);
+        });
+
+        Schema::create('payroll_history_cleanup_logs', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('payroll_import_id')->nullable();
+            $table->unsignedSmallInteger('tahun');
+            $table->unsignedTinyInteger('bulan');
+            $table->string('source_filename')->nullable();
+            $table->string('source_sha256', 64)->nullable();
+            $table->string('deleted_by')->nullable();
+            $table->string('reason');
+            $table->timestamp('deleted_at');
+            $table->timestamps();
         });
     }
 }

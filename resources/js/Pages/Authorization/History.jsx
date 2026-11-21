@@ -1,4 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
+import PageJumpControls from '../../Components/PageJumpControls';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SelectCombobox from '../../Components/SelectCombobox';
@@ -75,7 +76,7 @@ export default function AuthorizationHistory({ requests, filters }) {
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500">
                     <span>Menampilkan {requests.from || 0}-{requests.to || 0} dari {requests.total} pengajuan</span>
                     <div className="flex flex-wrap gap-2" aria-label="Paginasi riwayat pengajuan">
-                        {requests.links.filter((link) => link.url).map((link) => <Link key={link.label} href={link.url} preserveState className={'inline-flex min-h-11 items-center rounded-lg border px-3 py-2 ' + (link.active ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 hover:border-blue-600 hover:text-blue-600')} dangerouslySetInnerHTML={{ __html: link.label }} />)}
+                        <PageJumpControls paginator={requests} />
                     </div>
                 </div>
             </section>

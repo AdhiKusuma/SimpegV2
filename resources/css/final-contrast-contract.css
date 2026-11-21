@@ -146,3 +146,2470 @@ html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus, :focu
     stroke: currentColor !important;
     opacity: 1 !important;
 }
+
+/* Use a softer brand gradient for combobox hover/active states instead of a
+ * heavy solid block, while keeping the portal text and icons readable. */
+html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus, :focus-visible, .simpeg-combobox-option-active) {
+    background: linear-gradient(135deg, #f2f7ff 0%, #dceaff 55%, #c8dcfb 100%) !important;
+    background-color: transparent !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    box-shadow: inset 0 0 0 1px rgb(37 99 235 / 0.08);
+}
+
+html body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus, :focus-visible, .simpeg-combobox-option-active) :is(*, svg *) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus, :focus-visible, .simpeg-combobox-option-active) {
+    background: linear-gradient(135deg, #23385d 0%, #2f4f7e 55%, #3b6093 100%) !important;
+    background-color: transparent !important;
+    color: #f8faff !important;
+    -webkit-text-fill-color: #f8faff !important;
+    box-shadow: inset 0 0 0 1px rgb(147 197 253 / 0.16);
+}
+
+html.dark body .simpeg-combobox-menu .simpeg-combobox-option:is(:hover, :focus, :focus-visible, .simpeg-combobox-option-active) :is(*, svg *) {
+    color: #f8faff !important;
+    -webkit-text-fill-color: #f8faff !important;
+    stroke: currentColor !important;
+}
+
+/* Export menus use a white surface in both themes: keep headings and disabled
+ * actions readable there, including the icon and nested label nodes. */
+html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-title {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item)[aria-disabled='true'],
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item)[aria-disabled='true'] :is(*, svg *) {
+    background: #eef3fb !important;
+    background-color: #eef3fb !important;
+    color: #4a6088 !important;
+    -webkit-text-fill-color: #4a6088 !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:disabled, [disabled], [data-disabled='true']),
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:disabled, [disabled], [data-disabled='true']) :is(*, svg *) {
+    background: #eef3fb !important;
+    background-color: #eef3fb !important;
+    color: #4a6088 !important;
+    -webkit-text-fill-color: #4a6088 !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active'], [aria-selected='true']),
+html body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active'], [aria-selected='true']) :is(*, svg *) {
+    background: #0d5fe0 !important;
+    background-color: #0d5fe0 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+/* Radix portals export menus directly under body, outside the app canvas. */
+html body .simpeg-export-menu .simpeg-export-menu-title {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html body .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:disabled, [disabled], [aria-disabled='true'], [data-disabled='true']),
+html body .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:disabled, [disabled], [aria-disabled='true'], [data-disabled='true']) :is(*, svg *) {
+    background: #eef3fb !important;
+    background-color: #eef3fb !important;
+    color: #4a6088 !important;
+    -webkit-text-fill-color: #4a6088 !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active'], [aria-selected='true']),
+html body .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active'], [aria-selected='true']) :is(*, svg *) {
+    background: #0d5fe0 !important;
+    background-color: #0d5fe0 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+/* Dark mode overrides in dropdown-theme.css are more specific; match them
+ * explicitly for the light export popover and its disabled entries. */
+html.dark body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-title {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item),
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item) :is(*, svg *) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:disabled, [disabled], [aria-disabled='true'], [data-disabled='true']),
+html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-item, .simpeg-menu-item):is(:disabled, [disabled], [aria-disabled='true'], [data-disabled='true']) :is(*, svg *) {
+    background: #eef3fb !important;
+    background-color: #eef3fb !important;
+    color: #4a6088 !important;
+    -webkit-text-fill-color: #4a6088 !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+@media (min-width: 1024px) {
+    html body .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-collapsed .simpeg-sidebar-profile {
+        width: 2.75rem !important;
+        height: 2.75rem !important;
+        margin: 0 auto 0.25rem !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-collapsed .simpeg-sidebar-profile > span {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        border-radius: 9999px !important;
+        background: transparent !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-sidebar.simpeg-sidebar-collapsed .simpeg-sidebar-logout {
+        width: 2.75rem !important;
+        min-height: 2.75rem !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        border-radius: 0.875rem !important;
+    }
+}
+
+/* Account popovers are also portal-rendered. Keep menu icons readable on
+ * their light surface in both themes, including the hover row. */
+html body .simpeg-account-menu .simpeg-menu-item,
+html body .simpeg-account-menu .simpeg-menu-item :is(*, svg *) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-account-menu .simpeg-menu-item svg,
+html body .simpeg-account-menu .simpeg-menu-item svg * {
+    color: #0b1f4b !important;
+    stroke: #0b1f4b !important;
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+
+html body .simpeg-account-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true']),
+html body .simpeg-account-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true']) :is(*, svg *) {
+    background-color: #e8f0fd !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-account-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true']) svg,
+html body .simpeg-account-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true']) svg * {
+    color: #0b1f4b !important;
+    stroke: #0b1f4b !important;
+    fill: none !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke-width: 2px !important;
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+
+/* Some legacy dark-theme selectors paint account-menu SVG paths with a pale
+ * fill on the blue hover surface. Keep every non-destructive account icon as
+ * a crisp navy outline in both idle and highlighted states. */
+html body .simpeg-account-menu .simpeg-menu-item:not(.simpeg-account-menu-logout) svg,
+html body .simpeg-account-menu .simpeg-menu-item:not(.simpeg-account-menu-logout) svg * {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    fill: none !important;
+    stroke: #0b1f4b !important;
+    stroke-width: 2px !important;
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+
+/* Pin account-menu action icons explicitly so legacy dark-mode SVG overrides
+ * cannot wash them out on the light popover surface. */
+html body .simpeg-account-menu .simpeg-menu-item .simpeg-account-menu-icon,
+html body .simpeg-account-menu .simpeg-menu-item .simpeg-account-menu-icon * {
+    color: #0b1f4b !important;
+    fill: none !important;
+    stroke: #0b1f4b !important;
+    stroke-width: 2px !important;
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+
+html body .simpeg-account-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true']) .simpeg-account-menu-icon,
+html body .simpeg-account-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true']) .simpeg-account-menu-icon * {
+    color: #0b1f4b !important;
+    fill: none !important;
+    stroke: #0b1f4b !important;
+    stroke-width: 2px !important;
+    stroke-opacity: 1 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+
+html body .simpeg-account-menu .simpeg-menu-item.simpeg-account-menu-logout,
+html body .simpeg-account-menu .simpeg-menu-item.simpeg-account-menu-logout :is(*, svg *) {
+    color: #b91c1c !important;
+    -webkit-text-fill-color: #b91c1c !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-account-menu .simpeg-menu-item.simpeg-account-menu-logout:is(:hover, :focus, :focus-visible),
+html body .simpeg-account-menu .simpeg-menu-item.simpeg-account-menu-logout:is(:hover, :focus, :focus-visible) :is(*, svg *) {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    -webkit-text-fill-color: #991b1b !important;
+    stroke: currentColor !important;
+}
+
+/* Keep SVG controls legible in every shared portal menu, regardless of the
+ * page role or whether the shell is in light/dark mode. The text color on the
+ * item remains the icon color, so hover and destructive states stay aligned. */
+html body :is(
+    .simpeg-account-menu,
+    .simpeg-export-menu,
+    .simpeg-combobox-menu,
+    .simpeg-theme-menu,
+    .simpeg-notification-popover
+) :is(svg, svg *) {
+    color: inherit !important;
+    stroke: currentColor !important;
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+/* Login form fields stay light even when the page theme is dark. */
+html.dark body .simpeg-login-page .simpeg-login-clean-form {
+    --input: #ffffff !important;
+    --simpeg-input: #ffffff !important;
+    --foreground: #0b1f4b !important;
+    --simpeg-text: #0b1f4b !important;
+    --muted-foreground: #6c7fa3 !important;
+    --simpeg-subtle: #6c7fa3 !important;
+    --border: #b8ccea !important;
+    --simpeg-border: #b8ccea !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form input.simpeg-input,
+html.dark body .simpeg-login-page .simpeg-login-clean-form input[data-slot='input'] {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    border-color: #b8ccea !important;
+    color-scheme: light !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form input.simpeg-input::placeholder,
+html.dark body .simpeg-login-page .simpeg-login-clean-form input[data-slot='input']::placeholder {
+    color: #6c7fa3 !important;
+    -webkit-text-fill-color: #6c7fa3 !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-login-page .simpeg-login-clean-form input.simpeg-input:focus,
+html.dark body .simpeg-login-page .simpeg-login-clean-form input[data-slot='input']:focus {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #0d5fe0 !important;
+    box-shadow: 0 0 0 3px rgb(13 95 224 / 25%) !important;
+}
+
+/* Dark-mode floating-menu rules intentionally use light ink for dark menus.
+ * The account popover stays light, so those broader hover selectors must not
+ * turn its action text or icons pale when the row is highlighted. Match their
+ * specificity here and scope the correction to the account popover only. */
+html.dark body .simpeg-app-canvas .simpeg-account-menu :is(
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-menu-item[data-highlighted='true']
+ ) {
+    background-color: #e8f0fd !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-account-menu :is(
+    .simpeg-menu-item:hover,
+    .simpeg-menu-item:focus,
+    .simpeg-menu-item:focus-visible,
+    .simpeg-menu-item[data-highlighted='true']
+) :is(.simpeg-text, .simpeg-muted, .simpeg-menu-item, .simpeg-theme-option, .simpeg-export-menu-title, svg, svg *) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+    stroke-opacity: 1 !important;
+    fill: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+}
+
+/* Dashboard hero mobile override must share the utilities layer with the
+ * theme's important pseudo-element artwork; unlayered rules lose that cascade. */
+@layer utilities {
+    @media (max-width: 639px) {
+        html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+            background-color: #F5F8FE !important;
+            background-image: linear-gradient(180deg, #F8FBFF 0%, #EDF4FD 100%) !important;
+            background-position: center !important;
+            background-size: 100% 100% !important;
+        }
+
+        html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::before,
+        html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after,
+        html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::before,
+        html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after,
+        html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__art {
+            display: none !important;
+            content: none !important;
+            background-image: none !important;
+        }
+    }
+}
+
+/* Keep every LegacyPageShell section-tab row on the same palette, regardless
+ * of which route in the group is active or which theme rule loaded earlier. */
+@layer utilities {
+    html body .simpeg-app-canvas .simpeg-section-tabs {
+        background: #e8f0fd !important;
+        background-color: #e8f0fd !important;
+        border-color: #d6e2f5 !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-section-tabs .simpeg-section-tab:not(.simpeg-section-tab--active) {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #0b1f4b !important;
+        -webkit-text-fill-color: #0b1f4b !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-section-tabs .simpeg-section-tab:not(.simpeg-section-tab--active):is(:hover, :focus-visible) {
+        background: #f5f8fe !important;
+        background-color: #f5f8fe !important;
+        color: #0b1f4b !important;
+        -webkit-text-fill-color: #0b1f4b !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-section-tabs .simpeg-section-tab--active,
+    html body .simpeg-app-canvas .simpeg-section-tabs .simpeg-section-tab--active:is(:hover, :focus-visible) {
+        background: #0d5fe0 !important;
+        background-color: #0d5fe0 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+}
+
+/* Tailwind's important utilities live in the utilities layer, which outranks
+ * unlayered !important theme rules. Put the export interaction contract here
+ * so the focused/hovered row cannot keep navy ink on its blue accent. */
+@layer utilities {
+    html body .simpeg-export-menu .simpeg-menu-item:is(
+        :hover,
+        :focus,
+        :focus-visible,
+        [data-highlighted='true'],
+        [data-state='active'],
+        [aria-selected='true']
+    ),
+    html body .simpeg-export-menu .simpeg-menu-item:is(
+        :hover,
+        :focus,
+        :focus-visible,
+        [data-highlighted='true'],
+        [data-state='active'],
+        [aria-selected='true']
+    ) :is(*, svg *) {
+        background: #0d5fe0 !important;
+        background-color: #0d5fe0 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        stroke: currentColor !important;
+        stroke-opacity: 1 !important;
+        opacity: 1 !important;
+    }
+
+    html body .simpeg-export-menu .simpeg-menu-item:is(
+        :disabled,
+        [disabled],
+        [aria-disabled='true'],
+        [data-disabled='true']
+    ),
+    html body .simpeg-export-menu .simpeg-menu-item:is(
+        :disabled,
+        [disabled],
+        [aria-disabled='true'],
+        [data-disabled='true']
+    ) :is(*, svg *) {
+        background: #eef3fb !important;
+        background-color: #eef3fb !important;
+        color: #4a6088 !important;
+        -webkit-text-fill-color: #4a6088 !important;
+        stroke: currentColor !important;
+        stroke-opacity: 1 !important;
+        opacity: 1 !important;
+    }
+
+    html.dark body .simpeg-export-menu .simpeg-menu-item:is(
+        :hover,
+        :focus,
+        :focus-visible,
+        [data-highlighted='true'],
+        [data-state='active'],
+        [aria-selected='true']
+    ),
+    html.dark body .simpeg-export-menu .simpeg-menu-item:is(
+        :hover,
+        :focus,
+        :focus-visible,
+        [data-highlighted='true'],
+        [data-state='active'],
+        [aria-selected='true']
+    ) :is(*, svg *) {
+        background: #0d5fe0 !important;
+        background-color: #0d5fe0 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        stroke: currentColor !important;
+        stroke-opacity: 1 !important;
+        opacity: 1 !important;
+    }
+
+    html.dark body .simpeg-export-menu .simpeg-menu-item:is(
+        :disabled,
+        [disabled],
+        [aria-disabled='true'],
+        [data-disabled='true']
+    ),
+    html.dark body .simpeg-export-menu .simpeg-menu-item:is(
+        :disabled,
+        [disabled],
+        [aria-disabled='true'],
+        [data-disabled='true']
+    ) :is(*, svg *) {
+        background: #eef3fb !important;
+        background-color: #eef3fb !important;
+        color: #4a6088 !important;
+        -webkit-text-fill-color: #4a6088 !important;
+        stroke: currentColor !important;
+        stroke-opacity: 1 !important;
+        opacity: 1 !important;
+    }
+}
+
+@layer utilities {
+/* Dark navbar palette. Keep these variables and overrides scoped to the
+ * header so sidebar, page surfaces, and the light theme retain their colors. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content > .simpeg-header {
+    --navbar-bg: linear-gradient(90deg, #1b2a4a 0%, #243a63 50%, #2d4a7c 100%);
+    --navbar-border: rgb(255 255 255 / 0.08);
+    --navbar-shadow: 0 2px 10px rgb(27 42 74 / 0.25);
+    --navbar-control-bg: rgb(255 255 255 / 0.08);
+    --navbar-control-border: rgb(255 255 255 / 0.12);
+    --navbar-control-hover: rgb(255 255 255 / 0.16);
+    --navbar-ink: #ffffff;
+    --navbar-muted: #b7c3de;
+    --navbar-placeholder: #b7c3de;
+    background: var(--navbar-bg) !important;
+    background-color: transparent !important;
+    border-color: var(--navbar-border) !important;
+    box-shadow: var(--navbar-shadow) !important;
+    color: var(--navbar-ink) !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header :is(
+    .simpeg-search-trigger,
+    .simpeg-history-controls,
+    .simpeg-history-control,
+    .simpeg-theme-toggle,
+    .simpeg-utility,
+    .simpeg-profile-trigger
+) {
+    background: var(--navbar-control-bg) !important;
+    border: 1px solid var(--navbar-control-border) !important;
+    color: var(--navbar-ink) !important;
+    -webkit-text-fill-color: var(--navbar-ink) !important;
+}
+
+/* The theme, notification, and profile controls carry legacy utility classes
+ * with their own important light-surface colors. Give these navbar buttons a
+ * direct, higher-specificity dark override so they follow the navbar tokens. */
+html.dark body .simpeg-app-canvas .simpeg-header.simpeg-header button.simpeg-theme-toggle,
+html.dark body .simpeg-app-canvas .simpeg-header.simpeg-header button.simpeg-utility,
+html.dark body .simpeg-app-canvas .simpeg-header.simpeg-header button.simpeg-profile-trigger {
+    background: var(--navbar-control-bg) !important;
+    background-color: var(--navbar-control-bg) !important;
+    background-image: none !important;
+    border: 1px solid var(--navbar-control-border) !important;
+    color: var(--navbar-ink) !important;
+    -webkit-text-fill-color: var(--navbar-ink) !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header.simpeg-header button.simpeg-theme-toggle:is(:hover, :focus-visible),
+html.dark body .simpeg-app-canvas .simpeg-header.simpeg-header button.simpeg-utility:is(:hover, :focus-visible),
+html.dark body .simpeg-app-canvas .simpeg-header.simpeg-header button.simpeg-profile-trigger:is(:hover, :focus-visible) {
+    background: var(--navbar-control-hover) !important;
+    background-color: var(--navbar-control-hover) !important;
+    border-color: var(--navbar-control-border) !important;
+    color: var(--navbar-ink) !important;
+    -webkit-text-fill-color: var(--navbar-ink) !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header.simpeg-header button:is(.simpeg-theme-toggle, .simpeg-utility, .simpeg-profile-trigger) :is(svg, svg *, span, p) {
+    color: var(--navbar-ink) !important;
+    -webkit-text-fill-color: var(--navbar-ink) !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header :is(
+    .simpeg-search-trigger,
+    .simpeg-history-control,
+    .simpeg-theme-toggle,
+    .simpeg-utility,
+    .simpeg-profile-trigger
+) :is(svg, svg *, span, p) {
+    color: var(--navbar-ink) !important;
+    -webkit-text-fill-color: var(--navbar-ink) !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header :is(
+    .simpeg-search-trigger:hover,
+    .simpeg-search-trigger:focus-visible,
+    .simpeg-history-control:hover,
+    .simpeg-history-control:focus-visible,
+    .simpeg-theme-toggle:hover,
+    .simpeg-theme-toggle:focus-visible,
+    .simpeg-utility:hover,
+    .simpeg-utility:focus-visible,
+    .simpeg-profile-trigger:hover,
+    .simpeg-profile-trigger:focus-visible
+) {
+    background: var(--navbar-control-hover) !important;
+    background-color: var(--navbar-control-hover) !important;
+    border-color: var(--navbar-control-border) !important;
+    color: var(--navbar-ink) !important;
+    -webkit-text-fill-color: var(--navbar-ink) !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-search-trigger .simpeg-search-placeholder {
+    color: var(--navbar-placeholder) !important;
+    -webkit-text-fill-color: var(--navbar-placeholder) !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header-context .simpeg-muted,
+html.dark body .simpeg-app-canvas .simpeg-live-datetime .simpeg-muted {
+    color: var(--navbar-muted) !important;
+    -webkit-text-fill-color: var(--navbar-muted) !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-theme-toggle {
+    position: relative;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-theme-toggle::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 100;
+    width: max-content;
+    max-width: min(18rem, calc(100vw - 1rem));
+    padding: 0.45rem 0.65rem;
+    border: 1px solid rgb(255 255 255 / 0.15);
+    border-radius: 0.5rem;
+    background: #1b2a4a;
+    color: #ffffff;
+    white-space: normal;
+    text-align: left;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.2);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-theme-toggle:is(:hover, :focus-visible)::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-session-indicator {
+    border-color: rgb(255 255 255 / 0.12) !important;
+    background: rgb(255 255 255 / 0.08) !important;
+    color: #b7c3de !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-header-sidebar-toggle {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-header-sidebar-toggle:is(:hover, :focus-visible) {
+    background: rgb(255 255 255 / 0.12) !important;
+    color: #ffffff !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-session-time {
+    color: #ffffff !important;
+}
+}
+
+/* Center the three sidebar navigation controls as one visible card below the logo. */
+html body .simpeg-app-canvas #primary-navigation .simpeg-sidebar-inner > .simpeg-sidebar-history-nav {
+    display: inline-flex !important;
+    align-self: center !important;
+    justify-content: center !important;
+    gap: 0.125rem !important;
+    width: max-content !important;
+    margin: 0.75rem auto 0.25rem !important;
+    padding: 0.2rem !important;
+    border: 1px solid rgb(255 255 255 / 0.18) !important;
+    border-radius: 999px !important;
+    background: rgb(255 255 255 / 0.1) !important;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.12) !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation .simpeg-sidebar-history-nav .simpeg-sidebar-history-button {
+    display: inline-flex !important;
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+html body .simpeg-app-canvas #primary-navigation .simpeg-sidebar-history-nav .simpeg-sidebar-history-button:is(:hover, :focus-visible) {
+    background: rgb(255 255 255 / 0.16) !important;
+    color: #ffffff !important;
+}
+
+@media (min-width: 1024px) {
+    html body .simpeg-app-canvas #primary-navigation.simpeg-sidebar-collapsed .simpeg-sidebar-inner > .simpeg-sidebar-history-nav {
+        flex-direction: column !important;
+        border-radius: 1rem !important;
+    }
+}
+
+html.dark body .simpeg-app-canvas #primary-navigation.simpeg-sidebar,
+html.dark body .simpeg-app-canvas #primary-navigation.simpeg-sidebar > .simpeg-sidebar-inner {
+    background: linear-gradient(90deg, #1b2a4a 0%, #243a63 50%, #2d4a7c 100%) !important;
+    background-color: transparent !important;
+}
+
+/* Dashboard visual refresh: keep this scoped to the dashboard in dark mode. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content:has(.simpeg-dashboard-shell),
+html.dark body .simpeg-app-canvas .simpeg-shell-content:has(.simpeg-dashboard-shell) > main,
+html.dark body .simpeg-app-canvas main:has(.simpeg-dashboard-shell) {
+    background: #EEF2F9 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-stat,
+    .simpeg-dashboard-status-chart-card,
+    .simpeg-dashboard-violation-chart-card
+) {
+    --simpeg-surface: #FFFFFF !important;
+    --simpeg-card: #FFFFFF !important;
+    --simpeg-border: #E1E7F2 !important;
+    --border: #E1E7F2 !important;
+    --simpeg-track: #F1F5FB !important;
+    --simpeg-status-bar-1: #1257D6 !important;
+    --simpeg-status-bar-2: #5B8FE0 !important;
+    --simpeg-status-bar-3: #8FB2EC !important;
+    --simpeg-status-bar-4: #1b2a4a !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E1E7F2 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 20px rgb(27 42 74 / 0.08) !important;
+    transition: box-shadow 200ms ease, transform 200ms ease !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-stat,
+    .simpeg-dashboard-status-chart-card,
+    .simpeg-dashboard-violation-chart-card
+):is(:hover, :focus-within) {
+    background: #FFFFFF !important;
+    border-color: #E1E7F2 !important;
+    box-shadow: 0 8px 28px rgb(27 42 74 / 0.14) !important;
+    transform: translateY(-2px) !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-stat-value {
+    color: #1b2a4a !important;
+    -webkit-text-fill-color: #1b2a4a !important;
+    letter-spacing: -0.02em !important;
+    font-weight: 700 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-status-chart-card .simpeg-status-chart {
+    --simpeg-border: #E1E7F2 !important;
+    --simpeg-input: #F1F5FB !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-status-chart-card .recharts-cartesian-grid line {
+    stroke: #E1E7F2 !important;
+    stroke-dasharray: 3 3 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+    background-color: #F8FAFF !important;
+    background-image: linear-gradient(100deg, #F8FAFF 0%, #EAF1FC 60%, #DCE8FA 100%) !important;
+    border-bottom: 1px solid #E1E7F2 !important;
+    box-shadow: 0 2px 10px rgb(27 42 74 / 0.08) !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::before {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 0 !important;
+    content: '' !important;
+    background: radial-gradient(circle at 80% 50%, rgb(18 87 214 / 0.12), transparent 60%) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero a[data-dashboard-action='primary'] {
+    box-shadow: 0 6px 16px rgb(18 87 214 / 0.3) !important;
+}
+
+/* Global employee search is rendered outside the app canvas. Keep its dark
+ * dialog text independent from the light-surface .simpeg-text utility. */
+html.dark body .simpeg-search-overlay {
+    background: rgb(11 20 38 / 0.3) !important;
+    backdrop-filter: blur(16px) saturate(0.92) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(0.92) !important;
+}
+
+html.dark body .simpeg-search-overlay .simpeg-search-dialog {
+    background: #1b2a4a !important;
+    background-color: #1b2a4a !important;
+    border-color: rgb(255 255 255 / 0.14) !important;
+    color: #F8FAFF !important;
+}
+
+html.dark body .simpeg-search-overlay .simpeg-search-dialog-input {
+    border-color: rgb(255 255 255 / 0.12) !important;
+    color: #F8FAFF !important;
+}
+
+html.dark body .simpeg-search-overlay #global-employee-search,
+html.dark body .simpeg-search-overlay #global-employee-search:focus,
+html.dark body .simpeg-search-overlay #global-employee-search:focus-visible {
+    color: #F8FAFF !important;
+    -webkit-text-fill-color: #F8FAFF !important;
+    caret-color: #F8FAFF !important;
+}
+
+html.dark body .simpeg-search-overlay #global-employee-search::placeholder {
+    color: #B7C3DE !important;
+    -webkit-text-fill-color: #B7C3DE !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-search-overlay .simpeg-search-dialog-input > svg,
+html.dark body .simpeg-search-overlay .simpeg-search-close {
+    color: #F8FAFF !important;
+    -webkit-text-fill-color: #F8FAFF !important;
+}
+
+html.dark body .simpeg-search-overlay .simpeg-search-close kbd {
+    border-color: rgb(255 255 255 / 0.2) !important;
+    background: rgb(255 255 255 / 0.1) !important;
+    color: #F8FAFF !important;
+    -webkit-text-fill-color: #F8FAFF !important;
+}
+
+html.dark body .simpeg-search-overlay .simpeg-search-dialog-footer {
+    background: #1b2a4a !important;
+    background-color: #1b2a4a !important;
+    color: #B7C3DE !important;
+    -webkit-text-fill-color: #B7C3DE !important;
+}
+
+/* Use the same soft blue canvas on every authenticated page and role in dark
+ * mode; card and alert surfaces keep their own component colors. */
+html.dark body .simpeg-app-canvas .simpeg-shell-content,
+html.dark body .simpeg-app-canvas .simpeg-shell-content > main,
+html.dark body .simpeg-app-canvas .simpeg-shell-footer {
+    background: #EEF2F9 !important;
+}
+
+/* Dashboard hero typography hierarchy, scoped to dark mode only. */
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-eyebrow {
+    margin: 0 0 12px !important;
+    color: #1257D6 !important;
+    -webkit-text-fill-color: #1257D6 !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.18em !important;
+    text-transform: uppercase !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__title {
+    max-width: none !important;
+    margin: 0 !important;
+    color: #1b2a4a !important;
+    -webkit-text-fill-color: #1b2a4a !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    letter-spacing: normal !important;
+    line-height: normal !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__greeting {
+    display: block !important;
+    margin: 0 0 4px !important;
+    color: #5A6683 !important;
+    -webkit-text-fill-color: #5A6683 !important;
+    font-size: clamp(1.25rem, 2vw, 1.75rem) !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.01em !important;
+    line-height: 1.25 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__name {
+    display: block !important;
+    max-width: 18ch !important;
+    color: #1b2a4a !important;
+    -webkit-text-fill-color: transparent !important;
+    background-image: linear-gradient(90deg, #1b2a4a 0%, #1257D6 100%) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    font-size: clamp(2.25rem, 4.2vw, 3.5rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.08 !important;
+    text-transform: capitalize !important;
+    text-wrap: balance !important;
+    overflow-wrap: anywhere !important;
+}
+
+@supports not (-webkit-background-clip: text) {
+    html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__name,
+    html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__name {
+        color: #1b2a4a !important;
+        -webkit-text-fill-color: #1b2a4a !important;
+        background-image: none !important;
+    }
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__title::after {
+    width: 56px !important;
+    height: 4px !important;
+    margin-top: 18px !important;
+    border-radius: 999px !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__description {
+    max-width: 56ch !important;
+    margin: 16px 0 0 !important;
+    color: #4A5878 !important;
+    -webkit-text-fill-color: #4A5878 !important;
+    font-size: 1.0625rem !important;
+    font-weight: 400 !important;
+    line-height: 1.65 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls .simpeg-muted {
+    color: #6B7794 !important;
+    -webkit-text-fill-color: #6B7794 !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__actions {
+    align-items: flex-end !important;
+    margin-top: 32px !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action {
+    box-sizing: border-box !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    letter-spacing: normal !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action__label {
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    letter-spacing: normal !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) #dashboard-region {
+    box-sizing: border-box !important;
+    height: 48px !important;
+    min-height: 48px !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__greeting {
+    display: block !important;
+    margin: 0 0 4px !important;
+    color: #5A6683 !important;
+    -webkit-text-fill-color: #5A6683 !important;
+    font-size: clamp(1.25rem, 2vw, 1.75rem) !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.01em !important;
+    line-height: 1.25 !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__name {
+    display: block !important;
+    max-width: 18ch !important;
+    color: #1b2a4a !important;
+    -webkit-text-fill-color: transparent !important;
+    background-image: linear-gradient(90deg, #1b2a4a 0%, #1257D6 100%) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    font-size: clamp(2.25rem, 4.2vw, 3.5rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.08 !important;
+    text-transform: capitalize !important;
+    text-wrap: balance !important;
+    overflow-wrap: anywhere !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-eyebrow {
+    margin: 0 0 12px !important;
+    color: #1257D6 !important;
+    -webkit-text-fill-color: #1257D6 !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.18em !important;
+    text-transform: uppercase !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__title {
+    max-width: none !important;
+    margin: 0 !important;
+    color: #1b2a4a !important;
+    -webkit-text-fill-color: #1b2a4a !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    letter-spacing: normal !important;
+    line-height: normal !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__title::after {
+    width: 56px !important;
+    height: 4px !important;
+    margin-top: 18px !important;
+    border-radius: 999px !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__description {
+    max-width: 56ch !important;
+    margin: 16px 0 0 !important;
+    color: #4A5878 !important;
+    -webkit-text-fill-color: #4A5878 !important;
+    font-size: 1.0625rem !important;
+    font-weight: 400 !important;
+    line-height: 1.65 !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls .simpeg-muted {
+    color: #6B7794 !important;
+    -webkit-text-fill-color: #6B7794 !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__actions {
+    align-items: flex-end !important;
+    margin-top: 32px !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action {
+    box-sizing: border-box !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    letter-spacing: normal !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action__label {
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    letter-spacing: normal !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) #dashboard-region {
+    box-sizing: border-box !important;
+    height: 48px !important;
+    min-height: 48px !important;
+}
+
+@media (max-width: 639px) {
+    html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__actions,
+    html:not(.dark) body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__actions {
+        align-items: stretch !important;
+    }
+}
+
+/* Dark notification popover: keep every text/icon readable on the navbar
+ * surface, including utility classes that otherwise inject dark ink colors. */
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover {
+    background: var(--navbar-bg, linear-gradient(90deg, #1b2a4a 0%, #243a63 50%, #2d4a7c 100%)) !important;
+    background-color: #1b2a4a !important;
+    border-color: rgb(255 255 255 / 0.14) !important;
+    color: #f8faff !important;
+    -webkit-text-fill-color: #f8faff !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover :is(
+    .simpeg-text,
+    .simpeg-notification-item,
+    .simpeg-notification-all,
+    .simpeg-notification-popover-title
+),
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover :is(
+    .simpeg-text,
+    .simpeg-notification-item,
+    .simpeg-notification-all
+) :where(*) {
+    color: #f8faff !important;
+    -webkit-text-fill-color: #f8faff !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover .simpeg-muted,
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover .simpeg-notification-item .simpeg-muted {
+    color: #b7c3de !important;
+    -webkit-text-fill-color: #b7c3de !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover .simpeg-border {
+    border-color: rgb(255 255 255 / 0.14) !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover :is(svg, svg *) {
+    color: #f8faff !important;
+    stroke: currentColor !important;
+    stroke-opacity: 1 !important;
+    opacity: 1 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover :is(
+    .simpeg-notification-item,
+    .simpeg-notification-all
+):is(:hover, :focus-visible) {
+    background: rgb(255 255 255 / 0.12) !important;
+    background-color: rgb(255 255 255 / 0.12) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header .simpeg-notification-popover :is(
+    .simpeg-notification-item,
+    .simpeg-notification-all
+):is(:hover, :focus-visible) :where(*) {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Final light-theme shell backgrounds. This contract loads after the legacy
+ * shell/theme layers, whose !important shorthand rules otherwise win. */
+html:not(.dark) body .simpeg-app-canvas .simpeg-shell-content > .simpeg-header {
+    --simpeg-header: linear-gradient(90deg, #ffffff 0%, #eaf1fd 100%) !important;
+    background: linear-gradient(90deg, #ffffff 0%, #eaf1fd 100%) !important;
+    background-image: linear-gradient(90deg, #ffffff 0%, #eaf1fd 100%) !important;
+}
+
+html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
+    [data-sidebar-color="theme"],
+    [data-sidebar-color="navy"]
+) {
+    --simpeg-sidebar-bg: linear-gradient(180deg, #0a2a66 0%, #0f3a8a 100%) !important;
+    background: linear-gradient(180deg, #0a2a66 0%, #0f3a8a 100%) !important;
+    background-image: linear-gradient(180deg, #0a2a66 0%, #0f3a8a 100%) !important;
+}
+
+/* Final rounded-surface contract for dashboard availability cards. Keep this
+ * shared between themes so dark mode does not get a different table shape.
+ * The card and scroll viewport own the radius; the inner table stays flat so
+ * no square header corners or border slivers peek through. */
+html body .simpeg-app-canvas .simpeg-shell-content main section[aria-label='Ketersediaan jabatan'] {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+html body .simpeg-app-canvas .simpeg-dashboard-position-summary-card[data-slot='card'] {
+    overflow: hidden !important;
+    border-radius: 1rem !important;
+    background-clip: padding-box !important;
+}
+
+html body .simpeg-app-canvas .simpeg-dashboard-availability-card[data-slot='card'] {
+    overflow: hidden !important;
+    border-radius: 1.25rem !important;
+    background-clip: padding-box !important;
+}
+
+html body .simpeg-app-canvas .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table-scroll {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border: 1px solid var(--simpeg-border) !important;
+    border-radius: 1rem !important;
+    background: var(--simpeg-card) !important;
+    background-clip: padding-box !important;
+    box-shadow: none !important;
+    clip-path: none !important;
+}
+
+html body .simpeg-app-canvas .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table-scroll > [data-slot='table-wrapper'] {
+    width: 100% !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+html body .simpeg-app-canvas .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: var(--simpeg-card) !important;
+}
+
+/* The authenticated dark theme keeps the navigation chrome dark, but older
+ * rules still forced the dashboard workspace and its tables to the light
+ * paper palette. Give the dashboard one coherent dark surface so white card
+ * corners do not sit against a dark shell. Light mode is intentionally not
+ * included in this contract. */
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard {
+    --simpeg-canvas: #0f1b2a !important;
+    --bg: #0f1b2a !important;
+    --simpeg-canvas-mid: #0f1b2a !important;
+    --simpeg-canvas-end: #0f1b2a !important;
+    --simpeg-surface: #17283a !important;
+    --surface: #17283a !important;
+    --simpeg-surface-alt: #223a55 !important;
+    --surface-alt: #223a55 !important;
+    --simpeg-card: #17283a !important;
+    --simpeg-card-soft: #223a55 !important;
+    --simpeg-input: #132536 !important;
+    --simpeg-text: #f4f8fc !important;
+    --text: #f4f8fc !important;
+    --simpeg-muted: #b8c7d8 !important;
+    --text-muted: #b8c7d8 !important;
+    --simpeg-subtle: #9fb2c7 !important;
+    --simpeg-border: #36516d !important;
+    --border: #36516d !important;
+    --simpeg-track: #2b4662 !important;
+    --simpeg-table-surface: #132536 !important;
+    --simpeg-table-header: #223a55 !important;
+    --simpeg-table-grid: #36516d !important;
+    --simpeg-table-text: #f4f8fc !important;
+    --simpeg-table-muted: #d2deeb !important;
+    --simpeg-table-hover: #1e344d !important;
+    background: #0f1b2a !important;
+    color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-shell-frame,
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-shell-content,
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-shell-content > main,
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell {
+    background: #0f1b2a !important;
+    background-color: #0f1b2a !important;
+    color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    .simpeg-card,
+    .simpeg-card-soft,
+    .simpeg-dashboard-stat,
+    .simpeg-dashboard-chart-card,
+    .simpeg-dashboard-tenure-card,
+    .simpeg-dashboard-position-card,
+    [data-slot='card']
+) {
+    --simpeg-card: #17283a !important;
+    --simpeg-surface: #17283a !important;
+    --simpeg-card-soft: #223a55 !important;
+    --simpeg-input: #132536 !important;
+    --simpeg-text: #f4f8fc !important;
+    --text: #f4f8fc !important;
+    --simpeg-muted: #b8c7d8 !important;
+    --text-muted: #b8c7d8 !important;
+    --simpeg-border: #36516d !important;
+    --border: #36516d !important;
+    background: #17283a !important;
+    background-color: #17283a !important;
+    border-color: #36516d !important;
+    color: #f4f8fc !important;
+    box-shadow: 0 14px 32px rgb(0 0 0 / 0.24) !important;
+    border-radius: 1.25rem !important;
+    overflow: hidden !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    [data-slot='card-title'],
+    [data-slot='card-description'],
+    .simpeg-text,
+    .simpeg-muted,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-stat-info,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-position-value
+) {
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    [data-slot='card-description'],
+    .simpeg-muted,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-position-label
+) {
+    color: #b8c7d8 !important;
+    -webkit-text-fill-color: #b8c7d8 !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-card-header,
+    .simpeg-dashboard-card-content,
+    .simpeg-border
+) {
+    border-color: #36516d !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    input,
+    textarea,
+    select,
+    .simpeg-input
+) {
+    background: #132536 !important;
+    background-color: #132536 !important;
+    border-color: #46627e !important;
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-card-soft {
+    background: #223a55 !important;
+    background-color: #223a55 !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table-scroll {
+    border-color: #36516d !important;
+    background: #132536 !important;
+    background-color: #132536 !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table {
+    background: #132536 !important;
+    background-color: #132536 !important;
+    color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table :is(
+    thead,
+    thead tr,
+    thead th
+) {
+    background: #223a55 !important;
+    background-color: #223a55 !important;
+    border-color: #36516d !important;
+    color: #d2deeb !important;
+    -webkit-text-fill-color: #d2deeb !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table :is(
+    tbody,
+    tbody tr,
+    tbody th,
+    tbody td
+) {
+    background: #132536 !important;
+    background-color: #132536 !important;
+    border-color: #36516d !important;
+    color: #d2deeb !important;
+    -webkit-text-fill-color: #d2deeb !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table tbody tr:hover,
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table tbody tr:hover :is(th, td) {
+    background: #1e344d !important;
+    background-color: #1e344d !important;
+    color: #f4f8fc !important;
+}
+
+/* Finish the dark dashboard as one visual system. Earlier legacy contracts
+ * intentionally kept the hero light; that leaves a hard light/dark seam and
+ * makes the card edges look like clipped corners. */
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-hero {
+    position: relative !important;
+    overflow: hidden !important;
+    border: 1px solid #36516d !important;
+    border-radius: 1.5rem !important;
+    background:
+        radial-gradient(60% 110% at 88% 20%, rgb(49 112 180 / 0.25) 0%, rgb(49 112 180 / 0) 68%),
+        linear-gradient(135deg, #14283e 0%, #1d3854 100%) !important;
+    background-color: #14283e !important;
+    box-shadow: 0 18px 42px rgb(0 0 0 / 0.2) !important;
+    color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-hero::before {
+    display: none !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-hero::after {
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 58% !important;
+    height: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: url('/images/dashboard-building-modern.png') no-repeat right center / auto 100% !important;
+    box-shadow: none !important;
+    filter: none !important;
+    mix-blend-mode: screen !important;
+    opacity: 0.16 !important;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 42%, #000 100%) !important;
+    mask-image: linear-gradient(90deg, transparent 0%, #000 42%, #000 100%) !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-hero :is(
+    .simpeg-dashboard-eyebrow,
+    .simpeg-dashboard-hero__title,
+    .simpeg-dashboard-hero__title span,
+    .simpeg-dashboard-hero__description,
+    .simpeg-dashboard-hero__controls .simpeg-muted
+) {
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-hero__description,
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-hero__controls .simpeg-muted {
+    color: #b8c7d8 !important;
+    -webkit-text-fill-color: #b8c7d8 !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-hero__controls .simpeg-input {
+    border-color: #46627e !important;
+    background: #132536 !important;
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-eyebrow,
+    .simpeg-muted,
+    [data-slot='card-description']
+) {
+    color: #b8c7d8 !important;
+    -webkit-text-fill-color: #b8c7d8 !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    .simpeg-text,
+    [data-slot='card-title'],
+    .simpeg-dashboard-stat-value
+) {
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+/* Keep the component contract resilient when the shell URL is represented as
+ * an absolute Inertia URL. The dashboard marker itself is the reliable scope. */
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-availability-card,
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-position-summary-card {
+    border-radius: 1.25rem !important;
+    overflow: hidden !important;
+}
+
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-availability-card :is(
+    .simpeg-dashboard-availability-table-scroll,
+    .simpeg-dashboard-availability-table-scroll > [data-slot='table-wrapper'],
+    table.simpeg-dashboard-availability-table,
+    table.simpeg-dashboard-availability-table > thead,
+    table.simpeg-dashboard-availability-table > thead > tr,
+    table.simpeg-dashboard-availability-table > tbody,
+    table.simpeg-dashboard-availability-table > tbody > tr,
+    table.simpeg-dashboard-availability-table th,
+    table.simpeg-dashboard-availability-table td
+) {
+    background: #132536 !important;
+    background-color: #132536 !important;
+    border-color: #36516d !important;
+    color: #d2deeb !important;
+    -webkit-text-fill-color: #d2deeb !important;
+}
+
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-availability-card table.simpeg-dashboard-availability-table > thead,
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-availability-card table.simpeg-dashboard-availability-table > thead > tr,
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-availability-card table.simpeg-dashboard-availability-table > thead > tr > th {
+    background: #223a55 !important;
+    background-color: #223a55 !important;
+}
+
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-availability-card :is(
+    [data-slot='card-title'],
+    [data-slot='card-description'],
+    .simpeg-text,
+    .simpeg-muted
+) {
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-availability-card :is(
+    [data-slot='card-description'],
+    .simpeg-muted
+) {
+    color: #b8c7d8 !important;
+    -webkit-text-fill-color: #b8c7d8 !important;
+}
+
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-position-summary-card :is(
+    .simpeg-text,
+    .simpeg-dashboard-chart-meta
+) {
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-dashboard-shell .simpeg-dashboard-position-summary-card .simpeg-muted {
+    color: #b8c7d8 !important;
+    -webkit-text-fill-color: #b8c7d8 !important;
+}
+
+/* The table primitives are shared by several dashboard cards. Keep this
+ * fallback intentionally structural: it avoids relying on a utility class
+ * surviving a component refactor and prevents the light table paper from
+ * peeking through a dark card. */
+html.dark body .simpeg-dashboard-shell :is(
+    [data-slot='table-wrapper'],
+    table[data-slot='table'],
+    table[data-slot='table'] thead,
+    table[data-slot='table'] thead tr,
+    table[data-slot='table'] tbody,
+    table[data-slot='table'] tbody tr,
+    table[data-slot='table'] th,
+    table[data-slot='table'] td
+) {
+    background: #132536 !important;
+    background-color: #132536 !important;
+    background-image: none !important;
+    border-color: #36516d !important;
+    color: #d2deeb !important;
+    -webkit-text-fill-color: #d2deeb !important;
+}
+
+html.dark body .simpeg-dashboard-shell :is(
+    table[data-slot='table'] thead,
+    table[data-slot='table'] thead tr,
+    table[data-slot='table'] thead th
+) {
+    background: #223a55 !important;
+    background-color: #223a55 !important;
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-dashboard-shell :is(
+    table[data-slot='table'] tbody tr:hover,
+    table[data-slot='table'] tbody tr:hover th,
+    table[data-slot='table'] tbody tr:hover td
+) {
+    background: #1e344d !important;
+    background-color: #1e344d !important;
+}
+
+html.dark body .simpeg-dashboard-shell :is(
+    [data-slot='card-title'],
+    [data-slot='card-title'] *,
+    .simpeg-dashboard-position-summary-card .simpeg-text,
+    .simpeg-dashboard-position-summary-card .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-position-summary-card .simpeg-dashboard-stat-value
+) {
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html.dark body .simpeg-dashboard-shell :is(
+    [data-slot='card-description'],
+    .simpeg-dashboard-position-summary-card .simpeg-muted
+) {
+    color: #b8c7d8 !important;
+    -webkit-text-fill-color: #b8c7d8 !important;
+}
+
+/* Give the compact position summaries a stable desktop grid. The previous
+ * flex width let the title and "jabatan" meta collide at narrower widths. */
+.simpeg-dashboard-position-summary-card [data-slot='card-content'] {
+    display: grid !important;
+    grid-template-columns: minmax(18rem, 1.1fr) minmax(22rem, 1.9fr) !important;
+    align-items: center !important;
+}
+
+.simpeg-dashboard-position-summary-card [data-slot='card-content'] > :first-child {
+    width: auto !important;
+    min-width: 0 !important;
+}
+
+.simpeg-dashboard-position-summary-card [data-slot='card-content'] h3 {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+@media (max-width: 1023px) {
+    .simpeg-dashboard-position-summary-card [data-slot='card-content'] {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .simpeg-dashboard-position-summary-card [data-slot='card-content'] > :first-child {
+        width: 100% !important;
+    }
+}
+
+/* React-owned theme marker: use this as the final dark-dashboard contract so
+ * the dashboard does not depend on the document-level theme selector winning
+ * against legacy surface rules. The marker is only rendered while dark mode
+ * is active, so light mode keeps its existing paper surface and geometry. */
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell {
+    color: #f4f8fc !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-position-summary-card,
+    .simpeg-dashboard-availability-card
+) {
+    background: #17283a !important;
+    background-color: #17283a !important;
+    border: 1px solid #36516d !important;
+    border-radius: 1.25rem !important;
+    background-clip: padding-box !important;
+    box-shadow: 0 14px 32px rgb(0 0 0 / 0.24) !important;
+    color: #f4f8fc !important;
+    overflow: hidden !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-position-summary-card [data-slot='card-content'],
+    .simpeg-dashboard-availability-card [data-slot='card-header'],
+    .simpeg-dashboard-availability-card [data-slot='card-content']
+) {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #f4f8fc !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell .simpeg-dashboard-availability-table-scroll {
+    border: 1px solid #36516d !important;
+    border-radius: 1rem !important;
+    background: #132536 !important;
+    background-color: #132536 !important;
+    background-clip: padding-box !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell .simpeg-dashboard-availability-table-scroll > [data-slot='table-wrapper'] {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell .simpeg-dashboard-availability-table {
+    background: #132536 !important;
+    background-color: #132536 !important;
+    border: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    color: #d2deeb !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell .simpeg-dashboard-availability-table :is(
+    thead,
+    thead tr,
+    thead th
+) {
+    background: #223a55 !important;
+    background-color: #223a55 !important;
+    border-color: #36516d !important;
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell .simpeg-dashboard-availability-table :is(
+    tbody,
+    tbody tr,
+    tbody th,
+    tbody td
+) {
+    background: #132536 !important;
+    background-color: #132536 !important;
+    border-color: #36516d !important;
+    color: #d2deeb !important;
+    -webkit-text-fill-color: #d2deeb !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell .simpeg-dashboard-availability-table tbody tr:hover,
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell .simpeg-dashboard-availability-table tbody tr:hover :is(th, td) {
+    background: #1e344d !important;
+    background-color: #1e344d !important;
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell :is(
+    [data-slot='card-title'],
+    [data-slot='card-title'] *,
+    [data-slot='card-description'],
+    .simpeg-text,
+    .simpeg-muted,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-position-value
+) {
+    color: #f4f8fc !important;
+    -webkit-text-fill-color: #f4f8fc !important;
+}
+
+html body .simpeg-app-canvas.simpeg-theme-dark .simpeg-dashboard-shell :is(
+    [data-slot='card-description'],
+    .simpeg-muted,
+    .simpeg-dashboard-position-label
+) {
+    color: #b8c7d8 !important;
+    -webkit-text-fill-color: #b8c7d8 !important;
+}
+
+/* Keep the established light workspace palette in dark mode. Dark mode owns
+ * the navigation chrome; the dashboard data surface stays paper-white. The
+ * extra theme/route markers make this override win only on the dashboard. */
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard {
+    --simpeg-canvas: #f7f5f6 !important;
+    --bg: #f7f5f6 !important;
+    --simpeg-canvas-mid: #f7f5f6 !important;
+    --simpeg-canvas-end: #f7f5f6 !important;
+    --simpeg-surface: #ffffff !important;
+    --surface: #ffffff !important;
+    --simpeg-surface-alt: #f5f8fe !important;
+    --surface-alt: #f5f8fe !important;
+    --simpeg-card: #ffffff !important;
+    --simpeg-card-soft: #e8f0fd !important;
+    --simpeg-input: #ffffff !important;
+    --simpeg-text: #0b1f4b !important;
+    --text: #0b1f4b !important;
+    --simpeg-muted: #55668a !important;
+    --text-muted: #55668a !important;
+    --simpeg-border: #d6e2f5 !important;
+    --border: #d6e2f5 !important;
+    background: #f7f5f6 !important;
+    background-color: #f7f5f6 !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard :is(
+    .simpeg-shell-frame,
+    .simpeg-shell-content,
+    .simpeg-shell-content > main,
+    .simpeg-dashboard-shell
+) {
+    background: #f7f5f6 !important;
+    background-color: #f7f5f6 !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-position-summary-card,
+    .simpeg-dashboard-availability-card,
+    [data-slot='card']
+) {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid #d6e2f5 !important;
+    border-radius: 1.25rem !important;
+    background-clip: padding-box !important;
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.10) !important;
+    color: #0b1f4b !important;
+    overflow: hidden !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    [data-slot='card-title'],
+    [data-slot='card-title'] *,
+    .simpeg-text,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-position-value
+) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    [data-slot='card-description'],
+    .simpeg-muted,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-stat-label
+) {
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+/* Final hero restoration: keep the page header on the same light palette as
+ * the cards and tables, while the sidebar/header chrome remains dark. */
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+    position: relative !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background-color: #f5f8fe !important;
+    background-image:
+        radial-gradient(45% 75% at 80% 40%, rgb(43 123 240 / 0.18) 0%, rgb(43 123 240 / 0) 70%),
+        radial-gradient(30% 50% at 0% 0%, rgb(255 162 15 / 0.12) 0%, rgb(255 162 15 / 0) 70%),
+        linear-gradient(90deg, #f5f8fe 0%, rgb(245 248 254 / 0.98) 38%, rgb(245 248 254 / 0.68) 68%, rgb(245 248 254 / 0.16) 100%),
+        url('/images/dashboard-building-modern.png') !important;
+    background-position: center, center, center, right bottom !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100%, 100% 100%, 100% 100%, auto 100% !important;
+    background-blend-mode: normal !important;
+    box-shadow: none !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::before,
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+    display: none !important;
+    content: none !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero :is(
+    .simpeg-dashboard-eyebrow,
+    .simpeg-dashboard-hero__title,
+    .simpeg-dashboard-hero__title span,
+    .simpeg-dashboard-hero__description,
+    .simpeg-dashboard-hero__controls .simpeg-muted
+) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__description {
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls .simpeg-input {
+    border-color: #d6e2f5 !important;
+    background: #ffffff !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) {
+    border-color: #d6e2f5 !important;
+    background: #ffffff !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) :is(span, svg, svg *) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+}
+
+/* Route-marker-independent fallback for the live dashboard DOM. This keeps
+ * the restored palette active even when an Inertia refresh renders the shell
+ * before the optional route marker is attached. */
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-card,
+    [data-slot='card'],
+    .simpeg-dashboard-card,
+    .simpeg-dashboard-chart-card,
+    .simpeg-dashboard-summary-chart-card,
+    .simpeg-dashboard-tenure-card,
+    .simpeg-dashboard-stat,
+    .simpeg-dashboard-position-card,
+    .simpeg-dashboard-status-chart-card,
+    .simpeg-dashboard-violation-chart-card,
+    .simpeg-dashboard-employee-trend-card,
+    .simpeg-dashboard-gender-card,
+    .simpeg-dashboard-education-card,
+    .simpeg-dashboard-availability-card,
+    .simpeg-dashboard-position-summary-card
+) {
+    --simpeg-surface: #ffffff !important;
+    --surface: #ffffff !important;
+    --simpeg-card: #ffffff !important;
+    --simpeg-card-soft: #e8f0fd !important;
+    --simpeg-input: #ffffff !important;
+    --simpeg-text: #0b1f4b !important;
+    --text: #0b1f4b !important;
+    --simpeg-muted: #55668a !important;
+    --text-muted: #55668a !important;
+    --simpeg-border: #d6e2f5 !important;
+    --border: #d6e2f5 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #d6e2f5 !important;
+    border-radius: 1.25rem !important;
+    background-clip: padding-box !important;
+    color: #0b1f4b !important;
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.10) !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-card-header,
+    .simpeg-dashboard-card-content,
+    [data-slot='card-header'],
+    [data-slot='card-content']
+) {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-color: #d6e2f5 !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    [data-slot='card-title'],
+    [data-slot='card-title'] *,
+    [data-slot='card-description'],
+    .simpeg-text,
+    .simpeg-muted,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-stat-info,
+    .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-position-value,
+    .simpeg-dashboard-bar-label,
+    .simpeg-dashboard-bar-value
+) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    [data-slot='card-description'],
+    .simpeg-muted,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-stat-info,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-bar-label
+) {
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+/* Restore the hero to the established light workspace treatment as well.
+ * The previous dark-only hero contract was the remaining visual mismatch
+ * after the cards and tables were returned to their original palette. */
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+    position: relative !important;
+    overflow: hidden !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background-color: #f7f5f6 !important;
+    background-image:
+        linear-gradient(90deg, #f7f5f6 0%, rgb(247 245 246 / 0.98) 38%, rgb(247 245 246 / 0.62) 68%, rgb(247 245 246 / 0.12) 100%),
+        url('/images/dashboard-building-modern.png') !important;
+    background-position: center, right bottom !important;
+    background-repeat: no-repeat !important;
+    background-size: cover, auto 100% !important;
+    background-blend-mode: normal !important;
+    box-shadow: none !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::before {
+    display: none !important;
+    content: none !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+    display: none !important;
+    content: none !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero :is(
+    .simpeg-dashboard-eyebrow,
+    .simpeg-dashboard-hero__title,
+    .simpeg-dashboard-hero__title span,
+    .simpeg-dashboard-hero__description,
+    .simpeg-dashboard-hero__controls .simpeg-muted
+) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__description {
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__controls .simpeg-input {
+    border-color: #d6e2f5 !important;
+    background: #ffffff !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) {
+    border-color: #d6e2f5 !important;
+    background: #ffffff !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) :is(span, svg, svg *) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-availability-card [data-slot='card-header'],
+    .simpeg-dashboard-availability-card [data-slot='card-content'],
+    .simpeg-dashboard-position-summary-card [data-slot='card-content']
+) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* The scroll viewport is the sole owner of the table's outer border and
+ * radius. The inner table is flat and clipped by this viewport, preventing
+ * square header corners or one-pixel side slivers from escaping. */
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-table-scroll {
+    border: 1px solid #d6e2f5 !important;
+    border-radius: 1rem !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-clip: padding-box !important;
+    box-shadow: none !important;
+    clip-path: inset(0 round 1rem) !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-table-scroll > [data-slot='table-wrapper'] {
+    width: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    overflow: visible !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-table {
+    border: 0 !important;
+    border-radius: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-table :is(
+    thead,
+    thead tr,
+    thead th
+) {
+    background: #e8f0fd !important;
+    background-color: #e8f0fd !important;
+    border-color: #d6e2f5 !important;
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-table :is(
+    tbody,
+    tbody tr,
+    tbody th,
+    tbody td
+) {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #d6e2f5 !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+/* Final dashboard surface fallback. Keep the dashboard palette identical in
+ * both themes; only the navigation chrome changes with dark mode. Using the
+ * dashboard marker itself avoids any stale route/theme class from leaving a
+ * navy parent card behind the white data table. */
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell),
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-shell-content > main,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell {
+    --simpeg-canvas: #f7f5f6 !important;
+    --bg: #f7f5f6 !important;
+    --simpeg-surface: #ffffff !important;
+    --surface: #ffffff !important;
+    --simpeg-card: #ffffff !important;
+    --simpeg-card-soft: #e8f0fd !important;
+    --simpeg-input: #ffffff !important;
+    --simpeg-text: #0b1f4b !important;
+    --text: #0b1f4b !important;
+    --simpeg-muted: #55668a !important;
+    --text-muted: #55668a !important;
+    --simpeg-border: #d6e2f5 !important;
+    --border: #d6e2f5 !important;
+    background: #f7f5f6 !important;
+    background-color: #f7f5f6 !important;
+    color: #0b1f4b !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-position-summary-card,
+    .simpeg-dashboard-availability-card
+) {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid #d6e2f5 !important;
+    border-radius: 1.25rem !important;
+    background-clip: padding-box !important;
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.10) !important;
+    color: #0b1f4b !important;
+    overflow: hidden !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-position-summary-card [data-slot='card-content'],
+    .simpeg-dashboard-availability-card [data-slot='card-header'],
+    .simpeg-dashboard-availability-card [data-slot='card-content']
+) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    [data-slot='card-title'],
+    [data-slot='card-title'] *,
+    .simpeg-text,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-position-value
+) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell :is(
+    [data-slot='card-description'],
+    .simpeg-muted,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-stat-label
+) {
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table-scroll {
+    border: 1px solid #d6e2f5 !important;
+    border-radius: 1rem !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-clip: padding-box !important;
+    clip-path: inset(0 round 1rem) !important;
+    box-shadow: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table-scroll > [data-slot='table-wrapper'] {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    overflow: visible !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table tbody,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table tbody tr,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table tbody td,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table tbody th {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #d6e2f5 !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table thead,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table thead tr,
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-shell .simpeg-dashboard-availability-table thead th {
+    background: #e8f0fd !important;
+    background-color: #e8f0fd !important;
+    border-color: #d6e2f5 !important;
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+/* Highest-priority dashboard surface contract. Older dark-mode selectors use
+ * the route marker and a broad card selector, so keep this direct rule last:
+ * the workspace cards return to the established light palette while the
+ * navigation chrome remains dark. */
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-position-summary-card,
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid #d6e2f5 !important;
+    border-radius: 1.25rem !important;
+    background-clip: padding-box !important;
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.10) !important;
+    color: #0b1f4b !important;
+    overflow: hidden !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card [data-slot='card-header'],
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card [data-slot='card-content'],
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-position-summary-card [data-slot='card-content'] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-position-summary-card :is(
+    [data-slot='card-title'],
+    [data-slot='card-title'] *,
+    .simpeg-text,
+    .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-position-value
+),
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card :is(
+    [data-slot='card-title'],
+    [data-slot='card-title'] *,
+    .simpeg-text,
+    .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-position-value
+) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-position-summary-card :is(
+    [data-slot='card-description'],
+    .simpeg-muted,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-stat-label
+),
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card :is(
+    [data-slot='card-description'],
+    .simpeg-muted,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-stat-label
+) {
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table-scroll {
+    border: 1px solid #d6e2f5 !important;
+    border-radius: 1rem !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-clip: padding-box !important;
+    clip-path: inset(0 round 1rem) !important;
+    box-shadow: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table-scroll > [data-slot='table-wrapper'] {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    overflow: visible !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table {
+    border: 0 !important;
+    border-radius: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table :is(
+    thead,
+    thead tr,
+    thead th
+) {
+    background: #e8f0fd !important;
+    background-color: #e8f0fd !important;
+    border-color: #d6e2f5 !important;
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell .simpeg-dashboard-availability-card .simpeg-dashboard-availability-table :is(
+    tbody,
+    tbody tr,
+    tbody th,
+    tbody td
+) {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #d6e2f5 !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+/* Apply the same restored paper palette to every dashboard data card. The
+ * previous fix only reached the availability cards; the charts and pension
+ * section could still inherit the charcoal dark-mode surface. */
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    .simpeg-card,
+    [data-slot='card'],
+    .simpeg-dashboard-card,
+    .simpeg-dashboard-chart-card,
+    .simpeg-dashboard-summary-chart-card,
+    .simpeg-dashboard-tenure-card,
+    .simpeg-dashboard-stat,
+    .simpeg-dashboard-position-card,
+    .simpeg-dashboard-status-chart-card,
+    .simpeg-dashboard-violation-chart-card,
+    .simpeg-dashboard-employee-trend-card,
+    .simpeg-dashboard-gender-card,
+    .simpeg-dashboard-education-card,
+    .simpeg-dashboard-availability-card,
+    .simpeg-dashboard-position-summary-card
+) {
+    --simpeg-surface: #ffffff !important;
+    --surface: #ffffff !important;
+    --simpeg-card: #ffffff !important;
+    --simpeg-card-soft: #e8f0fd !important;
+    --simpeg-input: #ffffff !important;
+    --simpeg-text: #0b1f4b !important;
+    --text: #0b1f4b !important;
+    --simpeg-muted: #55668a !important;
+    --text-muted: #55668a !important;
+    --simpeg-border: #d6e2f5 !important;
+    --border: #d6e2f5 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #d6e2f5 !important;
+    border-radius: 1.25rem !important;
+    background-clip: padding-box !important;
+    color: #0b1f4b !important;
+    box-shadow: 0 10px 24px rgb(0 0 0 / 0.10) !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    .simpeg-dashboard-card-header,
+    .simpeg-dashboard-card-content,
+    [data-slot='card-header'],
+    [data-slot='card-content']
+) {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-color: #d6e2f5 !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    [data-slot='card-title'],
+    [data-slot='card-title'] *,
+    [data-slot='card-description'],
+    .simpeg-text,
+    .simpeg-muted,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-stat-info,
+    .simpeg-dashboard-stat-value,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-position-value,
+    .simpeg-dashboard-bar-label,
+    .simpeg-dashboard-bar-value,
+    .simpeg-dashboard-tenure-card *,
+    .simpeg-dashboard-position-card *
+) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-route-dashboard .simpeg-dashboard-shell :is(
+    [data-slot='card-description'],
+    .simpeg-muted,
+    .simpeg-dashboard-chart-meta,
+    .simpeg-dashboard-stat-label,
+    .simpeg-dashboard-stat-info,
+    .simpeg-dashboard-position-label,
+    .simpeg-dashboard-bar-label
+) {
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+/* Last cascade layer: restore the established hero gradient in dark mode
+ * without bringing back the dark table/card surfaces. */
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+    background-color: #f5f8fe !important;
+    background-image:
+        radial-gradient(45% 75% at 80% 40%, rgb(43 123 240 / 0.24) 0%, rgb(43 123 240 / 0) 70%),
+        radial-gradient(30% 50% at 0% 0%, rgb(255 162 15 / 0.14) 0%, rgb(255 162 15 / 0) 70%),
+        linear-gradient(90deg, #f5f8fe 0%, #f7f5f6 44%, #e8f2ff 100%) !important;
+    background-position: center, center, center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100%, 100% 100%, 100% 100% !important;
+    background-blend-mode: normal !important;
+}
+
+html.dark body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero::after {
+    display: block !important;
+    position: absolute !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 60% !important;
+    height: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    content: '' !important;
+    background: url('/images/dashboard-building-modern.png') no-repeat right center / auto 100% !important;
+    box-shadow: none !important;
+    mix-blend-mode: multiply !important;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.92) 26%, #000 36%, #000 100%) !important;
+    mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.92) 26%, #000 36%, #000 100%) !important;
+    -webkit-mask-position: center !important;
+    mask-position: center !important;
+    -webkit-mask-size: 100% 100% !important;
+    mask-size: 100% 100% !important;
+    -webkit-mask-repeat: no-repeat !important;
+    mask-repeat: no-repeat !important;
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+/* Use the route/theme marker as the most specific final selector so later
+ * legacy theme rules cannot flatten the hero back to a plain white surface. */
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero {
+    background-color: #f5f8fe !important;
+    background-image:
+        radial-gradient(45% 75% at 80% 40%, rgb(43 123 240 / 0.16) 0%, rgb(43 123 240 / 0) 70%),
+        radial-gradient(30% 50% at 0% 0%, rgb(255 162 15 / 0.10) 0%, rgb(255 162 15 / 0) 70%) !important;
+    background-position: center, center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100%, 100% 100% !important;
+}
+
+/* Return the hero to the established light treatment used before the
+ * dark-only navbar/sidebar experiment. */
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero {
+    background-color: #f5f8fe !important;
+    background-image:
+        radial-gradient(45% 75% at 80% 40%, rgb(43 123 240 / 0.24) 0%, rgb(43 123 240 / 0) 70%),
+        radial-gradient(30% 50% at 0% 0%, rgb(255 162 15 / 0.14) 0%, rgb(255 162 15 / 0) 70%),
+        linear-gradient(90deg, #f5f8fe 0%, #f7f5f6 44%, #e8f2ff 100%) !important;
+    background-position: center, center, center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100%, 100% 100%, 100% 100% !important;
+    background-blend-mode: normal !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero::after {
+    background: url('/images/dashboard-building-modern.png') no-repeat right center / auto 100% !important;
+    mix-blend-mode: multiply !important;
+    filter: none !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero :is(
+    .simpeg-dashboard-eyebrow,
+    .simpeg-dashboard-hero__title,
+    .simpeg-dashboard-hero__title span,
+    .simpeg-dashboard-hero__description,
+    .simpeg-dashboard-hero__controls .simpeg-muted
+) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero .simpeg-dashboard-hero__description,
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero .simpeg-dashboard-hero__controls .simpeg-muted {
+    color: #55668a !important;
+    -webkit-text-fill-color: #55668a !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero .simpeg-dashboard-hero__controls .simpeg-input {
+    border-color: #d6e2f5 !important;
+    background: #ffffff !important;
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) {
+    border-color: #d6e2f5 !important;
+    background: #ffffff !important;
+    color: #0b1f4b !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simpeg-dashboard-shell > .simpeg-dashboard-hero .simpeg-dashboard-action:not(.simpeg-dashboard-action--primary) :is(span, svg, svg *) {
+    color: #0b1f4b !important;
+    -webkit-text-fill-color: #0b1f4b !important;
+    stroke: currentColor !important;
+}

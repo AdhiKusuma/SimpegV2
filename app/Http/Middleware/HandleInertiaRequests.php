@@ -49,6 +49,8 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'sessionTimeoutSeconds' => max(1, (int) ceil((float) config('session.lifetime') * 60)),
+            'sessionExpiresAt' => now()->addSeconds(max(1, (int) ceil((float) config('session.lifetime') * 60)))->timestamp,
             'auth' => [
                 'user' => $authUser,
             ],

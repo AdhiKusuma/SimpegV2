@@ -1,4 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
+import IconAction from '../../Components/IconAction';
+import PageJumpControls from '../../Components/PageJumpControls';
 import ExportDropdown from '../../Components/ExportDropdown';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
@@ -57,12 +59,12 @@ export default function JabatanIndex({ items, units, positions, filters, canMana
                                 <td className="px-5 py-4 text-sm text-slate-600"><span className="block">Mulai: {item.tmt_jabatan || '-'}</span><span className="mt-1 block text-xs text-slate-400">Sampai: {item.sampai_tgl || '-'}</span></td>
                                 <td className="px-5 py-4 text-sm text-slate-600"><span className="block">{item.no_sk || '-'}</span><span className="mt-1 block text-xs text-slate-400">{item.tgl_sk || '-'}</span></td>
                                 <td className="px-5 py-4"><span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{item.status}</span></td>
-                                <td className="whitespace-nowrap px-5 py-4 text-right"><Link href={`/pegawai/${item.id_peg}`} className="mr-2 rounded-lg border border-blue-200 px-3 py-2 text-sm font-bold text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Profil</Link>{canManage && <Link href={`/jabatan/${item.id_jab}/edit`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 hover:border-blue-300 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Koreksi</Link>}</td>
+                                <td className="whitespace-nowrap px-5 py-4 text-right"><IconAction variant="view" href={`/pegawai/${item.id_peg}`} label="Profil pegawai" className="mr-2" />{canManage && <IconAction href={`/jabatan/${item.id_jab}/edit`} label="Koreksi" />}</td>
                             </tr>)}
                         </tbody>
                     </table>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {items.from || 0}–{items.to || 0} dari {items.total} data</span><div className="flex gap-2">{items.links.filter((link) => link.url).map((link) => <Link key={link.label} href={link.url} preserveState className={`rounded-lg border px-3 py-2 ${link.active ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 hover:border-blue-600 hover:text-blue-600'}`} dangerouslySetInnerHTML={{ __html: link.label }} />)}</div></div>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {items.from || 0}–{items.to || 0} dari {items.total} data</span><div className="flex gap-2"><PageJumpControls paginator={items} /></div></div>
             </section>
         </LegacyPageShell>
     );

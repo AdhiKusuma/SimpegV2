@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbHukuman;
 use App\Models\Legacy\TbJabatan;
+use App\Models\Legacy\TbKantor;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbRecycleBin;
 use App\Services\ImportPreviewService;
@@ -57,7 +58,12 @@ class PelanggaranController extends Controller
         $this->ensureStaffAccess($request);
 
         $search = $request->string('search')->trim()->value();
-        $items = $this->filteredPenaltyQuery($request, $search)
+        $type = $request->string('hukuman')->trim()->value();
+        $requestedYear = $request->string('tahun')->trim()->value();
+        $year = preg_match('/^\d{4}$/', $requestedYear) === 1 ? $requestedYear : '';
+        $office = $request->string('kantor')->trim()->value();
+        $recovery = $request->string('pemulihan')->trim()->value();
+        $items = $this->filteredPenaltyQuery($request, $search, $type, $year, $office, $recovery)
             ->select('h.*', 'p.nama as nama_pegawai', 'k.nama_kantor')
             ->orderByDesc('h.tgl_sk')
             ->orderByDesc('h.id_hukum')
@@ -67,7 +73,10 @@ class PelanggaranController extends Controller
 
         return Inertia::render('Pelanggaran/Index', [
             'items' => $items,
-            'filters' => ['search' => $search],
+            'types' => self::TYPES,
+            'years' => TbHukuman::query()->whereNotNull('tgl_sk')->selectRaw('YEAR(tgl_sk) as tahun')->distinct()->orderByDesc('tahun')->pluck('tahun')->values(),
+            'offices' => $this->filterOffices($request),
+            'filters' => ['search' => $search, 'hukuman' => $type, 'tahun' => $year, 'kantor' => $office, 'pemulihan' => $recovery],
             'canManage' => $this->canManage($request),
         ]);
     }
@@ -77,7 +86,12 @@ class PelanggaranController extends Controller
         $this->ensureStaffAccess($request);
 
         $search = $request->string('search')->trim()->value();
-        $records = $this->filteredPenaltyQuery($request, $search)
+        $type = $request->string('hukuman')->trim()->value();
+        $requestedYear = $request->string('tahun')->trim()->value();
+        $year = preg_match('/^\d{4}$/', $requestedYear) === 1 ? $requestedYear : '';
+        $office = $request->string('kantor')->trim()->value();
+        $recovery = $request->string('pemulihan')->trim()->value();
+        $records = $this->filteredPenaltyQuery($request, $search, $type, $year, $office, $recovery)
             ->select('h.*', 'p.nama as nama_pegawai', 'k.nama_kantor')
             ->orderByDesc('h.tgl_sk')
             ->orderByDesc('h.id_hukum')
@@ -449,9 +463,16 @@ class PelanggaranController extends Controller
             });
     }
 
-    private function filteredPenaltyQuery(Request $request, string $search): Builder
+    private function filteredPenaltyQuery(Request $request, string $search, string $type = '', string $year = '', string $office = '', string $recovery = ''): Builder
     {
         return $this->basePenaltyQuery($request)
+            ->when($type !== '', fn (Builder $builder) => $builder->where('h.hukuman', $type))
+            ->when($year !== '', fn (Builder $builder) => $builder->whereYear('h.tgl_sk', $year))
+            ->when($office !== '', fn (Builder $builder) => $builder->where('j.unit_kerja', $office))
+            ->when($recovery === 'sudah', fn (Builder $builder) => $builder->whereNotNull('h.tgl_pulih')->where('h.tgl_pulih', '<>', ''))
+            ->when($recovery === 'belum', fn (Builder $builder) => $builder->where(function (Builder $scope): void {
+                $scope->whereNull('h.tgl_pulih')->orWhere('h.tgl_pulih', '');
+            }))
             ->when($search !== '', function (Builder $builder) use ($search): void {
                 $like = "%{$search}%";
                 $builder->where(function (Builder $scope) use ($like): void {
@@ -463,6 +484,20 @@ class PelanggaranController extends Controller
                         ->orWhere('k.nama_kantor', 'like', $like);
                 });
             });
+    }
+
+    private function filterOffices(Request $request): array
+    {
+        $role = strtolower((string) $request->session()->get('hak_akses'));
+        $unit = $role === 'kepala' ? (string) $request->session()->get('kode_kantor') : '';
+
+        return TbKantor::query()
+            ->whereIn('level', ['KC', 'KP'])
+            ->when($unit !== '', fn (Builder $builder) => $builder->where('kode_kantor_detail', $unit))
+            ->orderBy('nama_kantor')
+            ->get(['kode_kantor_detail', 'nama_kantor'])
+            ->map(fn (TbKantor $office): array => ['kode' => $office->kode_kantor_detail, 'nama' => $office->nama_kantor])
+            ->all();
     }
 
     public function create(Request $request): Response

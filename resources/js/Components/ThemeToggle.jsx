@@ -133,7 +133,8 @@ export default function ThemeToggle({ className = '', defaultTheme = DEFAULT_THE
             onClick={toggleTheme}
             className={`simpeg-theme-toggle inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--simpeg-hover-border)] ${className}`}
             aria-label={label}
-            title={label}
+            title={theme === 'dark' ? undefined : label}
+            data-tooltip={label}
         >
             {theme === 'dark' ? <Moon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <Sun className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
         </button>

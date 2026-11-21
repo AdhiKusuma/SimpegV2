@@ -34,6 +34,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '../Components/ui/input';
 import LiveDateTime from './LiveDateTime';
 import ProfileAvatar from './ProfileAvatar';
+import SessionTimeoutIndicator from './SessionTimeoutIndicator';
 import SectionTabs from './SectionTabs';
 import ThemeToggle, { applyAppearancePreferences, applyConfiguredTheme } from './ThemeToggle';
 
@@ -159,8 +160,8 @@ const sectionTabGroups = [
         ariaLabel: 'Laporan diklat',
         matches: ['/laporan/rekap-diklat', '/laporan/rekap-biaya-pendidikan'],
         items: [
-            { href: '/laporan/rekap-diklat', label: 'Pelatihan Pegawai', permission: 'reports.training' },
             { href: '/laporan/rekap-biaya-pendidikan', label: 'Daftar Diklat', permission: 'reports.education' },
+            { href: '/laporan/rekap-diklat', label: 'Pelatihan Pegawai', permission: 'reports.training' },
         ],
     },
     {
@@ -228,15 +229,15 @@ const navigationCatalog = [
         icon: UsersRound,
         items: [
             navItem('/pegawai', 'Data Pegawai', UsersRound),
-            navItem('/mutasi', 'Mutasi Kepegawaian', BriefcaseBusiness, {
+            navItem('/pengangkatan', 'Mutasi Kepegawaian', BriefcaseBusiness, {
                 permission: ['appointments.view', 'mutations.view'],
-                hrefOptions: ['/mutasi', '/pengangkatan'],
+                hrefOptions: ['/pengangkatan', '/mutasi'],
                 activePrefixes: ['/pengangkatan', '/mutasi'],
                 matchDescendants: true,
             }),
             // Satu pintu untuk seluruh data keluarga. Tab Anak, Suami/Istri,
             // dan Orang Tua tetap tersedia di dalam halaman Keluarga.
-            navItem('/keluarga/suami-istri', 'Keluarga', UsersRound, { activePrefixes: ['/keluarga/'], matchDescendants: true }),
+            navItem('/keluarga/anak', 'Keluarga', UsersRound, { activePrefixes: ['/keluarga/'], matchDescendants: true }),
             navItem('/jabatan', 'Jabatan', BriefcaseBusiness),
             navItem('/pendidikan', 'Pendidikan', GraduationCap),
             navItem('/pelanggaran', 'Pelanggaran', ShieldAlert),
@@ -246,15 +247,15 @@ const navigationCatalog = [
         label: 'Diklat',
         icon: GraduationCap,
         items: [
-            navItem('/diklat', 'Pengembangan Kompetensi', GraduationCap, {
+            navItem('/biaya-pendidikan', 'Pengembangan Kompetensi', GraduationCap, {
                 permission: ['training.view', 'training_costs.view', 'certifications.view'],
-                hrefOptions: ['/diklat', '/biaya-pendidikan', '/sertifikasi'],
+                hrefOptions: ['/biaya-pendidikan', '/diklat', '/sertifikasi'],
                 activePrefixes: ['/diklat', '/biaya-pendidikan', '/sertifikasi'],
                 matchDescendants: true,
             }),
-            navItem('/laporan/rekap-diklat', 'Laporan Diklat', FileBarChart2, {
+            navItem('/laporan/rekap-biaya-pendidikan', 'Laporan Diklat', FileBarChart2, {
                 permission: ['reports.training', 'reports.education'],
-                hrefOptions: ['/laporan/rekap-diklat', '/laporan/rekap-biaya-pendidikan'],
+                hrefOptions: ['/laporan/rekap-biaya-pendidikan', '/laporan/rekap-diklat'],
                 activePrefixes: ['/laporan/rekap-diklat', '/laporan/rekap-biaya-pendidikan'],
                 matchDescendants: true,
             }),
@@ -382,7 +383,7 @@ function NavigationGroup({ item, url, onNavigate, onExpandSidebar, depth, sideba
 
 export default function LegacyPageShell({ title, children }) {
     const page = usePage();
-    const { appConfig, auth, notificationSummary } = page.props;
+    const { appConfig, auth, notificationSummary, sessionTimeoutSeconds, sessionExpiresAt } = page.props;
     const { url } = page;
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -579,12 +580,17 @@ export default function LegacyPageShell({ title, children }) {
                         <X className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
                     </button>
                 </div>
-                <div className="simpeg-sidebar-collapse-row hidden lg:flex" aria-label="Kontrol sidebar">
-                    <button type="button" className="simpeg-sidebar-collapse-toggle simpeg-utility inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border" onClick={toggleSidebar} aria-label={sidebarIsCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'} aria-expanded={!sidebarIsCollapsed} aria-controls="primary-navigation" title={sidebarIsCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'}>
-                        {sidebarIsCollapsed ? <PanelLeftOpen className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
+                <nav className="simpeg-sidebar-history-nav" aria-label="Navigasi halaman">
+                    <button type="button" className="simpeg-sidebar-history-button" onClick={() => window.history.back()} aria-label="Kembali ke halaman sebelumnya" title="Kembali">
+                        <ArrowLeft className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
                     </button>
-                </div>
-
+                    <button type="button" className="simpeg-sidebar-history-button" onClick={() => window.history.forward()} aria-label="Maju ke halaman berikutnya" title="Maju">
+                        <ArrowRight className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
+                    </button>
+                    <button type="button" className="simpeg-sidebar-history-button" onClick={() => window.location.reload()} aria-label="Muat ulang halaman" title="Muat ulang">
+                        <RefreshCw className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
+                    </button>
+                </nav>
                 <div className="simpeg-sidebar-nav-scroll mt-8 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
                     <p className="simpeg-sidebar-section-label simpeg-muted mb-3 px-3 text-xs font-medium">Menu utama</p>
                     <nav className="simpeg-sidebar-nav flex flex-col gap-1.5" aria-label="Navigasi utama">
@@ -614,7 +620,7 @@ export default function LegacyPageShell({ title, children }) {
     return (
         <>
             <Head title={title} />
-            <div className={`simpeg-app-canvas min-h-dvh ${searchOpen ? 'simpeg-search-active' : ''}`}>
+            <div className={`simpeg-app-canvas min-h-dvh ${isDarkTheme ? 'simpeg-theme-dark' : ''} ${url === '/dashboard' || url.startsWith('/dashboard?') ? 'simpeg-route-dashboard' : ''} ${searchOpen ? 'simpeg-search-active' : ''}`}>
                 <div className="simpeg-shell-frame flex min-h-dvh w-full overflow-x-clip">
                     {sidebar}
                     {mobileNavOpen && <button type="button" className="fixed inset-0 z-40 bg-[#131822]/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu" />}
@@ -625,6 +631,9 @@ export default function LegacyPageShell({ title, children }) {
                             <Button type="button" variant="outline" size="icon" className="simpeg-utility shrink-0 lg:hidden" onClick={() => setMobileNavOpen(true)} aria-expanded={mobileNavOpen} aria-controls="primary-navigation" aria-label="Buka navigasi">
                                 <Menu className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
                             </Button>
+                            <button type="button" className="simpeg-header-sidebar-toggle hidden shrink-0 lg:inline-flex" onClick={toggleSidebar} aria-label={sidebarIsCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'} aria-expanded={!sidebarIsCollapsed} aria-controls="primary-navigation" title={sidebarIsCollapsed ? 'Tampilkan label navigasi' : 'Sembunyikan sidebar'}>
+                                {sidebarIsCollapsed ? <PanelLeftOpen className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />}
+                            </button>
                             <div className="simpeg-header-context hidden min-w-0 shrink-0 sm:block">
                                 <p className="simpeg-muted text-xs font-medium">SIMPEG / {roleLabel}</p>
                                 <p className="simpeg-text truncate text-base font-medium">{pageLabel}</p>
@@ -634,22 +643,11 @@ export default function LegacyPageShell({ title, children }) {
 
                             {canSearchEmployees && <button type="button" className="simpeg-search-trigger min-w-0 max-w-xl flex-1" onClick={() => { setProfileOpen(false); setNotificationsOpen(false); setSearchOpen(true); }} aria-label="Buka pencarian pegawai">
                                 <Search className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                                <span className="min-w-0 flex-1 truncate text-left">{globalSearch || 'Cari nama / ID pegawai'}</span>
+                                <span className={`min-w-0 flex-1 truncate text-left ${globalSearch ? '' : 'simpeg-search-placeholder'}`}>{globalSearch || 'Cari nama / ID pegawai'}</span>
                             </button>}
 
                             <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-                            <nav className="simpeg-history-controls" aria-label="Navigasi halaman">
-                                <button type="button" className="simpeg-history-control" onClick={() => window.history.back()} aria-label="Kembali ke halaman sebelumnya" title="Kembali">
-                                    <ArrowLeft className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
-                                </button>
-                                <button type="button" className="simpeg-history-control" onClick={() => window.history.forward()} aria-label="Maju ke halaman berikutnya" title="Maju">
-                                    <ArrowRight className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
-                                </button>
-                                <button type="button" className="simpeg-history-control" onClick={() => window.location.reload()} aria-label="Muat ulang halaman" title="Muat ulang">
-                                    <RefreshCw className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} aria-hidden="true" />
-                                </button>
-                            </nav>
-
+                            <SessionTimeoutIndicator timeoutSeconds={sessionTimeoutSeconds} expiresAt={sessionExpiresAt} />
                             <ThemeToggle defaultTheme={appConfig?.defaultTheme} allowUserTheme={appConfig?.allowUserTheme !== false} />
 
                             {canViewNotifications && <div className="relative shrink-0" data-notification-popover>
@@ -723,13 +721,13 @@ export default function LegacyPageShell({ title, children }) {
                                         </div>
                                         <DropdownMenuItem asChild>
                                             <Link href={profileHref}>
-                                                <UserRound className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                                                <UserRound className="simpeg-account-menu-icon h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                                                 {profileLabel}
                                             </Link>
                                         </DropdownMenuItem>
                                         {canViewOwnPayslip && <DropdownMenuItem asChild>
                                             <Link href="/profile/slip-gaji">
-                                                <FileText className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+                                                <FileText className="simpeg-account-menu-icon h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                                                 Slip Gaji Saya
                                             </Link>
                                         </DropdownMenuItem>}

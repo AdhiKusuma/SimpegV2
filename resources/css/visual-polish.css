@@ -871,7 +871,9 @@ html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-sidebar {
 ) {
     overflow-x: auto;
     border: 0 !important;
-    border-radius: 1rem;
+    /* The outer card owns table rounding. A rounded inner scroll surface can
+     * expose its background as a pale crescent behind the table header. */
+    border-radius: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
     scrollbar-color: #9aaabd transparent;
@@ -882,7 +884,10 @@ html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-sidebar {
     border: 1px solid var(--simpeg-table-grid) !important;
     border-collapse: separate !important;
     border-spacing: 0 !important;
-    border-radius: 0.95rem;
+    /* The surrounding card/scroll wrapper owns rounded corners. Rounding
+     * every table as well exposes the white surface behind its header at
+     * the corners, especially in dark mode. */
+    border-radius: 0 !important;
     background: var(--simpeg-table-surface) !important;
     color: var(--simpeg-table-text) !important;
     font-family: var(--font-sans) !important;
@@ -3059,16 +3064,29 @@ html.dark .simpeg-dashboard-position-fill {
     box-shadow: var(--simpeg-shell-shadow) !important;
 }
 
-.employees-index-page > .simpeg-table-scroll {
+.employees-index-page > .employees-index-table-card {
     min-width: 0;
-    overflow-x: auto;
+    overflow: hidden;
+    isolation: isolate;
     border: 1px solid var(--simpeg-border) !important;
     border-radius: 1rem !important;
-    background: var(--simpeg-table-surface, var(--simpeg-card)) !important;
+    background: var(--simpeg-table-header, var(--simpeg-card-soft)) !important;
     box-shadow: var(--simpeg-shell-shadow) !important;
 }
 
-.employees-index-page > .simpeg-table-scroll + div {
+.employees-index-page > .employees-index-table-card > .employees-index-table-scroll {
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: var(--simpeg-table-header, var(--simpeg-card-soft));
+}
+
+.employees-index-page > .employees-index-table-card table {
+    border: 0 !important;
+    background: var(--simpeg-table-header, var(--simpeg-card-soft)) !important;
+}
+
+.employees-index-page > .employees-index-table-card + div {
     margin-top: -1px;
     border: 1px solid var(--simpeg-border);
     border-top: 0;
@@ -4758,7 +4776,7 @@ html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) {
 /* Keep the chart filters compact and aligned inside their own filter box. */
 .simpeg-employee-trend-filter-controls {
     display: grid;
-    grid-template-columns: minmax(10rem, 12rem) minmax(7rem, 9rem);
+    grid-template-columns: minmax(10rem, 12rem);
     gap: 0.65rem;
     min-width: 0;
     align-items: end;
@@ -4802,7 +4820,7 @@ html.dark .simpeg-app-canvas:has(.simpeg-dashboard-shell) {
     .simpeg-dashboard-employee-trend-filter-controls {
         width: 100%;
         min-width: 0;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -6905,9 +6923,6 @@ html body .simpeg-app-canvas :is(
 ) {
     color: var(--simpeg-text) !important;
 }
-
-html body .simpeg-app-canvas :is(
-    .simpeg-shell-frame,
 
 html body .simpeg-app-canvas .simpeg-validation-summary {
     border-color: var(--simpeg-danger-border) !important;
@@ -9014,6 +9029,278 @@ html body .simpeg-app-canvas :is(
         color: #FFFFFF !important;
         -webkit-text-fill-color: #FFFFFF !important;
         stroke: currentColor !important;
+    }
+}
+
+/* Dashboard chart preview: keep the action icon compact in the card while
+ * giving the chart enough space to be read without browser zoom. */
+.simpeg-chart-point {
+    cursor: pointer;
+    transition: r 150ms ease, stroke-width 150ms ease;
+}
+
+.simpeg-chart-axis-label {
+    fill: var(--simpeg-text) !important;
+    font-weight: 650;
+}
+
+.simpeg-chart-point:focus {
+    outline: 2px solid var(--simpeg-primary);
+    outline-offset: 3px;
+}
+
+.simpeg-chart-point-callout rect {
+    fill: var(--simpeg-card);
+    stroke: var(--simpeg-primary-border);
+    stroke-width: 1.5;
+    filter: drop-shadow(0 4px 8px rgb(15 23 42 / 0.16));
+}
+
+.simpeg-chart-point-callout path {
+    fill: var(--simpeg-card);
+    stroke: var(--simpeg-primary-border);
+    stroke-width: 1.5;
+}
+
+.simpeg-chart-point-callout text {
+    fill: var(--simpeg-text);
+    font-size: 11px;
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+}
+
+.simpeg-chart-point-callout .simpeg-chart-point-callout-value {
+    font-size: 11px;
+}
+
+.simpeg-chart-point-callout .simpeg-chart-point-callout-label {
+    fill: var(--simpeg-muted);
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.simpeg-dashboard-chart-filter-trigger {
+    display: inline-flex;
+    min-height: 2.25rem;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 0.7rem;
+    padding: 0.45rem 0.75rem;
+    background: var(--simpeg-card-soft);
+    color: var(--simpeg-text);
+    font-size: 0.8rem;
+    font-weight: 650;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+    transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.simpeg-dashboard-chart-filter-trigger:hover,
+.simpeg-dashboard-chart-filter-trigger:focus-visible,
+.simpeg-dashboard-chart-filter-trigger[aria-expanded='true'] {
+    border-color: var(--simpeg-primary-border);
+    background: var(--simpeg-primary-soft);
+    color: var(--simpeg-primary);
+}
+
+.simpeg-dashboard-chart-filter-content {
+    position: relative;
+    z-index: 20;
+    min-height: 0;
+}
+
+.simpeg-dashboard-chart-filter-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(100%, 18rem);
+    padding: 0.8rem;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 0.85rem;
+    background: var(--simpeg-card);
+    box-shadow: 0 14px 32px rgb(15 23 42 / 0.16);
+}
+
+.simpeg-dashboard-chart-filter-panel .simpeg-dashboard-chart-year-filter {
+    width: 100%;
+    flex-basis: auto;
+}
+
+.simpeg-dashboard-employee-trend-legend {
+    justify-content: flex-end !important;
+    text-align: right;
+}
+
+.simpeg-dashboard-chart-header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.simpeg-dashboard-chart-year-filter {
+    width: 7.75rem;
+    flex: 0 0 7.75rem;
+}
+
+.simpeg-dashboard-chart-year-filter label {
+    margin-bottom: 0.3rem;
+    font-size: 0.65rem;
+    line-height: 1.1;
+}
+
+.simpeg-dashboard-chart-year-filter .simpeg-input {
+    height: 2.25rem;
+    border-radius: 0.65rem;
+    padding-inline: 0.65rem;
+    font-size: 0.75rem;
+}
+
+.simpeg-dashboard-chart-year-filter .simpeg-utility {
+    height: 1.9rem;
+    width: 1.9rem;
+}
+
+.simpeg-dashboard-chart-preview-button {
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--simpeg-border);
+    border-radius: 0.7rem;
+    background: var(--simpeg-card-soft);
+    color: var(--simpeg-text);
+    transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.simpeg-dashboard-chart-preview-button:hover,
+.simpeg-dashboard-chart-preview-button:focus-visible {
+    border-color: var(--simpeg-primary-border);
+    background: var(--simpeg-primary-soft);
+    color: var(--simpeg-primary);
+}
+
+.simpeg-chart-preview-dialog {
+    width: min(86rem, calc(100vw - 2rem));
+    max-width: none;
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    padding: 0;
+    overflow: hidden;
+    color: var(--simpeg-text);
+    background: var(--simpeg-card);
+    border: 1px solid var(--simpeg-border);
+    border-radius: 1.1rem;
+    box-shadow: var(--simpeg-shadow-modal);
+}
+
+.simpeg-chart-preview-dialog::backdrop {
+    background: var(--simpeg-backdrop);
+    backdrop-filter: blur(4px);
+}
+
+.simpeg-chart-preview-dialog__inner {
+    display: flex;
+    max-height: calc(100dvh - 2rem);
+    flex-direction: column;
+}
+
+.simpeg-chart-preview-dialog__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 1.25rem;
+    border-bottom: 1px solid var(--simpeg-border);
+}
+
+.simpeg-chart-preview-dialog__content {
+    min-height: 0;
+    overflow: auto;
+    padding: 1.25rem;
+}
+
+.simpeg-chart-preview-dialog__content .simpeg-dashboard-employee-trend-plot-wrap,
+.simpeg-chart-preview-dialog__content .simpeg-violation-trend-plot-wrap {
+    height: min(30rem, 58vh) !important;
+    max-height: min(30rem, 58vh) !important;
+}
+
+.simpeg-chart-preview-dialog__content .simpeg-dashboard-employee-trend-plot,
+.simpeg-chart-preview-dialog__content .simpeg-violation-trend-plot {
+    height: 100% !important;
+    max-height: none !important;
+}
+
+.simpeg-chart-preview-dialog__content .simpeg-status-chart-canvas {
+    height: min(28rem, 58vh) !important;
+}
+
+.simpeg-chart-preview-dialog__content .simpeg-dashboard-position-scroll {
+    max-height: min(42rem, 64vh) !important;
+}
+
+@media (max-width: 639px) {
+    .simpeg-dashboard-chart-filter-panel {
+        right: auto;
+        left: 0;
+        width: min(100%, 18rem);
+    }
+
+    .simpeg-dashboard-chart-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .simpeg-dashboard-chart-year-filter {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .simpeg-chart-preview-dialog {
+        width: calc(100vw - 1rem);
+        max-height: calc(100dvh - 1rem);
+    }
+
+    .simpeg-chart-preview-dialog__inner {
+        max-height: calc(100dvh - 1rem);
+    }
+
+    .simpeg-chart-preview-dialog__header,
+    .simpeg-chart-preview-dialog__content {
+        padding: 0.85rem;
+    }
+}
+
+/* Keep the position overview compact: the summary cards are a quick read,
+ * while the full-width tables below carry the detailed rows. */
+.simpeg-dashboard-position-summary-card {
+    border-radius: 1rem !important;
+}
+
+.simpeg-dashboard-position-summary-card .simpeg-dashboard-chart-icon {
+    width: 2.65rem !important;
+    height: 2.65rem !important;
+    border-radius: 0.8rem !important;
+}
+
+.simpeg-dashboard-availability-card .simpeg-dashboard-card-header {
+    min-height: 0 !important;
+    padding: 1rem 1.25rem 0.85rem !important;
+}
+
+.simpeg-dashboard-availability-card .simpeg-dashboard-card-content {
+    padding: 0.85rem 1.25rem 1.15rem !important;
+}
+
+@media (max-width: 639px) {
+    .simpeg-dashboard-position-summary-card > [data-slot="card-content"] {
+        padding-inline: 0.9rem;
+    }
+
+    .simpeg-dashboard-availability-card .simpeg-dashboard-card-header,
+    .simpeg-dashboard-availability-card .simpeg-dashboard-card-content {
+        padding-inline: 0.9rem !important;
     }
 }
 

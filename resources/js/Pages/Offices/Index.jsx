@@ -1,4 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
+import PageJumpControls from '../../Components/PageJumpControls';
+import IconAction from '../../Components/IconAction';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 
@@ -41,12 +43,12 @@ export default function OfficeIndex({ offices, filters }) {
                                 <td className="max-w-sm px-5 py-4 text-sm text-slate-600">{office.alamat || '-'}</td>
                                 <td className="px-5 py-4 text-sm font-bold text-slate-700">{office.employee_count}</td>
                                 <td className="px-5 py-4 text-sm text-slate-600">{office.status_kantor || '-'}</td>
-                                <td className="px-5 py-4 text-right"><Link href={`/kantor/${office.kode_kantor_detail}`} className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-bold text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Detail</Link></td>
+                                <td className="px-5 py-4 text-right"><IconAction variant="view" href={`/kantor/${office.kode_kantor_detail}`} label="Detail kantor" /></td>
                             </tr>)}
                         </tbody>
                     </table>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {offices.from || 0}–{offices.to || 0} dari {offices.total} kantor</span><div className="flex gap-2">{offices.links.filter((link) => link.url).map((link) => <Link key={link.label} href={link.url} preserveState className={`rounded-lg border px-3 py-2 ${link.active ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 hover:border-blue-600 hover:text-blue-600'}`} dangerouslySetInnerHTML={{ __html: link.label }} />)}</div></div>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {offices.from || 0}–{offices.to || 0} dari {offices.total} kantor</span><div className="flex gap-2"><PageJumpControls paginator={offices} /></div></div>
             </section>
         </LegacyPageShell>
     );

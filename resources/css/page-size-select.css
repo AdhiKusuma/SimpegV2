@@ -26,3 +26,210 @@
     .simpeg-page-size-toolbar { justify-content: space-between; padding-inline: .75rem; }
     .simpeg-page-size { width: 100%; justify-content: space-between; }
 }
+
+/* Keep the dashboard building as a real decorative element. The hero has
+ * several historical pseudo-element overrides, so an explicit image avoids
+ * the illustration disappearing when a theme layer resets ::after. */
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero {
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__building {
+    position: absolute !important;
+    z-index: 1 !important;
+    inset: 0 0 0 auto !important;
+    display: block !important;
+    width: min(68%, 72rem) !important;
+    height: 100% !important;
+    max-width: none !important;
+    object-fit: cover !important;
+    object-position: right center !important;
+    pointer-events: none !important;
+    user-select: none !important;
+    mix-blend-mode: multiply !important;
+    opacity: 1 !important;
+}
+
+/* Fallback selector for shells that are rendered without the canvas marker. */
+.simpeg-dashboard-hero__building {
+    position: absolute !important;
+    z-index: 1 !important;
+    inset: 0 0 0 auto !important;
+    display: block !important;
+    width: min(68%, 72rem) !important;
+    height: 100% !important;
+    max-width: none !important;
+    object-fit: cover !important;
+    object-position: right center !important;
+    pointer-events: none !important;
+    mix-blend-mode: multiply !important;
+    opacity: 1 !important;
+}
+
+html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__copy {
+    position: relative !important;
+    z-index: 3 !important;
+}
+
+@media (max-width: 1023px) and (min-width: 641px) {
+    html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__building {
+        width: 100% !important;
+        height: 58% !important;
+        opacity: .24 !important;
+        object-position: right bottom !important;
+    }
+}
+
+@media (max-width: 640px) {
+    html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero__building {
+        display: none !important;
+    }
+}
+
+/* Unified filter presentation: every list page that uses MobileFilterGroup
+ * follows the same disclosure pattern as the employee filter box. */
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 0 1rem !important;
+    padding: 0 !important;
+}
+
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-unified-filter-trigger {
+    display: inline-flex !important;
+    min-height: 3rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: .5rem !important;
+    margin-left: auto !important;
+    padding-inline: 1.25rem !important;
+    border: 1px solid var(--simpeg-border) !important;
+    border-radius: .75rem !important;
+    background: var(--simpeg-card) !important;
+    color: var(--simpeg-text) !important;
+    cursor: pointer !important;
+}
+
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-unified-filter-trigger:is(:hover, [aria-expanded='true']) {
+    border-color: var(--simpeg-primary-border) !important;
+    background: var(--simpeg-primary-soft) !important;
+    color: var(--simpeg-primary) !important;
+}
+
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-unified-filter-panel {
+    display: none !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: end !important;
+    gap: 1rem !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin-top: 1rem !important;
+    padding: 1.25rem !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    border: 1px solid var(--simpeg-border) !important;
+    border-radius: 1rem !important;
+    background: var(--simpeg-card-soft) !important;
+    box-shadow: none !important;
+}
+
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-unified-filter-panel.is-open {
+    display: grid !important;
+}
+
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-unified-filter-panel > .simpeg-mobile-filter-search {
+    grid-column: 1 / -1 !important;
+    min-width: 0 !important;
+}
+
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-unified-filter-panel > .simpeg-mobile-filter-apply {
+    display: inline-flex !important;
+    min-height: 3rem !important;
+    width: auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    grid-column: 1 / -1 !important;
+    justify-self: end !important;
+    border-radius: .75rem !important;
+    padding-inline: 1.5rem !important;
+    font-size: .875rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+}
+
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-desktop-filter-apply,
+html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > :is(.simpeg-mobile-filter-actions, .simpeg-mobile-filter-actions--top, .simpeg-mobile-filter-actions--after-search, .simpeg-mobile-filter-actions--full) {
+    display: none !important;
+}
+
+@media (max-width: 767px) {
+    html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-unified-filter-panel {
+        grid-template-columns: minmax(0, 1fr) !important;
+        padding: 1rem !important;
+    }
+
+    html body form.simpeg-unified-filter-form:not(.employees-index-filter-box):not(.simpeg-quota-filter-form) > .simpeg-unified-filter-panel > .simpeg-mobile-filter-apply {
+        width: 100% !important;
+        justify-self: stretch !important;
+    }
+}
+
+/* Match the employee filter structure: the disclosure panel is a single
+ * surface, while its inner grid owns the two-column desktop layout. */
+html body form.simpeg-unified-filter-form.mutation-index-filter-box > .simpeg-mobile-filter-fields.mutation-index-filter-panel {
+    display: none !important;
+    margin-top: 1rem !important;
+    padding-top: 1.25rem !important;
+    border-top: 1px solid var(--simpeg-border) !important;
+}
+
+html body form.simpeg-unified-filter-form.mutation-index-filter-box > .simpeg-mobile-filter-fields.mutation-index-filter-panel.is-open {
+    display: block !important;
+}
+
+html body .mutation-index-filter-content {
+    display: grid !important;
+    min-width: 0 !important;
+    gap: 1.25rem !important;
+}
+
+html body .mutation-index-filter-grid {
+    display: grid !important;
+    min-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: end !important;
+    gap: 1rem !important;
+}
+
+html body .mutation-index-filter-search {
+    min-width: 0 !important;
+}
+
+@media (max-width: 767px) {
+    html body .mutation-index-filter-apply {
+        width: 100% !important;
+    }
+}
+
+@media (min-width: 768px) {
+    html body .mutation-index-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    html body .mutation-index-filter-apply {
+        display: inline-flex !important;
+        min-height: 3rem !important;
+        width: auto !important;
+        align-items: center !important;
+        justify-content: center !important;
+        grid-column: 1 / -1 !important;
+        justify-self: end !important;
+        border-radius: 0.75rem !important;
+        padding-inline: 1.25rem !important;
+        font-size: 0.875rem !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+    }
+}

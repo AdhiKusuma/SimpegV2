@@ -1,4 +1,6 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import IconAction from '../../Components/IconAction';
+import PageJumpControls from '../../Components/PageJumpControls';
 import { useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
@@ -88,7 +90,7 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                                     <td className="px-6 py-5 text-sm text-slate-600"><span className="block whitespace-nowrap font-medium">{item.tgl_mutasi || '-'}</span><span className="mt-1 block text-xs simpeg-muted">TMT: {item.tmt || '-'}</span></td>
                                     <td className="px-6 py-5 text-sm text-slate-600">{item.no_mutasi || '-'}</td>
                                     <td className="px-6 py-5">{item.document_url ? <a href={item.document_url} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Lihat SK</a> : <span className="text-sm simpeg-muted">Tidak ada file</span>}</td>
-                                    {canManage && <td className="whitespace-nowrap px-6 py-5"><div className="flex justify-end gap-2"><Link href={"/pengangkatan/" + item.id_angkat + "/edit"} className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Edit TMT</Link><button type="button" onClick={() => { setDeleteTarget(item); deleteForm.setData("reason", ""); }} className="inline-flex min-h-10 items-center rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600/20">Hapus</button></div></td>}
+                                    {canManage && <td className="whitespace-nowrap px-6 py-5"><div className="flex justify-end gap-2"><IconAction href={"/pengangkatan/" + item.id_angkat + "/edit"} label="Edit TMT" /><IconAction variant="delete" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} label="Hapus" /></div></td>}
                                 </tr>
                             ))}
                         </tbody>
@@ -97,7 +99,7 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
 
                 <div className="simpeg-card-soft flex flex-wrap items-center justify-between gap-3 border-t px-6 py-4 text-sm simpeg-muted">
                     <span>Menampilkan {items.from || 0}–{items.to || 0} dari {items.total} data</span>
-                    <div className="flex gap-2">{items.links.filter((link) => link.url).map((link) => <Link key={link.label} href={link.url} preserveState className={`inline-flex h-10 min-w-10 items-center justify-center rounded-lg border px-3 text-sm font-semibold ${link.active ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-600 hover:text-blue-600'}`} dangerouslySetInnerHTML={{ __html: link.label }} />)}</div>
+                    <div className="flex gap-2"><PageJumpControls paginator={items} /></div>
                 </div>
             </section>
 

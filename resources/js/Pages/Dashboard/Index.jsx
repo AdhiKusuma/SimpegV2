@@ -22,6 +22,16 @@ import { NumberTicker } from '../../Components/ui/number-ticker';
 
 const DashboardCharts = lazy(() => import('../../Components/DashboardCharts').then(({ DashboardCharts: Component }) => ({ default: Component })));
 
+const dashboardYearOptions = (() => {
+    const latestYear = new Date().getFullYear();
+
+    return Array.from({ length: Math.max(latestYear - 1999, 1) }, (_, index) => {
+        const optionYear = latestYear - index;
+
+        return { value: String(optionYear), label: String(optionYear) };
+    });
+})();
+
 const statMeta = {
     employees: { icon: UsersRound, kicker: 'Data aktif', badge: 'success' },
     inactive: { icon: Activity, kicker: 'Perubahan status', badge: 'warning' },
@@ -131,7 +141,7 @@ export default function Dashboard({ stats = [], tenure = [], year, unit, offices
     const { auth, flash } = usePage().props;
     const user = auth?.user ?? {};
     const displayName = user.nama_user || 'Pengguna SIMPEG';
-    const welcomeName = String(displayName).split(',')[0].trim() || displayName;
+    const welcomeName = String(displayName).split(',')[0].trim().toLocaleLowerCase('id-ID') || displayName;
     const [showWelcome, setShowWelcome] = useState(Boolean(flash?.welcome));
     const [selectedTenure, setSelectedTenure] = useState(null);
     const [tenurePage, setTenurePage] = useState(1);
@@ -141,6 +151,7 @@ export default function Dashboard({ stats = [], tenure = [], year, unit, offices
     const tenureDialogRef = useRef(null);
     const maximumTenure = Math.max(...tenure.map((item) => Number(item.value) || 0), 1);
     const selectedUnit = String(filters.unit_kerja ?? unit ?? '');
+    const selectedYear = String(year || new Date().getFullYear());
     const dashboardLabel = dashboardLocked ? 'Dashboard wilayah' : 'Dashboard';
 
     useEffect(() => {
@@ -191,7 +202,21 @@ export default function Dashboard({ stats = [], tenure = [], year, unit, offices
     }, [selectedTenure, selectedUnit, tenurePage]);
 
     function handleOfficeChange(nextUnit) {
-        router.get('/dashboard', nextUnit ? { unit_kerja: nextUnit } : {}, {
+        const params = { year: selectedYear };
+        if (nextUnit) params.unit_kerja = nextUnit;
+
+        router.get('/dashboard', params, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        });
+    }
+
+    function handleSummaryYearChange(nextYear) {
+        const params = { year: String(nextYear || selectedYear) };
+        if (selectedUnit) params.unit_kerja = selectedUnit;
+
+        router.get('/dashboard', params, {
             preserveScroll: true,
             preserveState: true,
             replace: true,
@@ -221,9 +246,17 @@ export default function Dashboard({ stats = [], tenure = [], year, unit, offices
             )}
             <div className="simpeg-dashboard-shell space-y-6">
                 <section className="simpeg-dashboard-hero" aria-labelledby="dashboard-title">
+                    <img
+                        className="simpeg-dashboard-hero__building"
+                        src="/images/dashboard-building-modern.png"
+                        alt="Ilustrasi gedung BKK Jawa Tengah"
+                    />
                     <div className="simpeg-dashboard-hero__copy min-w-0">
                         <p className="simpeg-dashboard-eyebrow">{dashboardLabel}</p>
-                        <h1 id="dashboard-title" className="simpeg-dashboard-hero__title">Selamat Datang, <span>{welcomeName}</span></h1>
+                        <h1 id="dashboard-title" className="simpeg-dashboard-hero__title">
+                            <span className="simpeg-dashboard-hero__greeting">Selamat datang,</span>{' '}
+                            <span className="simpeg-dashboard-hero__name">{welcomeName}</span>
+                        </h1>
                         <p className="simpeg-dashboard-hero__description">Kelola data kepegawaian, administrasi, dan kinerja pegawai secara terintegrasi.</p>
                         <div className="simpeg-dashboard-hero__actions">
                             <Button asChild variant="default" className="simpeg-dashboard-action simpeg-dashboard-action--primary whitespace-nowrap">
@@ -259,8 +292,31 @@ export default function Dashboard({ stats = [], tenure = [], year, unit, offices
                     </div>
                 </section>
 
-                <section className="simpeg-dashboard-stats grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan dashboard">
-                    {stats.map((stat) => <div key={stat.key} className="min-w-0"><StatCard stat={stat} /></div>)}
+                <section aria-labelledby="dashboard-summary-title">
+                    <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p className="simpeg-dashboard-eyebrow">Ringkasan</p>
+                            <h2 id="dashboard-summary-title" className="simpeg-text text-lg font-semibold">Ringkasan dashboard</h2>
+                            <p className="simpeg-muted mt-1 text-sm">Filter tahun ini berlaku untuk kartu Non Aktif, Pelanggaran, dan Diklat.</p>
+                        </div>
+                        <div className="w-full sm:w-48">
+                            <SelectCombobox
+                                id="dashboard-summary-year"
+                                label="Tahun ringkasan"
+                                value={selectedYear}
+                                options={dashboardYearOptions}
+                                optionValue={(option) => option.value}
+                                optionLabel={(option) => option.label}
+                                placeholder="Pilih tahun"
+                                emptyMessage="Tahun tidak ditemukan."
+                                onChange={handleSummaryYearChange}
+                                className="w-full"
+                            />
+                        </div>
+                    </div>
+                    <div className="simpeg-dashboard-stats grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan dashboard">
+                        {stats.map((stat) => <div key={stat.key} className="min-w-0"><StatCard stat={stat} /></div>)}
+                    </div>
                 </section>
 
                 <DeferredDashboardCharts

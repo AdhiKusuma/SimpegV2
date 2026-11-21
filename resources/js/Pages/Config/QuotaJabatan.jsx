@@ -1,6 +1,7 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { Check, Plus, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import IconAction from '../../Components/IconAction';
 import SearchableCombobox from '../../Components/SearchableCombobox';
 import SelectCombobox from '../../Components/SelectCombobox';
 import LegacyPageShell from '../../Components/LegacyPageShell';
@@ -12,6 +13,10 @@ const emptyForm = {
     jabatan_id: '',
     kuota_pegawai: 0,
 };
+
+function branchOptionValue(branch) {
+    return String(branch?.value || `${branch?.kode_cabang || ''}:${branch?.level || ''}`);
+}
 
 function errorForBatchQuota(errors, index, field = 'kuota_pegawai') {
     return errors?.['quotas.' + index + '.' + field] || errors?.['quotas.' + index];
@@ -30,20 +35,34 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
     const [editingPositionGroup, setEditingPositionGroup] = useState('');
     const [savingPositionKey, setSavingPositionKey] = useState(null);
     const [deletingPositionId, setDeletingPositionId] = useState(null);
-    const form = useForm({ kode_cabang: '', quotas: [] });
-    const createForm = useForm({ kode_cabang: '', jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
+    const form = useForm({ kode_cabang: '', lingkup: '', quotas: [] });
+    const createForm = useForm({ kode_cabang: '', lingkup: '', jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
 
     const selectedBranch = useMemo(
-        () => branchOptions.find((branch) => String(branch.kode_cabang) === selectedBranchCode),
+        () => branchOptions.find((branch) => branchOptionValue(branch) === selectedBranchCode),
         [branchOptions, selectedBranchCode],
     );
+    const canPersistQuota = Boolean(selectedBranch && selectedBranch.type !== 'consolidated');
     const branchPositionsForOffice = useMemo(
-        () => branchPositionOptions.find((branch) => String(branch.kode_cabang) === selectedBranchCode)?.positions || [],
+        () => branchPositionOptions.find((branch) => branchOptionValue(branch) === selectedBranchCode)?.positions || [],
         [branchPositionOptions, selectedBranchCode],
     );
     const effectiveQuotas = useMemo(
-        () => quotas.filter((quota) => String(quota.kode_cabang) === selectedBranchCode),
-        [quotas, selectedBranchCode],
+        () => quotas.filter((quota) => {
+            if (selectedBranch?.type === 'consolidated') {
+                // Konsolidasi melihat seluruh kuota tanpa membatasi rentang.
+            } else if (selectedBranch?.is_region) {
+                const branchCode = Number(quota.kode_cabang);
+                if (branchCode < Number(selectedBranch.from) || branchCode > Number(selectedBranch.to)) return false;
+            } else if (String(quota.kode_cabang) !== String(selectedBranch?.kode_cabang || '')) {
+                return false;
+            }
+            if (!selectedBranch?.level) return true;
+
+            const quotaScope = String(quota.lingkup || '').toUpperCase();
+            return quotaScope === String(selectedBranch.level).toUpperCase() || quotaScope === '';
+        }),
+        [quotas, selectedBranch],
     );
     const existingQuotaByPosition = useMemo(
         () => new Map(effectiveQuotas
@@ -125,18 +144,23 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                 kode_jabatan: savedQuota?.kode_custom || (position.custom_id ? position.kode_custom : null),
                 nama_jabatan: savedQuota?.nama_jabatan || (position.custom_id ? position.nama_jabatan : null),
                 group_jabatan: savedQuota?.group_jabatan || (position.custom_id ? position.group_jabatan : null),
-                kuota_pegawai: savedQuota?.kuota_pegawai ?? 0,
+                lingkup: position.lingkup || selectedBranch?.level || null,
+                kuota_pegawai: savedQuota?.kuota_pegawai ?? position.kuota_bawaan ?? 0,
             };
         }));
         form.clearErrors();
-    }, [existingQuotaByPosition, selectedBranchPositions]);
+    }, [existingQuotaByPosition, selectedBranch?.level, selectedBranchPositions]);
 
     function selectBranch(value) {
-        const branchCode = String(value || '');
+        const branch = branchOptions.find((option) => branchOptionValue(option) === String(value || ''));
+        const branchCode = branch?.type === 'consolidated' ? '' : String(branch?.kode_cabang || '');
+        const branchScope = String(branch?.level || '');
+        const branchValue = branchOptionValue(branch);
 
-        setSelectedBranchCode(branchCode);
+        setSelectedBranchCode(branchValue);
         form.setData('kode_cabang', branchCode);
-        createForm.setData({ kode_cabang: branchCode, jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
+        form.setData('lingkup', branchScope);
+        createForm.setData({ kode_cabang: branchCode, lingkup: branchScope, jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
         setShowCreateForm(false);
         setPositionSearch('');
         setCreatePositionName('');
@@ -157,11 +181,13 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
 
     function submit(event) {
         event.preventDefault();
+        if (!canPersistQuota) return;
         form.post('/config/kuota-jabatan', { preserveScroll: true });
     }
 
     function submitCreate(event) {
         event.preventDefault();
+        if (!canPersistQuota) return;
         createForm.post('/config/kuota-jabatan', {
             preserveScroll: true,
             preserveState: true,
@@ -169,7 +195,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                 setShowCreateForm(false);
                 setCreatePositionName('');
                 setCreateQuota('');
-                createForm.setData({ kode_cabang: selectedBranchCode, jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
+                createForm.setData({ kode_cabang: selectedBranch?.kode_cabang || '', lingkup: selectedBranch?.level || '', jabatan_id: null, kode_jabatan: '', nama_jabatan: '', group_jabatan: '', kuota_pegawai: '' });
             },
         });
     }
@@ -191,6 +217,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
     }
 
     function savePositionName(position, index) {
+        if (!canPersistQuota) return;
         const nextName = editingPositionName.trim();
         if (!nextName) return;
         if (position.custom_id && !['PE', 'PS'].includes(editingPositionGroup)) return;
@@ -199,7 +226,8 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
         const savedQuota = position.saved_quota || existingQuotaByPosition.get(String(position.kode_jabatan));
         const positionKey = position.custom_id ? 'custom:'+position.custom_id : String(position.kode_jabatan);
         const payload = {
-            kode_cabang: selectedBranchCode,
+            kode_cabang: selectedBranch?.kode_cabang || '',
+            lingkup: position.lingkup || selectedBranch?.level || null,
             jabatan_id: position.custom_id ? null : position.kode_jabatan,
             kode_jabatan: position.custom_id ? editingPositionCode.trim() : null,
             nama_jabatan: nextName,
@@ -228,6 +256,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
     }
 
     function deleteQuota(position) {
+        if (!canPersistQuota) return;
         const savedQuota = position.saved_quota || existingQuotaByPosition.get(String(position.kode_jabatan));
         const positionKey = position.custom_id ? 'custom:'+position.custom_id : String(position.kode_jabatan);
         const confirmed = window.confirm(
@@ -249,7 +278,8 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
         }
 
         router.post('/config/kuota-jabatan', {
-            kode_cabang: selectedBranchCode,
+            kode_cabang: selectedBranch?.kode_cabang || '',
+            lingkup: position.lingkup || selectedBranch?.level || null,
             jabatan_id: position.kode_jabatan,
             kuota_pegawai: 0,
         }, options);
@@ -264,7 +294,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                         <p className="simpeg-quota-eyebrow">Administrasi jabatan</p>
                         <h1 className="simpeg-quota-title">Kuota jabatan</h1>
                         <p className="simpeg-quota-description">
-                            Pilih kantor untuk menampilkan seluruh jabatan aktif yang tersedia, lalu atur kuotanya sekaligus.
+                            Pilih kantor terlebih dahulu untuk menampilkan tabel jabatan Eksekutif dan Struktural, lalu atur kuotanya sekaligus.
                         </p>
                     </div>
                 </div>
@@ -284,21 +314,24 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                             <SelectCombobox
                                 id="quota-branch"
                                 name="kode_cabang"
-                                label="KCU / kantor cabang"
+                                label="Kantor"
                                 value={selectedBranchCode}
                                 options={branchOptions}
-                                optionValue={(option) => option.kode_cabang}
+                                optionValue={branchOptionValue}
                                 optionLabel={(option) => option.label}
                                 onChange={selectBranch}
-                                placeholder="Pilih KCU atau kantor cabang"
-                                emptyLabel="Pilih KCU atau kantor cabang"
+                                placeholder="Pilih kantor"
                                 required
                                 error={form.errors.kode_cabang}
                             />
                             <p className="simpeg-quota-position-note">
                                 {selectedBranch
-                                    ? 'Jabatan aktif yang terdaftar pada ' + selectedBranch.label + ' akan ditampilkan di bawah.'
-                                    : 'Pilih KCU atau kantor cabang terlebih dahulu untuk memuat daftar jabatannya.'}
+                                    ? selectedBranch.type === 'consolidated'
+                                        ? 'Mode konsolidasi: seluruh jabatan PE dan PS dari semua kantor ditampilkan di bawah.'
+                                        : selectedBranch.is_region
+                                            ? 'Jabatan PE dan PS pada cakupan ' + selectedBranch.label + ' ditampilkan di bawah dan disimpan untuk wilayah tersebut.'
+                                        : 'Jabatan master dengan lingkup ' + (selectedBranch.level || '-') + ' pada ' + selectedBranch.label + ' akan ditampilkan di bawah.'
+                                    : 'Pilih kantor terlebih dahulu untuk memuat daftar jabatannya.'}
                             </p>
                         </div>
 
@@ -323,7 +356,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                             type="button"
                                             className="simpeg-quota-add-toggle"
                                             onClick={() => setShowCreateForm((visible) => !visible)}
-                                            disabled={!selectedBranchCode}
+                                            disabled={!canPersistQuota}
                                         >
                                             <Plus aria-hidden="true" />
                                             {showCreateForm ? 'Tutup tambah' : 'Tambah kuota'}
@@ -454,7 +487,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
 
                                 {selectedBranchPositions.length === 0 ? (
                                     <p className="simpeg-quota-empty">
-                                        Belum ada jabatan aktif atau custom yang terhubung dengan kantor ini.
+                                        Belum ada jabatan master atau custom yang sesuai dengan lingkup kantor ini.
                                     </p>
                                 ) : filteredPositionEntries.length === 0 ? (
                                     <p className="simpeg-quota-empty">
@@ -529,23 +562,19 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                                         ) : (
                                                             <div className="simpeg-quota-position-name-row">
                                                                 <strong>{position.nama_jabatan}</strong>
-                                                                <button
-                                                                    type="button"
+                                                                <IconAction
                                                                     className="simpeg-quota-edit"
                                                                     onClick={() => startEditPosition(position)}
-                                                                    disabled={isDeleting || form.processing || savingPositionKey !== null}
-                                                                    title="Edit nama jabatan"
-                                                                >
-                                                                    <Pencil aria-hidden="true" />
-                                                                    <span>Edit</span>
-                                                                </button>
+                                                                    disabled={!canPersistQuota || isDeleting || form.processing || savingPositionKey !== null}
+                                                                    label="Edit nama jabatan"
+                                                                />
                                                             </div>
                                                         )}
                                                         <span>
                                                             {position.custom_id ? `Kode ${position.kode_custom || '-'}` : `Kode ${position.kode_jabatan}`} · {position.lingkup || selectedBranch?.level || '-'} · {position.group_jabatan || 'Pilih PE/PS'}
                                                         </span>
                                                         <em className={savedQuota ? 'is-configured' : ''}>
-                                                            {savedQuota?.source === 'master'
+                                                            {savedQuota?.source === 'master' || (!savedQuota && position.kuota_bawaan !== undefined)
                                                                 ? 'Mengikuti kuota master'
                                                                 : savedQuota
                                                                     ? 'Kuota kantor tersimpan'
@@ -567,16 +596,13 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                                                 className="simpeg-input simpeg-quota-number"
                                                                 required
                                                             />
-                                                            <button
-                                                                type="button"
+                                                            <IconAction
+                                                                variant="delete"
                                                                 className="simpeg-quota-delete"
                                                                 onClick={() => deleteQuota(position)}
-                                                                disabled={isDeleting || form.processing}
-                                                                title="Hapus kuota"
-                                                            >
-                                                                <Trash2 aria-hidden="true" />
-                                                                <span>{isDeleting ? 'Menghapus...' : 'Hapus'}</span>
-                                                            </button>
+                                                                disabled={!canPersistQuota || isDeleting || form.processing}
+                                                                label={isDeleting ? 'Menghapus...' : 'Hapus kuota'}
+                                                            />
                                                         </div>
                                                         {quotaError && <p className="simpeg-quota-error" role="alert">{quotaError}</p>}
                                                     </div>
@@ -590,7 +616,7 @@ function QuotaJabatanBatch({ branchOptions = [], branchPositionOptions = [], pos
                                     <button
                                         type="submit"
                                         className="simpeg-primary simpeg-quota-save"
-                                        disabled={form.processing || !selectedBranchCode || selectedBranchPositions.length === 0}
+                                        disabled={form.processing || !canPersistQuota || selectedBranchPositions.length === 0}
                                     >
                                         <Check aria-hidden="true" />
                                         {form.processing ? 'Menyimpan...' : 'Simpan semua kuota'}
@@ -904,19 +930,8 @@ export default function QuotaJabatan({ branchOptions = [], branchPositionOptions
                                         <td className="text-right"><strong>{quota.kuota_pegawai}</strong></td>
                                         <td className="text-right">
                                             <div className="simpeg-quota-row-actions">
-                                                <button type="button" className="simpeg-quota-edit" onClick={() => editQuota(quota)}>
-                                                    <Pencil aria-hidden="true" />
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="simpeg-quota-delete"
-                                                    onClick={() => deleteQuota(quota)}
-                                                    disabled={deletingKey === quota.row_key}
-                                                >
-                                                    <Trash2 aria-hidden="true" />
-                                                    {deletingKey === quota.row_key ? 'Menghapus...' : 'Hapus'}
-                                                </button>
+                                                <IconAction className="simpeg-quota-edit" onClick={() => editQuota(quota)} label="Edit kuota" />
+                                                <IconAction variant="delete" className="simpeg-quota-delete" onClick={() => deleteQuota(quota)} disabled={deletingKey === quota.row_key} label={deletingKey === quota.row_key ? 'Menghapus...' : 'Hapus kuota'} />
                                             </div>
                                         </td>
                                     </tr>
@@ -940,19 +955,8 @@ export default function QuotaJabatan({ branchOptions = [], branchPositionOptions
                                 <div className="simpeg-quota-mobile-meta">
                                     <strong>{quota.kuota_pegawai}</strong>
                                     <div className="simpeg-quota-mobile-actions">
-                                        <button type="button" className="simpeg-quota-edit" onClick={() => editQuota(quota)}>
-                                            <Pencil aria-hidden="true" />
-                                            Edit
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="simpeg-quota-delete"
-                                            onClick={() => deleteQuota(quota)}
-                                            disabled={deletingKey === quota.row_key}
-                                        >
-                                            <Trash2 aria-hidden="true" />
-                                            {deletingKey === quota.row_key ? 'Menghapus...' : 'Hapus'}
-                                        </button>
+                                        <IconAction className="simpeg-quota-edit" onClick={() => editQuota(quota)} label="Edit kuota" />
+                                        <IconAction variant="delete" className="simpeg-quota-delete" onClick={() => deleteQuota(quota)} disabled={deletingKey === quota.row_key} label={deletingKey === quota.row_key ? 'Menghapus...' : 'Hapus kuota'} />
                                     </div>
                                 </div>
                             </article>

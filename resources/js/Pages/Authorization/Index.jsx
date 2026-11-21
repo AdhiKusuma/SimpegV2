@@ -1,5 +1,6 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowUpRight } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import PageJumpControls from '../../Components/PageJumpControls';
+import IconAction from '../../Components/IconAction';
 import { useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
@@ -93,7 +94,7 @@ export default function AuthorizationIndex({ pending, filters }) {
                                     <td className="px-5 py-4 text-sm text-slate-700">{item.nama_user || '-'}</td>
                                     <td className="px-5 py-4 text-sm text-slate-700">{item.kantor_pemohon || '-'}</td>
                                     <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{item.waktu || '-'}</td>
-                                    <td className="px-5 py-4 text-right"><Link href={`/otorisasi/${item.id_edit}/detail`} className="simpeg-utility inline-flex min-h-10 min-w-[8.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-3.5 py-2 text-sm font-bold transition hover:border-blue-600 hover:text-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-600/20"><span>Lihat detail</span><ArrowUpRight aria-hidden="true" className="h-4 w-4" /></Link></td>
+                                    <td className="px-5 py-4 text-right"><IconAction variant="view" href={`/otorisasi/${item.id_edit}/detail`} label="Lihat detail otorisasi" /></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -102,7 +103,7 @@ export default function AuthorizationIndex({ pending, filters }) {
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500">
                     <span>Menampilkan {pending.from || 0}-{pending.to || 0} dari {pending.total} pengajuan</span>
                     <div className="flex flex-wrap gap-2" aria-label="Paginasi pengajuan">
-                        {pending.links.filter((link) => link.url).map((link) => <Link key={link.label} href={link.url} preserveState className={`inline-flex min-h-11 items-center rounded-lg border px-3 py-2 ${link.active ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 hover:border-blue-600 hover:text-blue-600'}`} dangerouslySetInnerHTML={{ __html: link.label }} />)}
+                        <PageJumpControls paginator={pending} />
                     </div>
                 </div>
             </section>

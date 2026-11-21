@@ -16,8 +16,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -242,6 +245,8 @@ class AuthorizationController extends Controller
             $this->notifications->notifyPendingResult($pending, $status);
         });
 
+        $this->cleanupPendingBiodataPhoto($id);
+
         return to_route('authorizations.show', ['id' => $id])->with('success', "Pengajuan berhasil {$status}.");
     }
 
@@ -364,7 +369,16 @@ class AuthorizationController extends Controller
         $changes = [];
 
         foreach ($keys as $key) {
-            if (in_array($key, ['scope', 'action', 'record_id', 'id_peg', 'request_comment'], true)) {
+            if (in_array($key, ['scope', 'action', 'record_id', 'id_peg', 'request_comment', 'foto_current'], true)) {
+                continue;
+            }
+
+            if ($key === 'foto_pending') {
+                $changes[] = [
+                    'field' => 'Foto profil',
+                    'old' => $oldValues[$key] ?? 'Belum ada foto',
+                    'new' => 'Foto baru',
+                ];
                 continue;
             }
 
@@ -430,10 +444,55 @@ class AuthorizationController extends Controller
             }
         }
 
+        $newPhoto = null;
+        if (! empty($data['foto_pending'])) {
+            $pendingName = basename((string) $data['foto_pending']);
+            $pendingPath = 'pending-profile-photos/'.$pendingName;
+            if (! Storage::disk('local')->exists($pendingPath)) {
+                throw ValidationException::withMessages(['action' => 'Foto yang diajukan tidak dapat ditemukan.']);
+            }
+
+            $employee = TbPegawai::query()->where('id_peg', $pending->id_peg)->firstOrFail();
+            $directory = public_path('uploads/pegawai');
+            File::ensureDirectoryExists($directory, 0755);
+            $extension = strtolower(pathinfo($pendingName, PATHINFO_EXTENSION));
+            abort_unless(in_array($extension, ['jpg', 'jpeg', 'png', 'gif'], true), 422);
+            $safeId = preg_replace('/[^A-Za-z0-9_-]/', '', (string) $pending->id_peg);
+            $newPhoto = 'foto_'.$safeId.'_'.now()->format('YmdHisv').'_'.Str::lower(Str::random(6)).'.'.$extension;
+            File::copy(Storage::disk('local')->path($pendingPath), $directory.'/'.$newPhoto);
+            $attributes['foto'] = $newPhoto;
+        }
+
         $this->validateEmployeeNumericAttributes($attributes);
 
         if ($attributes !== []) {
             $this->updateEmployee($pending->id_peg, $attributes, $actor);
+        }
+
+    }
+
+    private function cleanupPendingBiodataPhoto(int $id): void
+    {
+        $pending = TbEditPending::query()->find($id);
+        if (! $pending || $pending->jenis_data !== 'biodata_update') {
+            return;
+        }
+
+        $data = $this->decodePayload($pending->data_baru);
+        $filename = basename((string) ($data['foto_pending'] ?? ''));
+        if ($filename !== '') {
+            Storage::disk('local')->delete('pending-profile-photos/'.$filename);
+
+            if ($pending->status_otorisasi === 'Disetujui') {
+                $oldData = $this->decodePayload($pending->data_lama);
+                $oldPhoto = basename((string) ($oldData['foto_current'] ?? ''));
+                if ($oldPhoto !== '') {
+                    $oldPath = public_path('uploads/pegawai/'.$oldPhoto);
+                    if (File::isFile($oldPath)) {
+                        File::delete($oldPath);
+                    }
+                }
+            }
         }
     }
 

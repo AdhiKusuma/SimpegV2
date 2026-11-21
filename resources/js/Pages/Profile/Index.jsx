@@ -1,7 +1,14 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { FilePenLine, Printer } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import IconAction from '../../Components/IconAction';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import ProfileAvatar from '../../Components/ProfileAvatar';
+import SearchableCombobox from '../../Components/SearchableCombobox';
+
+const religionOptions = ['Islam', 'Protestan', 'Katolik', 'Hindu', 'Budha', 'KongHuCu'];
+const genderOptions = ['Laki-laki', 'Perempuan'];
+const employmentStatusOptions = ['Tetap', 'Kontrak', 'Outsource'];
 
 const tabs = [
     ['biodata', 'Biodata'],
@@ -11,6 +18,12 @@ const tabs = [
 
 function valueOrDash(value) {
     return value || '-';
+}
+
+function dateInputValue(value) {
+    if (!value) return '';
+    const parts = String(value).split('-');
+    return parts.length === 3 && parts[0].length === 2 ? `${parts[2]}-${parts[1]}-${parts[0]}` : value;
 }
 
 function DataTable({ title, items = [], columns, empty = 'Belum ada data.', action = null, rowAction = null }) {
@@ -90,9 +103,9 @@ function FamilyTab({ family, familyRequests = [], canRequestFamily, canManageFam
             return null;
         }
 
-        return <div className="flex min-w-[10.5rem] flex-col items-stretch gap-2">
-            <Link href={`/keluarga/${type}/${encodeURIComponent(recordId)}/edit?uid=${encodeURIComponent(employeeId)}`} className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20">{canRequestFamily ? 'Ajukan ubah' : 'Edit'}</Link>
-            <button type="button" onClick={() => { setDeleteTarget({ type, item }); deleteForm.setData('reason', ''); }} className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-red-500 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-600/20">{canRequestFamily ? 'Ajukan hapus' : 'Hapus'}</button>
+        return <div className="flex min-w-[10.5rem] items-center justify-end gap-2">
+            <IconAction href={`/keluarga/${type}/${encodeURIComponent(recordId)}/edit?uid=${encodeURIComponent(employeeId)}`} label={canRequestFamily ? 'Ajukan ubah' : 'Edit'} />
+            <IconAction variant="delete" onClick={() => { setDeleteTarget({ type, item }); deleteForm.setData('reason', ''); }} label={canRequestFamily ? 'Ajukan hapus' : 'Hapus'} />
         </div>;
     } : null;
 
@@ -161,8 +174,40 @@ function HistoryTab({ history }) {
     );
 }
 
-export default function Profile({ employee, family, familyRequests = [], canRequestFamily, canManageFamily, history, flash = {} }) {
+export default function Profile({ employee, family, familyRequests = [], canRequestFamily, canRequestBiodata, canManageBiodata, canManageFamily, history, flash = {} }) {
     const [activeTab, setActiveTab] = useState('biodata');
+    const [biodataDialogOpen, setBiodataDialogOpen] = useState(false);
+    const [fotoPreview, setFotoPreview] = useState(employee?.foto_url || null);
+    const biodataForm = useForm({ nip: '', nama: '', tempat_lhr: '', tgl_lhr: '', jk: '', agama: '', gol_darah: '', status_nikah: '', status_kepeg: '', alamat: '', telp: '', email: '', request_comment: '', foto: null });
+
+    useEffect(() => {
+        if (!biodataForm.data.foto) return undefined;
+
+        const previewUrl = URL.createObjectURL(biodataForm.data.foto);
+        setFotoPreview(previewUrl);
+
+        return () => URL.revokeObjectURL(previewUrl);
+    }, [biodataForm.data.foto]);
+
+    function openBiodataRequest() {
+        setFotoPreview(employee.foto_url || null);
+        biodataForm.setData({
+            nip: employee.nik || '', nama: employee.nama || '', tempat_lhr: employee.tempat_lhr || '',
+            tgl_lhr: dateInputValue(employee.tgl_lhr), jk: employee.jk || '', agama: employee.agama || '',
+            gol_darah: employee.gol_darah || '', status_nikah: employee.status_nikah || '', status_kepeg: employee.status_kepeg || '', alamat: employee.alamat || '',
+            telp: employee.telp || '', email: employee.email || '', request_comment: '', foto: null,
+        });
+        setBiodataDialogOpen(true);
+    }
+
+    function submitBiodataRequest(event) {
+        event.preventDefault();
+        const submit = canManageBiodata ? biodataForm.put.bind(biodataForm) : biodataForm.post.bind(biodataForm);
+        submit(canManageBiodata ? '/profile/biodata' : '/profile/biodata-request', {
+            preserveScroll: true,
+            onSuccess: () => setBiodataDialogOpen(false),
+        });
+    }
 
     return (
         <LegacyPageShell title="Profil Saya">
@@ -177,6 +222,7 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
             </div>
 
             {flash.error && <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm font-medium text-amber-800" role="alert">{flash.error}</div>}
+            {flash.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm font-medium text-emerald-800" role="status">{flash.success}</div>}
 
             {!employee ? <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm font-medium text-amber-800" role="alert">Data pegawai untuk akun ini belum ditemukan.</div> : <div className="simpeg-profile-page">
                 <section className="simpeg-profile-hero" aria-labelledby="profile-identity-title">
@@ -199,6 +245,12 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                     </div>
                 </section>
 
+                <div className="simpeg-profile-actions">
+                    {canRequestBiodata && <button type="button" onClick={openBiodataRequest} className="simpeg-action-primary simpeg-profile-request-button"><FilePenLine aria-hidden="true" />Ajukan Edit Biodata</button>}
+                    {canManageBiodata && <button type="button" onClick={openBiodataRequest} className="simpeg-action-primary simpeg-profile-request-button"><FilePenLine aria-hidden="true" />Edit Biodata</button>}
+                    <button type="button" onClick={() => window.print()} className="simpeg-config-secondary-action simpeg-profile-print-button"><Printer aria-hidden="true" />Cetak CV</button>
+                </div>
+
                 <div className="simpeg-profile-workspace">
                     <aside className="simpeg-profile-navigation" aria-label="Navigasi profil">
                         <div>
@@ -220,6 +272,51 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                         {activeTab === 'history' && <HistoryTab history={history} />}
                     </section>
                 </div>
+
+                <article className="simpeg-profile-cv-print">
+                    <header><p>SIMPEG · DAFTAR RIWAYAT HIDUP</p><h1>{employee.nama}</h1><span>ID Pegawai: {employee.id_peg}</span></header>
+                    <h2>Data Pribadi</h2>
+                    <dl>{[['NIK', employee.nik], ['Tempat, tanggal lahir', [employee.tempat_lhr, employee.tgl_lhr].filter(Boolean).join(', ')], ['Jenis kelamin', employee.jk], ['Agama', employee.agama], ['Golongan darah', employee.gol_darah], ['Status nikah', employee.status_nikah], ['Alamat', employee.alamat], ['Telepon', employee.telp], ['Email', employee.email], ['Status kepegawaian', employee.status_kepeg], ['TMT kerja', employee.tmt_kerja]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{valueOrDash(value)}</dd></div>)}</dl>
+                    {[['Data Keluarga', [...family.children, ...family.spouses, ...family.parents].map((item) => [item.nama, item.status_hub || item.pekerjaan || '-', item.tgl_lhr || '-'])], ['Riwayat Jabatan', history.position.map((item) => [item.jabatan, item.unit_kerja, item.tmt_jabatan])], ['Pendidikan', history.education.map((item) => [item.jenjang, item.nama_sekolah, item.th_lulus])], ['Diklat', history.training.map((item) => [item.diklat, item.penyelenggara, item.tahun])], ['Sertifikasi', history.certification.map((item) => [item.sertifikasi, item.penyelenggara, item.tgl_sertifikat])]].map(([title, rows]) => <section key={title}><h2>{title}</h2>{rows.length ? <table><tbody>{rows.map((row, index) => <tr key={`${title}-${index}`}>{row.map((value, cell) => <td key={cell}>{valueOrDash(value)}</td>)}</tr>)}</tbody></table> : <p className="simpeg-profile-cv-empty">Belum ada data.</p>}</section>)}
+                    <footer>Dicetak dari SIMPEG · {new Date().toLocaleDateString('id-ID')}</footer>
+                </article>
+            </div>}
+
+            {biodataDialogOpen && <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/55 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setBiodataDialogOpen(false); }}>
+                <section className="simpeg-profile-panel simpeg-profile-edit-dialog max-h-[90dvh] w-full max-w-3xl p-5 shadow-2xl sm:p-7" role="dialog" aria-modal="true" aria-labelledby="biodata-request-title">
+                    <div className="flex items-start justify-between gap-4"><div><p className="simpeg-profile-section-kicker">{canManageBiodata ? 'Perubahan langsung' : 'Pengajuan perubahan'}</p><h2 id="biodata-request-title" className="simpeg-text mt-1 text-xl font-bold">{canManageBiodata ? 'Edit Biodata' : 'Ajukan Edit Biodata'}</h2><p className="simpeg-muted mt-2 text-sm">{canManageBiodata ? 'Perubahan akan langsung disimpan ke data pegawai.' : 'Perubahan akan diterapkan setelah disetujui.'}</p></div><button type="button" onClick={() => setBiodataDialogOpen(false)} className="simpeg-config-secondary-action simpeg-utility min-h-10 rounded-lg border px-3 text-sm font-semibold">Tutup</button></div>
+                    <form onSubmit={submitBiodataRequest} className="mt-5">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {[
+                                ['nip', 'NIK', 'text'], ['nama', 'Nama lengkap', 'text'], ['tempat_lhr', 'Tempat lahir', 'text'], ['tgl_lhr', 'Tanggal lahir', 'date'],
+                                ['gol_darah', 'Golongan darah', 'text'], ['status_nikah', 'Status nikah', 'text'],
+                                ['telp', 'Telepon', 'text'], ['email', 'Email', 'email'],
+                            ].map(([name, label, type]) => <label key={name} className="grid gap-1.5 text-sm font-semibold simpeg-text">{label}<input type={type} value={biodataForm.data[name]} onChange={(event) => biodataForm.setData(name, event.target.value)} className="simpeg-input min-h-11 w-full rounded-xl border px-3 py-2 font-normal" />{biodataForm.errors[name] && <span className="text-xs font-medium text-red-600" role="alert">{biodataForm.errors[name]}</span>}</label>)}
+                            <SearchableCombobox id="profile-edit-gender" label="Jenis kelamin" value={biodataForm.data.jk} onChange={(value) => biodataForm.setData('jk', value)} options={genderOptions} searchable={false} placeholder="Pilih jenis kelamin" error={biodataForm.errors.jk} className="min-w-0" />
+                            <SearchableCombobox id="profile-edit-religion" label="Agama" value={biodataForm.data.agama} onChange={(value) => biodataForm.setData('agama', value)} options={religionOptions} searchable={false} placeholder="Pilih agama" error={biodataForm.errors.agama} className="min-w-0" />
+                            <SearchableCombobox id="profile-edit-employment-status" label="Status kepegawaian" value={biodataForm.data.status_kepeg} onChange={(value) => biodataForm.setData('status_kepeg', value)} options={[...new Set([...employmentStatusOptions, employee.status_kepeg].filter(Boolean))]} searchable={false} placeholder="Pilih status kepegawaian" error={biodataForm.errors.status_kepeg} className="min-w-0" />
+                            <label className="grid gap-1.5 text-sm font-semibold simpeg-text sm:col-span-2">Alamat<textarea rows="2" value={biodataForm.data.alamat} onChange={(event) => biodataForm.setData('alamat', event.target.value)} className="simpeg-input w-full rounded-xl border px-3 py-2 font-normal" />{biodataForm.errors.alamat && <span className="text-xs font-medium text-red-600" role="alert">{biodataForm.errors.alamat}</span>}</label>
+                            {(canManageBiodata || canRequestBiodata) && <div className="grid gap-2 text-sm font-semibold simpeg-text sm:col-span-2">
+                                <span>Foto profil</span>
+                                <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 p-3">
+                                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                                        <ProfileAvatar gender={employee.jk} photoUrl={fotoPreview} alt={`Pratinjau foto ${employee.nama}`} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <label className="inline-flex min-h-9 cursor-pointer items-center rounded-lg border border-slate-300 px-3 text-sm font-semibold transition hover:border-blue-500 hover:text-blue-700">
+                                            Pilih foto
+                                            <input type="file" accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif" onChange={(event) => biodataForm.setData('foto', event.target.files?.[0] || null)} className="sr-only" />
+                                        </label>
+                                        <p className="mt-1 max-w-full truncate text-xs font-normal simpeg-muted">{biodataForm.data.foto?.name || 'JPG, PNG, atau GIF · Maksimal 2 MB'}</p>
+                                    </div>
+                                </div>
+                                {biodataForm.errors.foto && <span className="text-xs font-medium text-red-600" role="alert">{biodataForm.errors.foto}</span>}
+                            </div>}
+                            {canRequestBiodata && <label className="grid gap-1.5 text-sm font-semibold simpeg-text sm:col-span-2">Catatan pengajuan (opsional)<textarea rows="2" value={biodataForm.data.request_comment} onChange={(event) => biodataForm.setData('request_comment', event.target.value)} className="simpeg-input w-full rounded-xl border px-3 py-2 font-normal" placeholder="Jelaskan alasan perubahan" /></label>}
+                        </div>
+                        <div className="mt-6 flex flex-wrap justify-end gap-3"><button type="button" onClick={() => setBiodataDialogOpen(false)} className="simpeg-config-secondary-action simpeg-utility min-h-11 rounded-xl border px-4 font-semibold">Batal</button><button type="submit" disabled={biodataForm.processing} className="simpeg-action-primary simpeg-profile-request-button disabled:cursor-wait disabled:opacity-60">{biodataForm.processing ? (canManageBiodata ? 'Menyimpan...' : 'Mengirim...') : (canManageBiodata ? 'Simpan Perubahan' : 'Kirim Pengajuan')}</button></div>
+                    </form>
+                </section>
             </div>}
         </LegacyPageShell>
     );

@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, CalendarClock, CheckCircle2, Clock3, Send, Trash2, X, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import IconAction from '../../Components/IconAction';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 
 const statusStyles = {
@@ -65,7 +66,7 @@ function PublicationActions({ publication, canManage, onDelete }) {
         return (
             <div className="flex w-full items-center justify-end gap-2">
                 <span className="simpeg-muted mr-1 text-xs">Publikasi lama</span>
-                <button type="button" onClick={() => onDelete(publication)} className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-red-300 px-3 text-xs font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-600/20 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/30"><Trash2 aria-hidden="true" className="h-4 w-4" /> Hapus riwayat</button>
+                <IconAction variant="delete" onClick={() => onDelete(publication)} label="Hapus riwayat publikasi" />
             </div>
         );
     }
@@ -89,7 +90,7 @@ function PublicationActions({ publication, canManage, onDelete }) {
                 {!isProcessing && publication.status !== 'sent' && <button type="button" onClick={() => router.post(`/payroll/publications/${publication.id}/send`, {}, { preserveScroll: true })} className="simpeg-primary inline-flex h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold"><Send aria-hidden="true" className="h-4 w-4" /> Kirim sekarang</button>}
                 {!isProcessing && publication.status === 'scheduled' && <button type="button" onClick={() => router.post(`/payroll/publications/${publication.id}/cancel`, {}, { preserveScroll: true })} className="simpeg-utility inline-flex h-10 items-center gap-1.5 rounded-lg border px-3 text-xs font-bold"><XCircle aria-hidden="true" className="h-4 w-4" /> Batalkan</button>}
             </div>
-            {!isProcessing && <div className="flex w-full justify-end border-t border-slate-200/70 pt-3 dark:border-slate-700/70"><button type="button" onClick={() => onDelete(publication)} className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-red-300 px-3 text-xs font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-600/20 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/30"><Trash2 aria-hidden="true" className="h-4 w-4" /> Hapus riwayat</button></div>}
+            {!isProcessing && <div className="flex w-full justify-end border-t border-slate-200/70 pt-3 dark:border-slate-700/70"><IconAction variant="delete" onClick={() => onDelete(publication)} label="Hapus riwayat publikasi" /></div>}
         </div>
     );
 }

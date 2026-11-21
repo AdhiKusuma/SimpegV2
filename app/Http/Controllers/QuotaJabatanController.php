@@ -23,7 +23,7 @@ class QuotaJabatanController extends Controller
 
         $branchOptions = $this->branchOptions();
         $positionOptions = $this->positionOptions();
-        $branchNames = collect($branchOptions)->keyBy('kode_cabang');
+        $branchNames = collect($branchOptions)->groupBy('kode_cabang');
         $positionNames = collect($positionOptions)->keyBy(fn (array $position): string => (string) $position['kode_jabatan']);
         $filterValue = static function (string $key) use ($request): string {
             $value = $request->query($key, '');
@@ -64,7 +64,7 @@ class QuotaJabatanController extends Controller
                 ->where(function ($query): void {
                     $query
                         ->whereIn('k.level', ['KP', 'KC'])
-                        ->orWhereRaw("RIGHT(k.kode_kantor_detail, 3) = '000'");
+                        ->orWhere('k.kode_cabang', '000');
                 });
 
             if ($this->positionMasterTable() === 'tb_master_jabatan') {
@@ -102,7 +102,7 @@ class QuotaJabatanController extends Controller
                     continue;
                 }
 
-                $branch = $branchNames->get($branchCode);
+                $branch = $this->branchOptionForScope($branchNames, $branchCode, (string) $default->lingkup);
                 $quotas->push([
                     'id' => $override?->id,
                     'row_key' => $key,
@@ -113,7 +113,7 @@ class QuotaJabatanController extends Controller
                     'nama_jabatan' => trim((string) ($override?->nama_jabatan ?: $default->nama_jabatan)),
                     'lingkup' => (string) ($default->lingkup ?: '-'),
                     'group_jabatan' => (string) ($default->group_jabatan ?: '-'),
-                    'kuota_pegawai' => $override ? (int) $override->kuota_pegawai : max((int) $default->kuota_bawaan, 1),
+                    'kuota_pegawai' => $override ? (int) $override->kuota_pegawai : 1,
                     'updated_at' => $override?->updated_at?->format('d-m-Y H:i'),
                 ]);
             }
@@ -128,9 +128,13 @@ class QuotaJabatanController extends Controller
                 continue;
             }
 
-            $branch = $branchNames->get((string) $quota->kode_cabang);
             $position = $positionId !== '' ? $positionNames->get($positionId) : null;
             $customName = trim((string) ($quota->nama_jabatan ?? ''));
+            $branch = $this->branchOptionForScope(
+                $branchNames,
+                (string) $quota->kode_cabang,
+                (string) ($position['lingkup'] ?? $quota->lingkup ?? ''),
+            );
             $quotas->push([
                 'id' => $quota->id,
                 'row_key' => $key,
@@ -195,6 +199,7 @@ class QuotaJabatanController extends Controller
         if ($request->has('quotas')) {
             $validated = $request->validate([
                 'kode_cabang' => ['required', 'string', 'max:20', 'exists:tb_kantor,kode_cabang'],
+                'lingkup' => ['nullable', 'string', Rule::in(['KP', 'KC', 'KANWIL'])],
                 'quotas' => ['required', 'array', 'min:1'],
                 'quotas.*.id' => ['nullable', 'integer'],
                 'quotas.*.jabatan_id' => ['nullable', 'integer', Rule::exists($this->positionMasterTable(), 'kode_jabatan')],
@@ -202,6 +207,7 @@ class QuotaJabatanController extends Controller
                 'quotas.*.nama_jabatan' => ['nullable', 'string', 'max:100'],
                 'quotas.*.group_jabatan' => ['nullable', 'string', Rule::in(['PE', 'PS'])],
                 'quotas.*.kuota_pegawai' => ['required', 'integer', 'min:0', 'max:100000'],
+                'quotas.*.lingkup' => ['nullable', 'string', Rule::in(['KP', 'KC', 'KANWIL'])],
             ]);
 
             $customNames = [];
@@ -261,6 +267,7 @@ class QuotaJabatanController extends Controller
                             [
                                 'nama_jabatan' => trim((string) ($quota['nama_jabatan'] ?? '')) ?: null,
                                 'kode_jabatan' => null,
+                                'lingkup' => $quota['lingkup'] ?? $validated['lingkup'] ?? null,
                                 'kuota_pegawai' => (int) $quota['kuota_pegawai'],
                             ],
                         );
@@ -274,7 +281,7 @@ class QuotaJabatanController extends Controller
                         'kode_jabatan' => trim((string) $quota['kode_jabatan']),
                         'nama_jabatan' => trim((string) $quota['nama_jabatan']),
                         'group_jabatan' => trim((string) $quota['group_jabatan']),
-                        'lingkup' => $this->branchLevel($validated['kode_cabang']),
+                        'lingkup' => $this->branchLevel($validated['kode_cabang'], $validated['lingkup'] ?? null),
                         'kuota_pegawai' => (int) $quota['kuota_pegawai'],
                     ];
                     $customQuota = ! empty($quota['id'])
@@ -306,6 +313,7 @@ class QuotaJabatanController extends Controller
 
         $validated = $request->validate([
             'kode_cabang' => ['required', 'string', 'max:20', 'exists:tb_kantor,kode_cabang'],
+            'lingkup' => ['nullable', 'string', Rule::in(['KP', 'KC', 'KANWIL'])],
             'jabatan_id' => ['nullable', 'integer', Rule::exists($this->positionMasterTable(), 'kode_jabatan')],
             'kode_jabatan' => ['nullable', 'string', 'max:50'],
             'nama_jabatan' => ['nullable', 'string', 'max:100'],
@@ -349,6 +357,7 @@ class QuotaJabatanController extends Controller
                 [
                     'nama_jabatan' => $customName !== '' ? $customName : null,
                     'kode_jabatan' => null,
+                    'lingkup' => $validated['lingkup'] ?? null,
                     'kuota_pegawai' => (int) $validated['kuota_pegawai'],
                 ],
             );
@@ -359,7 +368,7 @@ class QuotaJabatanController extends Controller
                 'kode_jabatan' => $customCode,
                 'nama_jabatan' => $customName,
                 'group_jabatan' => $customGroup,
-                'lingkup' => $this->branchLevel($validated['kode_cabang']),
+                'lingkup' => $this->branchLevel($validated['kode_cabang'], $validated['lingkup'] ?? null),
                 'kuota_pegawai' => (int) $validated['kuota_pegawai'],
             ];
             $customQuota = $this->findInactiveCustomQuota($validated['kode_cabang'], $customName, $customCode);
@@ -387,6 +396,7 @@ class QuotaJabatanController extends Controller
         $quota = QuotaJabatan::query()->findOrFail($id);
         $validated = $request->validate([
             'kode_cabang' => ['required', 'string', 'max:20', 'exists:tb_kantor,kode_cabang'],
+            'lingkup' => ['nullable', 'string', Rule::in(['KP', 'KC', 'KANWIL'])],
             'jabatan_id' => ['nullable', 'integer', Rule::exists($this->positionMasterTable(), 'kode_jabatan')],
             'kode_jabatan' => ['nullable', 'string', 'max:50'],
             'nama_jabatan' => ['nullable', 'string', 'max:100'],
@@ -437,7 +447,7 @@ class QuotaJabatanController extends Controller
             'kode_jabatan' => $positionId === null ? $customCode : null,
             'nama_jabatan' => $customName !== '' ? $customName : null,
             'group_jabatan' => $positionId === null ? $customGroup : null,
-            'lingkup' => $positionId === null ? $this->branchLevel($validated['kode_cabang']) : null,
+            'lingkup' => $positionId === null ? $this->branchLevel($validated['kode_cabang'], $validated['lingkup'] ?? null) : ($validated['lingkup'] ?? null),
             'kuota_pegawai' => (int) $validated['kuota_pegawai'],
         ]);
 
@@ -511,28 +521,79 @@ class QuotaJabatanController extends Controller
 
     private function branchOptions(): array
     {
-        return TbKantor::query()
-            ->whereNotNull('kode_cabang')
-            ->where('kode_cabang', '<>', '')
-            ->where(function ($query): void {
-                $query
-                    ->whereIn('level', ['KP', 'KC'])
-                    ->orWhereRaw("RIGHT(kode_kantor_detail, 3) = '000'");
-            })
-            ->select('kode_cabang')
-            ->selectRaw('MIN(nama_kantor) as nama_kantor')
-            ->selectRaw("CASE WHEN MAX(CASE WHEN level = 'KP' THEN 1 ELSE 0 END) = 1 THEN 'KP' ELSE 'KC' END as level")
-            ->groupBy('kode_cabang')
+        $regionOptions = collect(config('dashboard.region_filters', []))
+            ->map(fn (array $region): array => [
+                'value' => (string) $region['code'],
+                // Region quotas are stored under the first branch code in
+                // the same range; dashboard aggregation already uses that
+                // range when reading configured quotas.
+                'kode_cabang' => (string) $region['from'],
+                'nama_cabang' => (string) $region['label'],
+                'label' => (string) $region['label'],
+                // Pusat is backed by the KP master scope. Every Korwil is
+                // backed by the KANWIL master scope; it must not reuse KC
+                // positions just because its offices contain KC branches.
+                'level' => (string) $region['from'] === '000' && (string) $region['to'] === '000' ? 'KP' : 'KANWIL',
+                'type' => 'region',
+                'is_region' => true,
+                'from' => (string) $region['from'],
+                'to' => (string) $region['to'],
+            ]);
+
+        // Keep this list aligned with the Dashboard's Wilayah filter:
+        // region scopes first, followed by the physical KC offices.
+        $officeOptions = TbKantor::query()
+            ->where('level', 'KC')
             ->orderBy('kode_cabang')
-            ->get()
-            ->map(fn ($branch): array => [
-                'kode_cabang' => (string) $branch->kode_cabang,
-                'nama_cabang' => trim((string) ($branch->nama_kantor ?: 'Cabang '.$branch->kode_cabang)),
-                'label' => sprintf('%s - %s', $branch->kode_cabang, trim((string) ($branch->nama_kantor ?: 'Cabang'))),
-                'level' => (string) ($branch->level ?: 'KC'),
-            ])
+            ->get(['kode_kantor_detail', 'kode_cabang', 'nama_kantor'])
+            ->map(fn (TbKantor $office): array => [
+                'value' => (string) $office->kode_kantor_detail,
+                'kode_cabang' => (string) $office->kode_cabang,
+                'nama_cabang' => sprintf('%s - %s', $office->kode_cabang, trim((string) $office->nama_kantor)),
+                'label' => sprintf('%s - %s', $office->kode_cabang, trim((string) $office->nama_kantor)),
+                'level' => 'KC',
+                'type' => 'office',
+                'is_region' => false,
+                'office_code' => (string) $office->kode_kantor_detail,
+            ]);
+
+        return collect([[
+            'value' => '__dashboard_consolidated',
+            'kode_cabang' => null,
+            'nama_cabang' => 'Konsolidasi',
+            'label' => 'Konsolidasi',
+            'level' => 'ALL',
+            'type' => 'consolidated',
+            'is_region' => true,
+            'from' => '000',
+            'to' => '999',
+        ]])
+            ->concat($regionOptions)
+            ->concat($officeOptions)
             ->values()
             ->all();
+    }
+
+    private function branchOptionForScope($branchNames, string $branchCode, string $scope): ?array
+    {
+        $scope = strtoupper(trim($scope));
+        $options = $branchNames->get($branchCode, collect());
+        $match = $options->first(fn (array $branch): bool => strtoupper((string) ($branch['level'] ?? '')) === $scope);
+        if ($match) {
+            return $match;
+        }
+
+        $regionalMatch = $branchNames
+            ->flatten(1)
+            ->first(function (array $branch) use ($branchCode, $scope): bool {
+                return ($branch['is_region'] ?? false) === true
+                    && ($branch['type'] ?? '') !== 'consolidated'
+                    && strtoupper((string) ($branch['level'] ?? '')) === $scope
+                    && (int) $branchCode >= (int) ($branch['from'] ?? 0)
+                    && (int) $branchCode <= (int) ($branch['to'] ?? 0);
+            });
+
+        return $regionalMatch ?: $options->first();
     }
 
     private function positionOptions(): array
@@ -571,13 +632,66 @@ class QuotaJabatanController extends Controller
     }
 
     /**
-     * Return the active positions actually assigned to each branch.
-     * The quota form uses this list after an office is selected.
+     * Return the master positions for each branch level and merge any active
+     * positions assigned to a branch. The quota form uses this list after an
+     * office is selected.
      */
     private function branchPositionOptions(): array
     {
         if (! Schema::hasTable('tb_jabatan') || ! Schema::hasTable('tb_pegawai') || ! Schema::hasTable('tb_kantor')) {
             return [];
+        }
+
+        $branchContexts = collect($this->branchOptions())
+            ->mapWithKeys(fn (array $branch): array => [
+                (string) $branch['value'] => $branch,
+            ])
+            ->all();
+        $branchLevels = collect($branchContexts)
+            ->mapWithKeys(fn (array $branch, string $branchKey): array => [
+                $branchKey => strtoupper(trim((string) $branch['level'])),
+            ])
+            ->all();
+        $masterScopes = collect($branchLevels)
+            ->filter(fn (string $level): bool => $level === 'ALL')
+            ->isNotEmpty()
+            ? ['KP', 'KANWIL', 'KC']
+            : array_values(array_unique($branchLevels));
+
+        $positionsByBranch = [];
+        foreach (array_keys($branchLevels) as $branchCode) {
+            $positionsByBranch[$branchCode] = [];
+        }
+
+        $masterPositionsQuery = $this->positionMasterTable() === 'tb_master_jabatan'
+            ? TbMasterJabatan::query()
+                ->select(['kode_jabatan', 'nama_jabatan', 'group_jabatan', 'lingkup', 'kuota'])
+                ->whereIn('group_jabatan', ['PE', 'PS'])
+                ->whereIn(DB::raw('UPPER(TRIM(lingkup))'), $masterScopes)
+                ->orderBy('nama_jabatan')
+            : TbRefJabatan::query()
+                ->selectRaw('kode_jabatan, jabatan as nama_jabatan, `group` as group_jabatan, lingkup, kuota')
+                ->whereIn('group', ['PE', 'PS'])
+                ->whereIn(DB::raw('UPPER(TRIM(lingkup))'), $masterScopes)
+                ->orderBy('jabatan');
+        $masterPositions = $masterPositionsQuery->get();
+
+        foreach ($branchLevels as $branchCode => $branchLevel) {
+            foreach ($masterPositions as $position) {
+                if ($branchLevel !== 'ALL'
+                    && strtoupper(trim((string) ($position->lingkup ?? ''))) !== $branchLevel) {
+                    continue;
+                }
+
+                $positionId = (string) $position->kode_jabatan;
+                $positionsByBranch[$branchCode][$positionId] = [
+                    'kode_jabatan' => $positionId,
+                    'nama_jabatan' => (string) $position->nama_jabatan,
+                    'group_jabatan' => (string) ($position->group_jabatan ?: '-'),
+                    'lingkup' => (string) ($position->lingkup ?: '-'),
+                    'kuota_bawaan' => 1,
+                ];
+            }
         }
 
         $positionsQuery = DB::table('tb_jabatan as j')
@@ -590,7 +704,7 @@ class QuotaJabatanController extends Controller
             ->where(function ($query): void {
                 $query
                     ->whereIn('k.level', ['KP', 'KC'])
-                    ->orWhereRaw("RIGHT(k.kode_kantor_detail, 3) = '000'");
+                    ->orWhere('k.kode_cabang', '000');
             });
 
         if ($this->positionMasterTable() === 'tb_master_jabatan') {
@@ -599,17 +713,21 @@ class QuotaJabatanController extends Controller
                 ->whereIn('m.group_jabatan', ['PE', 'PS'])
                 ->select([
                     'k.kode_cabang',
+                    'k.kode_kantor_detail',
                     'm.kode_jabatan',
                     'm.nama_jabatan',
                     'm.group_jabatan',
                     'm.lingkup',
+                    'm.kuota',
                 ])
                 ->groupBy(
                     'k.kode_cabang',
+                    'k.kode_kantor_detail',
                     'm.kode_jabatan',
                     'm.nama_jabatan',
                     'm.group_jabatan',
                     'm.lingkup',
+                    'm.kuota',
                 )
                 ->orderBy('k.kode_cabang')
                 ->orderBy('m.nama_jabatan');
@@ -617,30 +735,57 @@ class QuotaJabatanController extends Controller
             $positionsQuery
                 ->join('tb_ref_jabatan as m', 'm.kode_jabatan', '=', 'j.kode_jabatan')
                 ->whereIn('m.`group`', ['PE', 'PS'])
-                ->selectRaw('k.kode_cabang, m.kode_jabatan, m.jabatan as nama_jabatan, m.`group` as group_jabatan, m.lingkup')
+                ->selectRaw('k.kode_cabang, k.kode_kantor_detail, m.kode_jabatan, m.jabatan as nama_jabatan, m.`group` as group_jabatan, m.lingkup, m.kuota')
                 ->groupBy(
                     'k.kode_cabang',
+                    'k.kode_kantor_detail',
                     'm.kode_jabatan',
                     'm.jabatan',
                     'm.lingkup',
+                    'm.kuota',
                 )
                 ->groupByRaw('m.`group`')
                 ->orderBy('k.kode_cabang')
                 ->orderBy('m.jabatan');
         }
 
-        return $positionsQuery
-            ->get()
-            ->groupBy(fn ($position): string => (string) $position->kode_cabang)
-            ->map(fn ($positions, string $branchCode): array => [
-                'kode_cabang' => $branchCode,
-                'positions' => $positions
-                    ->map(fn ($position): array => [
-                        'kode_jabatan' => (string) $position->kode_jabatan,
-                        'nama_jabatan' => (string) $position->nama_jabatan,
-                        'group_jabatan' => (string) ($position->group_jabatan ?: '-'),
-                        'lingkup' => (string) ($position->lingkup ?: '-'),
-                    ])
+        foreach ($positionsQuery->get() as $position) {
+            $positionScope = strtoupper(trim((string) $position->lingkup));
+            $positionId = (string) $position->kode_jabatan;
+
+            foreach ($branchContexts as $branchKey => $branch) {
+                if ($branch['level'] !== 'ALL' && strtoupper((string) $branch['level']) !== $positionScope) {
+                    continue;
+                }
+
+                if (($branch['is_region'] ?? false) === true) {
+                    if ($branch['type'] !== 'consolidated'
+                        && ((int) $position->kode_cabang < (int) $branch['from']
+                        || (int) $position->kode_cabang > (int) $branch['to'])) {
+                        continue;
+                    }
+                } elseif (($branch['office_code'] ?? '') !== (string) $position->kode_kantor_detail) {
+                    continue;
+                }
+
+                $positionsByBranch[$branchKey][$positionId] = [
+                    'kode_jabatan' => $positionId,
+                    'nama_jabatan' => (string) $position->nama_jabatan,
+                    'group_jabatan' => (string) ($position->group_jabatan ?: '-'),
+                    'lingkup' => (string) ($position->lingkup ?: '-'),
+                    'kuota_bawaan' => 1,
+                ];
+            }
+        }
+
+        return collect($positionsByBranch)
+            ->map(fn (array $positions, string $branchKey): array => [
+                'value' => $branchKey,
+                'kode_cabang' => $branchContexts[$branchKey]['kode_cabang'] ?? null,
+                'level' => $branchContexts[$branchKey]['level'] ?? '-',
+                'is_region' => $branchContexts[$branchKey]['is_region'] ?? false,
+                'positions' => collect($positions)
+                    ->sortBy('nama_jabatan', SORT_NATURAL | SORT_FLAG_CASE)
                     ->values()
                     ->all(),
             ])
@@ -653,14 +798,22 @@ class QuotaJabatanController extends Controller
         return Schema::hasTable('tb_master_jabatan') ? 'tb_master_jabatan' : 'tb_ref_jabatan';
     }
 
-    private function branchLevel(string $branchCode): string
+    private function branchLevel(string $branchCode, ?string $requestedScope = null): string
     {
+        $requestedScope = strtoupper(trim((string) $requestedScope));
+        if (in_array($requestedScope, ['KP', 'KC', 'KANWIL'], true)
+            && collect($this->branchOptions())->contains(fn (array $branch): bool =>
+                (string) $branch['kode_cabang'] === $branchCode && strtoupper((string) $branch['level']) === $requestedScope
+            )) {
+            return $requestedScope;
+        }
+
         $level = TbKantor::query()
             ->where('kode_cabang', $branchCode)
             ->where(function ($query): void {
                 $query
                     ->whereIn('level', ['KP', 'KC'])
-                    ->orWhereRaw("RIGHT(kode_kantor_detail, 3) = '000'");
+                    ->orWhere('kode_cabang', '000');
             })
             ->orderByRaw("CASE WHEN level = 'KP' THEN 0 ELSE 1 END")
             ->value('level');

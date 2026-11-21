@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbJabatan;
+use App\Models\Legacy\TbKantor;
+use App\Models\Legacy\TbMasterJabatan;
 use App\Models\Legacy\TbMutasi;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbRecycleBin;
 use App\Services\XlsxExportService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,20 +39,27 @@ class MutationController extends Controller
         $this->ensureStaffAccess($request);
 
         $search = $request->string('search')->trim()->value();
+        $office = $request->string('kantor')->trim()->value();
+        $division = $request->string('divisi')->trim()->value();
+        $position = $request->string('jabatan')->trim()->value();
         $requestedYear = $request->string('year')->trim()->value();
         $year = preg_match('/^\d{4}$/', $requestedYear) === 1 ? $requestedYear : '';
         $baseQuery = $this->baseMutationQuery($request);
         $yearsQuery = clone $baseQuery;
         $years = $yearsQuery
-            ->whereNotNull('m.tmt')
-            ->selectRaw('YEAR(m.tmt) as year')
+            ->whereNotNull('p.tmt_kerja')
+            ->selectRaw('YEAR(p.tmt_kerja) as year')
             ->distinct()
             ->orderByDesc('year')
             ->pluck('year')
             ->map(fn ($value): string => (string) $value)
             ->values();
 
-        $items = $this->filteredMutationQuery($request, $year, $search)
+        $filterOptions = $office !== ''
+            ? $this->mutationFilterOptions($request, $office, $division)
+            : ['divisions' => [], 'positions' => []];
+
+        $items = $this->filteredMutationQuery($request, $year, $search, $office, $division, $position)
             ->select('m.*', 'p.nama as nama_pegawai')
             ->orderByDesc('m.tgl_mutasi')
             ->orderByDesc('m.id_mutasi')
@@ -59,10 +69,33 @@ class MutationController extends Controller
 
         return Inertia::render('Mutation/Index', [
             'items' => $items,
+            'offices' => $this->mutationFilterOffices($request),
+            'divisions' => $filterOptions['divisions'],
+            'positions' => $filterOptions['positions'],
             'years' => $years,
-            'filters' => ['search' => $search, 'year' => $year],
+            'filters' => [
+                'search' => $search,
+                'kantor' => $office,
+                'divisi' => $division,
+                'jabatan' => $position,
+                'year' => $year,
+            ],
             'canManage' => $this->canManage($request),
         ]);
+    }
+
+    public function filterOptions(Request $request): JsonResponse
+    {
+        $this->ensureStaffAccess($request);
+
+        $office = $request->string('kantor')->trim()->value();
+        $division = $request->string('divisi')->trim()->value();
+
+        if ($office === '') {
+            return response()->json(['divisions' => [], 'positions' => []]);
+        }
+
+        return response()->json($this->mutationFilterOptions($request, $office, $division));
     }
 
     public function export(Request $request, XlsxExportService $xlsxExport): StreamedResponse
@@ -70,9 +103,12 @@ class MutationController extends Controller
         $this->ensureStaffAccess($request);
 
         $search = $request->string('search')->trim()->value();
+        $office = $request->string('kantor')->trim()->value();
+        $division = $request->string('divisi')->trim()->value();
+        $position = $request->string('jabatan')->trim()->value();
         $requestedYear = $request->string('year')->trim()->value();
         $year = preg_match('/^\d{4}$/', $requestedYear) === 1 ? $requestedYear : '';
-        $records = $this->filteredMutationQuery($request, $year, $search)
+        $records = $this->filteredMutationQuery($request, $year, $search, $office, $division, $position)
             ->select('m.*', 'p.nama as nama_pegawai')
             ->orderByDesc('m.tgl_mutasi')
             ->orderByDesc('m.id_mutasi')
@@ -124,17 +160,138 @@ class MutationController extends Controller
             });
     }
 
-    private function filteredMutationQuery(Request $request, string $year, string $search): Builder
+    private function filteredMutationQuery(Request $request, string $year, string $search, string $office = '', string $division = '', string $position = ''): Builder
     {
         return $this->baseMutationQuery($request)
-            ->when($year !== '', fn (Builder $builder) => $builder->whereYear('m.tmt', $year))
+            ->when($year !== '', fn (Builder $builder) => $builder->whereYear('p.tmt_kerja', $year))
+            ->when($office !== '', function (Builder $builder) use ($office): void {
+                $builder->whereExists(function (QueryBuilder $scope) use ($office): void {
+                    $scope->selectRaw('1')
+                        ->from('tb_jabatan as j_filter')
+                        ->whereColumn('j_filter.id_peg', 'm.id_peg')
+                        ->where('j_filter.unit_kerja', $office);
+                });
+            })
+            ->when($division !== '', function (Builder $builder) use ($division): void {
+                $selectedDivision = $this->normalizeMutationDivision($division);
+
+                $builder->whereExists(function (QueryBuilder $scope) use ($selectedDivision, $office): void {
+                    $scope->selectRaw('1')
+                        ->from('tb_jabatan as j_filter')
+                        ->leftJoin('tb_master_jabatan as mj_filter', 'j_filter.kode_jabatan', '=', 'mj_filter.kode_jabatan')
+                        ->whereColumn('j_filter.id_peg', 'm.id_peg')
+                        ->when($office !== '', fn (QueryBuilder $query) => $query->where('j_filter.unit_kerja', $office))
+                        ->whereRaw('TRIM(mj_filter.nama_unit_kerja) = ?', [$selectedDivision]);
+                });
+            })
+            ->when($position !== '', function (Builder $builder) use ($position): void {
+                $builder->whereExists(function (QueryBuilder $scope) use ($position, $office): void {
+                    $scope->selectRaw('1')
+                        ->from('tb_jabatan as j_filter')
+                        ->leftJoin('tb_master_jabatan as mj_filter', 'j_filter.kode_jabatan', '=', 'mj_filter.kode_jabatan')
+                        ->whereColumn('j_filter.id_peg', 'm.id_peg')
+                        ->when($office !== '', fn (QueryBuilder $query) => $query->where('j_filter.unit_kerja', $office))
+                        ->where(function (QueryBuilder $positionScope) use ($position): void {
+                            $positionScope->whereRaw('TRIM(mj_filter.nama_jabatan) = ?', [$position])
+                                ->orWhereRaw('TRIM(j_filter.jabatan) = ?', [$position]);
+                        });
+                });
+            })
             ->when($search !== '', function (Builder $builder) use ($search): void {
                 $like = "%{$search}%";
                 $builder->where(function (Builder $scope) use ($like): void {
                     $scope->where('p.nama', 'like', $like)
-                        ->orWhere('m.id_peg', 'like', $like);
+                        ->orWhere('p.id_peg', 'like', $like);
                 });
             });
+    }
+
+    private function mutationFilterOffices(Request $request): \Illuminate\Support\Collection
+    {
+        $role = strtolower((string) $request->session()->get('hak_akses'));
+
+        return TbKantor::query()
+            ->whereNotNull('nama_kantor')
+            ->whereRaw("TRIM(nama_kantor) <> ''")
+            ->where(function (Builder $builder): void {
+                $builder->whereIn('level', ['KP', 'KANWIL', 'KC'])
+                    ->orWhere(function (Builder $regional): void {
+                        $regional->whereNull('level')
+                            ->whereRaw("UPPER(TRIM(nama_kantor)) LIKE 'KANTOR WILAYAH%'");
+                    });
+            })
+            ->when($role === 'kepala', fn (Builder $builder) => $builder->where('kode_kantor_detail', $request->session()->get('kode_kantor')))
+            ->orderBy('kode_kantor_detail')
+            ->get(['kode_kantor_detail', 'nama_kantor', 'level', 'kode_cabang']);
+    }
+
+    private function mutationFilterOptions(Request $request, string $office, string $division = ''): array
+    {
+        $role = strtolower((string) $request->session()->get('hak_akses'));
+        $scopeOffice = $role === 'kepala' ? $request->session()->get('kode_kantor') : null;
+
+        if ($scopeOffice !== null && $office !== $scopeOffice) {
+            return ['divisions' => [], 'positions' => []];
+        }
+
+        $divisions = TbMasterJabatan::query()
+            ->from('tb_master_jabatan as mj')
+            ->whereNotNull('mj.nama_unit_kerja')
+            ->whereRaw("TRIM(mj.nama_unit_kerja) <> ''")
+            ->whereExists(function (QueryBuilder $scope) use ($office): void {
+                $scope->selectRaw('1')
+                    ->from('tb_jabatan as j_filter')
+                    ->join('tb_mutasi as m_filter', 'm_filter.id_peg', '=', 'j_filter.id_peg')
+                    ->whereColumn('j_filter.kode_jabatan', 'mj.kode_jabatan')
+                    ->where('j_filter.unit_kerja', $office);
+            })
+            ->selectRaw('TRIM(mj.nama_unit_kerja) as value')
+            ->distinct()
+            ->orderBy('value')
+            ->get()
+            ->map(fn ($row): array => [
+                'value' => 'division:'.$row->value,
+                'label' => $row->value,
+                'description' => 'Bagian / Divisi',
+            ])
+            ->values();
+
+        $selectedDivision = $this->normalizeMutationDivision($division);
+        $positions = collect();
+
+        if ($division !== '') {
+            $positions = TbMasterJabatan::query()
+                ->from('tb_master_jabatan as mj')
+                ->whereNotNull('mj.nama_jabatan')
+                ->whereRaw("TRIM(mj.nama_jabatan) <> ''")
+                ->whereRaw('TRIM(mj.nama_unit_kerja) = ?', [$selectedDivision])
+                ->whereExists(function (QueryBuilder $scope) use ($office): void {
+                    $scope->selectRaw('1')
+                        ->from('tb_jabatan as j_filter')
+                        ->join('tb_mutasi as m_filter', 'm_filter.id_peg', '=', 'j_filter.id_peg')
+                        ->whereColumn('j_filter.kode_jabatan', 'mj.kode_jabatan')
+                        ->where('j_filter.unit_kerja', $office);
+                })
+                ->selectRaw('TRIM(mj.nama_jabatan) as value')
+                ->distinct()
+                ->orderBy('value')
+                ->get()
+                ->map(fn ($row): array => [
+                    'value' => $row->value,
+                    'label' => $row->value,
+                    'description' => 'Jabatan pada divisi terpilih',
+                ])
+                ->values();
+        }
+
+        return ['divisions' => $divisions, 'positions' => $positions];
+    }
+
+    private function normalizeMutationDivision(string $division): string
+    {
+        return str_starts_with($division, 'division:')
+            ? trim(substr($division, strlen('division:')))
+            : trim($division);
     }
 
     public function create(Request $request): Response

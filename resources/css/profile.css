@@ -32,6 +32,158 @@
     gap: 1.5rem;
 }
 
+.simpeg-profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    border-top: 1px solid var(--simpeg-border);
+    padding: 1rem 0;
+}
+
+.simpeg-profile-request-button,
+.simpeg-profile-print-button {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    border: 1px solid #0b625d;
+    border-radius: 0.9rem;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.simpeg-profile-request-button svg,
+.simpeg-profile-print-button svg {
+    height: 1.1rem;
+    width: 1.1rem;
+    flex: 0 0 auto;
+}
+
+.simpeg-profile-request-button {
+    border-color: var(--simpeg-action-primary, #0D5FE0);
+    background: var(--simpeg-action-primary, #0D5FE0);
+    color: var(--simpeg-action-primary-ink, #fff);
+}
+
+.simpeg-profile-request-button:hover {
+    border-color: var(--simpeg-action-primary-hover, #0A4DB8);
+    background: var(--simpeg-action-primary-hover, #0A4DB8);
+}
+
+.simpeg-profile-print-button {
+    border-color: var(--simpeg-action-secondary-border, #D6E2F5);
+    background: var(--simpeg-action-secondary, #fff);
+    color: var(--simpeg-action-secondary-ink, #0B1F4B);
+}
+
+.simpeg-profile-print-button:hover {
+    border-color: var(--simpeg-action-secondary-border-hover, #B8CCEA);
+    background: var(--simpeg-action-secondary-hover, #E8F0FD);
+}
+
+.simpeg-profile-cv-print {
+    display: none;
+}
+
+@media print {
+    @page {
+        size: A4;
+        margin: 14mm;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    .simpeg-profile-cv-print,
+    .simpeg-profile-cv-print * {
+        visibility: visible !important;
+    }
+
+    .simpeg-profile-cv-print {
+        position: absolute !important;
+        inset: 0 auto auto 0 !important;
+        display: block !important;
+        width: 100% !important;
+        color: #172746 !important;
+        background: #fff !important;
+        font: 10pt/1.45 Arial, sans-serif !important;
+    }
+
+    .simpeg-profile-cv-print header {
+        border-bottom: 2px solid #1257d6;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .simpeg-profile-cv-print header p {
+        color: #52627e;
+        font-size: 8pt;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+    }
+
+    .simpeg-profile-cv-print h1 {
+        margin: 0.2rem 0;
+        color: #1b2a4a;
+        font-size: 20pt;
+        font-weight: 700;
+    }
+
+    .simpeg-profile-cv-print h2 {
+        margin: 1rem 0 0.4rem;
+        color: #1b2a4a;
+        font-size: 12pt;
+        font-weight: 700;
+    }
+
+    .simpeg-profile-cv-print dl {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem 1.25rem;
+    }
+
+    .simpeg-profile-cv-print dl div {
+        display: grid;
+        grid-template-columns: 8rem 1fr;
+        border-bottom: 1px solid #e1e7f2;
+        padding: 0.25rem 0;
+    }
+
+    .simpeg-profile-cv-print dt,
+    .simpeg-profile-cv-empty {
+        color: #52627e;
+    }
+
+    .simpeg-profile-cv-print dd {
+        margin: 0;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .simpeg-profile-cv-print table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .simpeg-profile-cv-print td {
+        border: 1px solid #e1e7f2;
+        padding: 0.35rem 0.5rem;
+    }
+
+    .simpeg-profile-cv-print footer {
+        margin-top: 1.5rem;
+        border-top: 1px solid #e1e7f2;
+        padding-top: 0.5rem;
+        color: #52627e;
+        font-size: 8pt;
+    }
+}
+
 .simpeg-profile-hero {
     display: grid;
     min-width: 0;
@@ -51,6 +203,11 @@
     background: var(--simpeg-primary);
     color: var(--simpeg-primary-foreground);
     padding: 1.5rem;
+}
+
+.simpeg-profile-identity .simpeg-profile-identity-kicker {
+    color: var(--simpeg-primary-foreground) !important;
+    -webkit-text-fill-color: var(--simpeg-primary-foreground) !important;
 }
 
 .simpeg-profile-avatar {
@@ -209,6 +366,14 @@
     border-radius: 1.25rem;
     background: var(--simpeg-card);
     box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.simpeg-profile-edit-dialog {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
 }
 
 .simpeg-profile-panel-heading,

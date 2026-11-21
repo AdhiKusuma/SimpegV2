@@ -49,6 +49,9 @@ class PayrollMasterController extends Controller
             ->orderBy('p.nama')
             ->orderBy('m.employee_id');
         $this->applyOfficeScope($query, $scope, 'm.office_code');
+        $masterCountQuery = DB::table('payroll_salary_masters as m');
+        $this->applyOfficeScope($masterCountQuery, $scope, 'm.office_code');
+        $masterCount = (int) $masterCountQuery->count('m.employee_id');
         if (trim((string) ($filters['search'] ?? '')) !== '') {
             $search = trim((string) $filters['search']);
             $query->where(fn ($builder) => $builder
@@ -68,6 +71,7 @@ class PayrollMasterController extends Controller
 
         return Inertia::render('Payroll/Master', [
             'masters' => $masters,
+            'masterCount' => $masterCount,
             'filters' => ['search' => (string) ($filters['search'] ?? '')],
             'canEdit' => $rbac->can($request, 'payroll.master.edit'),
             'canDelete' => $rbac->can($request, 'payroll.master.delete'),
@@ -839,6 +843,90 @@ class PayrollMasterController extends Controller
         }
 
         return to_route('payroll.master.index')->with('success', 'Master Gaji berhasil dihapus. Riwayat payroll yang sudah tercatat tetap tersimpan.');
+    }
+
+    public function destroyAll(Request $request, RbacService $rbac, NotificationService $notifications): RedirectResponse
+    {
+        abort_unless($rbac->can($request, 'payroll.master.delete'), 403);
+        $request->validate(['confirmation' => ['required', 'in:HAPUS SEMUA']]);
+
+        $scope = $this->officeScope($request);
+        $userId = (string) $request->session()->get('id_user');
+        $bypass = ! $this->willRequireApproval($request, $rbac);
+        $changeRequest = DB::transaction(function () use ($scope, $userId, $bypass): PayrollChangeRequest {
+            $query = DB::table('payroll_salary_masters')
+                ->orderBy('employee_id')
+                ->lockForUpdate();
+            $this->applyOfficeScope($query, $scope, 'office_code');
+            $masters = $query->get();
+            if ($masters->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'confirmation' => 'Tidak ada Master Gaji dalam cakupan akun ini yang dapat dihapus.',
+                ]);
+            }
+
+            $employeeIds = $masters->pluck('employee_id')->map(fn ($id): string => (string) $id)->values()->all();
+            $pendingEmployeeId = DB::table('payroll_change_request_entries as e')
+                ->join('payroll_change_requests as r', 'r.id', '=', 'e.payroll_change_request_id')
+                ->whereIn('e.employee_id', $employeeIds)
+                ->where('r.status', 'pending')
+                ->lockForUpdate()
+                ->value('e.employee_id');
+            if ($pendingEmployeeId !== null) {
+                throw ValidationException::withMessages([
+                    'confirmation' => 'Penghapusan dibatalkan karena pengajuan payroll pegawai '.$pendingEmployeeId.' masih menunggu persetujuan.',
+                ]);
+            }
+
+            $change = PayrollChangeRequest::query()->create([
+                'change_type' => 'manual_delete',
+                'requested_by' => $userId,
+                'office_codes' => $masters->pluck('office_code')->map(fn ($code): string => (string) $code)->unique()->values()->all(),
+                'summary_data' => ['employee_count' => $masters->count(), 'bulk' => true],
+                'status' => $bypass ? 'approved' : 'pending',
+                'decision_reason' => $bypass ? 'Dihapus massal langsung sesuai izin payroll.' : null,
+                'decided_by' => $bypass ? $userId : null,
+                'submitted_at' => now(),
+                'decided_at' => $bypass ? now() : null,
+            ]);
+
+            $now = now();
+            $entries = $masters->map(function (object $master) use ($change, $now): array {
+                $oldData = [];
+                foreach (['office_code', 'bank_office_code', 'no_rekening', 'nama_nasabah', 'tgl_gajian', ...self::DETAIL_FIELDS, ...self::AMOUNT_FIELDS] as $field) {
+                    $oldData[$field] = $master->{$field};
+                }
+
+                return [
+                    'payroll_change_request_id' => $change->id,
+                    'employee_id' => (string) $master->employee_id,
+                    'office_code' => (string) $master->office_code,
+                    'old_data' => json_encode($oldData, JSON_THROW_ON_ERROR),
+                    'new_data' => json_encode([], JSON_THROW_ON_ERROR),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            })->all();
+            foreach (array_chunk($entries, 500) as $chunk) {
+                DB::table('payroll_change_request_entries')->insert($chunk);
+            }
+
+            if ($bypass) {
+                $deleteQuery = DB::table('payroll_salary_masters')->whereIn('employee_id', $employeeIds);
+                $this->applyOfficeScope($deleteQuery, $scope, 'office_code');
+                $deleteQuery->delete();
+            }
+
+            return $change;
+        });
+
+        if (! $bypass) {
+            $notifications->notifyPayrollRequestCreated($changeRequest);
+
+            return to_route('payroll.master.index')->with('success', 'Penghapusan semua Master Gaji diajukan dan menunggu persetujuan supervisor kantor terkait.');
+        }
+
+        return to_route('payroll.master.index')->with('success', 'Semua Master Gaji dalam cakupan akun berhasil dihapus. Riwayat payroll yang sudah tercatat tetap tersimpan.');
     }
 
     public function approvals(Request $request, RbacService $rbac): Response

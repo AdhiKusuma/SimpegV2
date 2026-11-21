@@ -51,14 +51,16 @@ export default function SearchableCombobox({
             const menuMaxHeight = Math.min(256, Math.max(128, window.innerHeight - (viewportPadding * 2)));
             const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
             const spaceAbove = rect.top - viewportPadding;
-            const showAbove = spaceBelow < menuMaxHeight && spaceAbove > spaceBelow;
+            const estimatedMenuHeight = Math.min(menuMaxHeight, Math.max(96, (filteredOptions.length * 48) + 8));
+            const showAbove = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow;
+            const availableHeight = Math.max(64, Math.min(estimatedMenuHeight, showAbove ? spaceAbove : spaceBelow));
             const top = showAbove
-                ? Math.max(viewportPadding, rect.top - menuGap - menuMaxHeight)
-                : Math.min(window.innerHeight - viewportPadding - menuMaxHeight, rect.bottom + menuGap);
+                ? Math.max(viewportPadding, rect.top - menuGap - availableHeight)
+                : Math.min(window.innerHeight - viewportPadding - availableHeight, rect.bottom + menuGap);
             const width = Math.min(rect.width, window.innerWidth - (viewportPadding * 2));
             const left = Math.min(Math.max(viewportPadding, rect.left), window.innerWidth - viewportPadding - width);
 
-            setMenuPosition({ position: 'fixed', top, left, width, maxHeight: menuMaxHeight, zIndex: 1000 });
+            setMenuPosition({ position: 'fixed', top, left, width, maxHeight: availableHeight, zIndex: 1000 });
         }
 
         updateMenuPosition();

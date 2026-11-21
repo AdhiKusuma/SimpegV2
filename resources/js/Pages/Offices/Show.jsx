@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import PageJumpControls from '../../Components/PageJumpControls';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 
 export default function OfficeShow({ office, employees }) {
@@ -50,7 +51,7 @@ export default function OfficeShow({ office, employees }) {
                         </tbody>
                     </table>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {employees.from || 0}–{employees.to || 0} dari {employees.total} pegawai</span><div className="flex gap-2">{employees.links.filter((link) => link.url).map((link) => <Link key={link.label} href={link.url} preserveState className={`rounded-lg border px-3 py-2 ${link.active ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 hover:border-blue-600 hover:text-blue-600'}`} dangerouslySetInnerHTML={{ __html: link.label }} />)}</div></div>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {employees.from || 0}–{employees.to || 0} dari {employees.total} pegawai</span><div className="flex gap-2"><PageJumpControls paginator={employees} /></div></div>
             </section>
         </LegacyPageShell>
     );

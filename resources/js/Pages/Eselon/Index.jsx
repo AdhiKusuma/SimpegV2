@@ -1,4 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import IconAction from '../../Components/IconAction';
 import { useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 
@@ -53,7 +54,7 @@ export default function EselonIndex({ items, record, canManage }) {
                                 {items.length === 0 ? <tr><td colSpan={canManage ? 3 : 2} className="px-5 py-12 text-center text-sm text-slate-500">Belum ada master eselon.</td></tr> : items.map((item) => <tr key={item.id_masteresl} className="transition hover:bg-slate-50">
                                     <td className="px-5 py-4 font-mono text-sm text-slate-500">{item.id_masteresl}</td>
                                     <td className="px-5 py-4 font-bold text-slate-800">{item.nama_masteresl}</td>
-                                    {canManage && <td className="whitespace-nowrap px-5 py-4 text-right"><Link href={`/eselon/${item.id_masteresl}/edit`} className="mr-2 inline-flex min-h-10 items-center rounded-lg border border-blue-200 px-3 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Edit</Link><button type="button" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} className="inline-flex min-h-10 items-center rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600/20">Hapus</button></td>}
+                                    {canManage && <td className="whitespace-nowrap px-5 py-4 text-right"><IconAction href={`/eselon/${item.id_masteresl}/edit`} label="Edit" className="mr-2" /><IconAction variant="delete" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} label="Hapus" /></td>}
                                 </tr>)}
                             </tbody>
                         </table>

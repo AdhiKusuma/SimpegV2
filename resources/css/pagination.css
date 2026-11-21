@@ -64,3 +64,157 @@ html body .simpeg-app-canvas .simpeg-shell-content main a[href*='page=']:is(
     -webkit-text-fill-color: #FFFFFF !important;
     stroke: currentColor !important;
 }
+
+/* Shared page controls: compact page window plus a direct page jump. */
+.simpeg-page-pagination {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.simpeg-page-pagination__links,
+.simpeg-page-pagination__group,
+.simpeg-page-pagination__jump {
+    display: inline-flex;
+    align-items: center;
+}
+
+.simpeg-page-pagination__links {
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.simpeg-page-pagination__group {
+    gap: 0.45rem;
+}
+
+.simpeg-page-pagination__number,
+.simpeg-page-pagination__step {
+    display: inline-flex;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--simpeg-border, #d5e1f5);
+    border-radius: 0.8rem;
+    background: var(--simpeg-card, #fff);
+    color: var(--simpeg-text, #10234b);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.simpeg-page-pagination__number:hover,
+.simpeg-page-pagination__step:hover,
+.simpeg-page-pagination__number:focus-visible,
+.simpeg-page-pagination__step:focus-visible {
+    border-color: var(--simpeg-primary, #1257d6);
+    background: var(--simpeg-hover-surface, #edf4ff);
+    color: var(--simpeg-primary, #1257d6);
+    outline: none;
+}
+
+.simpeg-page-pagination__number.is-active {
+    border-color: var(--simpeg-primary, #1257d6);
+    background: var(--simpeg-primary, #1257d6);
+    color: #fff;
+    box-shadow: 0 5px 14px rgb(18 87 214 / 0.2);
+}
+
+.simpeg-page-pagination__ellipsis {
+    display: inline-flex;
+    min-width: 1rem;
+    align-items: center;
+    justify-content: center;
+    color: var(--simpeg-muted, #657696);
+}
+
+.simpeg-page-pagination__jump {
+    gap: 0.5rem;
+    color: var(--simpeg-muted, #657696);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.simpeg-page-pagination__jump input {
+    box-sizing: border-box;
+    width: 4.25rem;
+    min-height: 2.75rem;
+    border: 1px solid var(--simpeg-border, #d5e1f5);
+    border-radius: 0.75rem;
+    background: var(--simpeg-card, #fff);
+    color: var(--simpeg-text, #10234b);
+    padding: 0.4rem 0.55rem;
+    text-align: center;
+    font: inherit;
+}
+
+.simpeg-page-pagination__jump input:focus-visible {
+    border-color: var(--simpeg-primary, #1257d6);
+    outline: 3px solid rgb(18 87 214 / 0.16);
+}
+
+.simpeg-page-pagination__jump button {
+    min-height: 2.75rem;
+    border: 1px solid var(--simpeg-primary, #1257d6);
+    border-radius: 0.75rem;
+    background: var(--simpeg-primary, #1257d6);
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.simpeg-page-pagination__jump button:hover,
+.simpeg-page-pagination__jump button:focus-visible {
+    filter: brightness(0.94);
+}
+
+/* The first-page URL can omit `?page=1`, so the legacy href-based contract
+ * does not reach its active number. Own foreground and fill here explicitly. */
+html body .simpeg-app-canvas .simpeg-page-pagination .simpeg-page-pagination__number.is-active,
+html body .simpeg-app-canvas .simpeg-page-pagination .simpeg-page-pagination__number.is-active:is(:hover, :focus-visible),
+html body .simpeg-app-canvas .simpeg-page-pagination .simpeg-page-pagination__jump button,
+html body .simpeg-app-canvas .simpeg-page-pagination .simpeg-page-pagination__jump button:is(:hover, :focus-visible) {
+    border-color: var(--simpeg-primary, #1257d6) !important;
+    background: var(--simpeg-primary, #1257d6) !important;
+    background-color: var(--simpeg-primary, #1257d6) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+@media (max-width: 700px) {
+    .simpeg-page-pagination {
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .simpeg-page-pagination__links {
+        justify-content: center;
+        gap: 0.3rem;
+    }
+
+    .simpeg-page-pagination__group {
+        gap: 0.3rem;
+    }
+
+    .simpeg-page-pagination__number,
+    .simpeg-page-pagination__step {
+        min-width: 2.5rem;
+        min-height: 2.5rem;
+        border-radius: 0.7rem;
+    }
+
+    .simpeg-page-pagination__jump input,
+    .simpeg-page-pagination__jump button {
+        min-height: 2.5rem;
+    }
+}

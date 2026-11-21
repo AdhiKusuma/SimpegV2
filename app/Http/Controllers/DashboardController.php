@@ -34,7 +34,7 @@ class DashboardController extends Controller
             ...$data,
             ...$this->dashboardDetails($data['unit'], $data['year']),
             'offices' => $this->dashboardOffices($request),
-            'filters' => ['unit_kerja' => $data['unit']],
+            'filters' => ['unit_kerja' => $data['unit'], 'year' => $data['year']],
             'dashboardLocked' => $role === 'kepala',
             'canSelectOffice' => $role !== 'kepala',
         ]);
@@ -108,6 +108,27 @@ class DashboardController extends Controller
         return response()->json($this->employeeTrendData($unit, $year));
     }
 
+    public function chartData(Request $request, string $chart): JsonResponse
+    {
+        abort_unless($this->rbac->can($request, 'dashboard.view'), 403);
+
+        $role = strtolower((string) $request->session()->get('hak_akses'));
+        $unit = $role === 'kepala'
+            ? $request->session()->get('kode_kantor')
+            : $request->string('unit_kerja')->trim()->value();
+        $unit = $unit ?: null;
+        $year = max(2000, min(2100, $request->integer('year', now()->year)));
+
+        return response()->json(match ($chart) {
+            'violations' => $this->violationTrend($unit, $year),
+            'retirement' => [
+                'year' => $year,
+                'rows' => $this->retirementList($unit, $year),
+            ],
+            default => abort(404),
+        });
+    }
+
     private function dashboardData(Request $request, ?string $forcedUnit = null): array
     {
         $role = strtolower((string) $request->session()->get('hak_akses'));
@@ -115,7 +136,7 @@ class DashboardController extends Controller
             ? $request->session()->get('kode_kantor')
             : $request->string('unit_kerja')->trim()->value());
         $unit = $unit ?: null;
-        $year = now()->year;
+        $year = max(2000, min(2100, $request->integer('year', now()->year)));
 
         $activeEmployees = TbPegawai::query()
             ->from('tb_pegawai as p')
@@ -525,6 +546,17 @@ class DashboardController extends Controller
         return TbPegawai::query()
             ->from('tb_pegawai as p')
             ->whereNotIn('p.id_peg', $excludedIds)
+            ->whereNotExists(function (QueryBuilder $subquery): void {
+                $subquery->select(DB::raw('1'))
+                    ->from('tb_jabatan as director_job')
+                    ->whereColumn('director_job.id_peg', 'p.id_peg')
+                    ->where('director_job.status_jab', 'Aktif')
+                    ->where(function (QueryBuilder $positionQuery): void {
+                        $positionQuery
+                            ->whereRaw("LOWER(TRIM(director_job.jabatan)) LIKE '%direktur%'")
+                            ->orWhereRaw("LOWER(TRIM(director_job.jabatan)) = 'direksi'");
+                    });
+            })
             ->whereYear('p.tgl_pensiun', $year)
             ->when($unit !== null, function (Builder $builder) use ($unit): void {
                 $builder->whereExists(function ($subquery) use ($unit): void {
@@ -564,6 +596,7 @@ class DashboardController extends Controller
 
     private function positionAvailability(string $group, ?string $unit): array
     {
+        $positionScope = $this->dashboardPositionScope($unit);
         $rows = TbMasterJabatan::query()
             ->from('tb_master_jabatan as m')
             ->leftJoin('tb_jabatan as j', function ($join) use ($unit): void {
@@ -586,6 +619,10 @@ class DashboardController extends Controller
                 $join->on('j.id_peg', '=', 'p.id_peg')->where('p.status_aktif', 1);
             })
             ->where('m.group_jabatan', $group)
+            ->whereIn(DB::raw('UPPER(TRIM(m.lingkup))'), ['KP', 'KANWIL', 'KC'])
+            ->when($positionScope !== null, function (Builder $builder) use ($positionScope): void {
+                $builder->whereRaw('UPPER(TRIM(m.lingkup)) = ?', [$positionScope]);
+            })
             ->select(['m.kode_jabatan', 'm.kuota'])
             ->selectRaw('m.nama_jabatan as nama_jabatan')
             ->selectRaw('COUNT(DISTINCT p.id_peg) as terisi')
@@ -593,18 +630,18 @@ class DashboardController extends Controller
             ->orderBy('m.kode_jabatan')
             ->get();
 
-        $configuredQuotas = $this->configuredPositionQuotas($group, $unit);
+        // Consolidation is the master view across KP, KANWIL, and KC. It must
+        // not let a branch-specific override hide a master position or replace
+        // the master quota with a single office's setting.
+        $configuredQuotas = $unit === null
+            ? collect()
+            : $this->configuredPositionQuotas($group, $unit);
 
-        if ($unit !== null) {
-            $rows = $rows->filter(fn ($row): bool => (int) $row->terisi > 0 || $configuredQuotas->has((string) $row->kode_jabatan)
-            )->values();
-        }
-
-        $masterRows = $rows->map(function ($row) use ($configuredQuotas): array {
+        $masterRows = $rows->map(function ($row) use ($configuredQuotas, $unit): array {
             $positionId = (string) $row->kode_jabatan;
             $quota = $configuredQuotas->has($positionId)
                 ? (int) $configuredQuotas->get($positionId)
-                : max((int) $row->kuota, 1);
+                : 1;
             $filled = (int) $row->terisi;
             $remaining = max($quota - $filled, 0);
             $status = $filled === 0
@@ -625,6 +662,10 @@ class DashboardController extends Controller
         // Custom quotas are intentionally not part of tb_master_jabatan. Include
         // them here so a quota created from the admin form is visible in the
         // dashboard card for the matching PE/PS group.
+        if ($unit === null) {
+            return $masterRows->values()->all();
+        }
+
         return $masterRows
             ->concat($this->customPositionAvailability($group, $unit))
             ->values()
@@ -704,10 +745,14 @@ class DashboardController extends Controller
             return collect();
         }
 
+        $positionScope = $this->dashboardPositionScope($unit);
         $query = QuotaJabatan::query()
             ->from('kuota_jabatan as q')
             ->join('tb_master_jabatan as m', 'm.kode_jabatan', '=', 'q.jabatan_id')
             ->where('m.group_jabatan', $group)
+            ->when($positionScope !== null, function (Builder $builder) use ($positionScope): void {
+                $builder->whereRaw('UPPER(TRIM(m.lingkup)) = ?', [$positionScope]);
+            })
             ->select('q.jabatan_id')
             ->selectRaw('SUM(q.kuota_pegawai) as total_kuota')
             ->groupBy('q.jabatan_id');
@@ -768,5 +813,35 @@ class DashboardController extends Controller
             'type' => 'unit',
             'code' => $unit,
         ];
+    }
+
+    private function dashboardPositionScope(?string $unit): ?string
+    {
+        if ($unit === null) {
+            return null;
+        }
+
+        $scope = $this->dashboardUnitScope($unit);
+        if ($scope['type'] === 'region') {
+            // Pusat uses the KP master scope. Korwil represents the regional
+            // office layer, so its PE/PS positions come from KANWIL—not KC.
+            return $scope['from'] === '000' && $scope['to'] === '000' ? 'KP' : 'KANWIL';
+        }
+
+        $office = TbKantor::query()
+            ->where('kode_kantor_detail', $scope['code'])
+            ->first(['level', 'nama_kantor', 'kode_cabang']);
+
+        $level = strtoupper(trim((string) ($office?->level ?? '')));
+        if (in_array($level, ['KP', 'KC', 'KANWIL'], true)) {
+            return $level;
+        }
+
+        $officeName = strtoupper(trim((string) ($office?->nama_kantor ?? '')));
+        if (str_contains($officeName, 'WILAYAH') || str_contains($officeName, 'KANWIL')) {
+            return 'KANWIL';
+        }
+
+        return (string) ($office?->kode_cabang ?? '') === '000' ? 'KP' : 'KC';
     }
 }

@@ -214,7 +214,7 @@ class PayrollController extends Controller
         $canClearHistory = $this->canClearHistory($request, $rbac);
         $historyCleanupPlan = $canClearHistory
             ? $this->historyCleanupPlan()
-            : ['candidates' => [], 'protected' => []];
+            : ['candidates' => [], 'protected' => [], 'active_import_id' => null];
 
         return Inertia::render('Payroll/Index', [
             'filters' => ['tahun' => $year, 'bulan' => $month, 'office' => $selectedOffice, 'view' => $view, 'stage' => $stage],
@@ -239,7 +239,6 @@ class PayrollController extends Controller
             'canEditMaster' => $rbac->can($request, 'payroll.master.edit'),
             'canClearHistory' => $canClearHistory,
             'payrollHistoryCount' => count($historyCleanupPlan['candidates']),
-            'payrollProtectedHistoryCount' => count($historyCleanupPlan['protected']),
             'scopeLabel' => $scope['label'],
             'scopeLocked' => $scope['restricted'] && count($scope['codes']) <= 1,
             'flash' => [
@@ -640,32 +639,24 @@ class PayrollController extends Controller
             ->with('success', 'Data payroll berhasil diimpor. Batch sebelumnya untuk periode ini tetap tersimpan sebagai riwayat.');
     }
 
-    public function clearHistory(Request $request, RbacService $rbac): RedirectResponse
+    public function clearHistory(Request $request, RbacService $rbac, NotificationService $notifications): RedirectResponse
     {
         $this->authorizeHistoryCleanup($request, $rbac);
-        $request->validate(['confirmation' => ['required', 'in:HAPUS RIWAYAT']]);
+        $request->validate(['confirmation' => ['required', 'in:HAPUS SEMUA PAYROLL']]);
 
         $plan = $this->historyCleanupPlan();
         if ($plan['candidates'] === []) {
-            return to_route('payroll.index')->with(
-                'error',
-                'Tidak ada riwayat payroll lama yang aman untuk dibersihkan. Batch aktif atau data yang masih digunakan tetap dilindungi.',
-            );
+            return to_route('payroll.index')->with('error', 'Tidak ada batch payroll yang dapat dihapus.');
         }
 
         $actorId = trim((string) $request->session()->get('id_user')) ?: null;
-        $deletedCount = DB::transaction(function () use ($plan, $actorId): int {
+        $deletedCount = DB::transaction(function () use ($plan, $actorId, $notifications): int {
             $deleted = 0;
-            $reason = 'Pembersihan riwayat payroll produksi';
+            $reason = 'Penghapusan riwayat payroll produksi';
 
             foreach ($plan['candidates'] as $candidate) {
                 $import = PayrollImport::query()->whereKey((int) $candidate['id'])->lockForUpdate()->first();
-                if (! $import || $import->is_current) {
-                    continue;
-                }
-
-                if (Schema::hasTable('payroll_salary_masters')
-                    && DB::table('payroll_salary_masters')->where('source_import_id', $import->id)->exists()) {
+                if (! $import) {
                     continue;
                 }
 
@@ -674,10 +665,18 @@ class PayrollController extends Controller
                         ->where('payroll_import_id', $import->id)
                         ->lockForUpdate()
                         ->first();
-                    if ($publication && $publication->status !== 'deleted') {
-                        continue;
+                    if ($publication?->status === 'processing') {
+                        abort(409, 'Publikasi payroll sedang diproses. Coba hapus kembali setelah proses selesai.');
                     }
                 }
+
+                if (Schema::hasTable('payroll_salary_masters')) {
+                    DB::table('payroll_salary_masters')
+                        ->where('source_import_id', $import->id)
+                        ->update(['source_import_id' => null, 'updated_at' => now()]);
+                }
+
+                $notifications->deletePublishedPayrollNotifications($import);
 
                 DB::table('payroll_history_cleanup_logs')->insert([
                     'payroll_import_id' => $import->id,
@@ -704,8 +703,8 @@ class PayrollController extends Controller
         return to_route('payroll.index')->with(
             $deletedCount > 0 ? 'success' : 'error',
             $deletedCount > 0
-                ? "Riwayat payroll lama dibersihkan: {$deletedCount} batch. Batch aktif dan data yang masih digunakan tidak diubah."
-                : 'Tidak ada riwayat payroll yang dapat dibersihkan karena seluruh kandidat sedang dilindungi.',
+                ? "Riwayat payroll dihapus: {$deletedCount} batch. Data Master Gaji tetap dipertahankan, tetapi referensi ke batch yang dihapus dilepas."
+                : 'Tidak ada batch payroll yang dapat dihapus.',
         );
     }
 
@@ -1051,42 +1050,21 @@ class PayrollController extends Controller
     private function historyCleanupPlan(): array
     {
         if (! Schema::hasTable('payroll_imports')) {
-            return ['candidates' => [], 'protected' => []];
+            return ['candidates' => [], 'protected' => [], 'active_import_id' => null];
         }
 
         $imports = PayrollImport::query()
-            ->where('is_current', false)
             ->orderBy('id')
-            ->get(['id', 'tahun', 'bulan', 'source_filename', 'source_sha256']);
+            ->get(['id', 'tahun', 'bulan', 'source_filename', 'source_sha256', 'is_current']);
         if ($imports->isEmpty()) {
-            return ['candidates' => [], 'protected' => []];
+            return ['candidates' => [], 'protected' => [], 'active_import_id' => null];
         }
 
-        $ids = $imports->pluck('id')->map(fn ($id): int => (int) $id)->all();
-        $protected = [];
-
-        if (Schema::hasTable('payroll_salary_masters')) {
-            $protected = DB::table('payroll_salary_masters')
-                ->whereIn('source_import_id', $ids)
-                ->whereNotNull('source_import_id')
-                ->pluck('source_import_id')
-                ->map(fn ($id): int => (int) $id)
-                ->all();
-        }
-
-        if (Schema::hasTable('payroll_publications')) {
-            $published = DB::table('payroll_publications')
-                ->whereIn('payroll_import_id', $ids)
-                ->where('status', '<>', 'deleted')
-                ->pluck('payroll_import_id')
-                ->map(fn ($id): int => (int) $id)
-                ->all();
-            $protected = array_merge($protected, $published);
-        }
-
-        $protected = array_values(array_unique($protected));
+        $activeImportId = $imports
+            ->filter(fn (PayrollImport $import): bool => (bool) $import->is_current)
+            ->sortByDesc('id')
+            ->first()?->id;
         $candidates = $imports
-            ->reject(fn (PayrollImport $import): bool => in_array((int) $import->id, $protected, true))
             ->map(fn (PayrollImport $import): array => [
                 'id' => (int) $import->id,
                 'tahun' => (int) $import->tahun,
@@ -1098,7 +1076,8 @@ class PayrollController extends Controller
 
         return [
             'candidates' => $candidates,
-            'protected' => $protected,
+            'protected' => [],
+            'active_import_id' => $activeImportId === null ? null : (int) $activeImportId,
         ];
     }
 

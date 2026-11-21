@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowUpRight, Banknote, CalendarClock, FileSpreadsheet, Search, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ExportDropdown from '../../Components/ExportDropdown';
+import IconAction from '../../Components/IconAction';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SelectCombobox from '../../Components/SelectCombobox';
@@ -26,13 +27,16 @@ const monthOptions = [
     { value: '12', label: 'Desember' },
 ];
 
-export default function Master({ masters, filters = {}, canEdit = false, canDelete = false, deleteRequiresApproval = false, canImport = false, canTransfer = false, transferDefaults = {}, scopeLabel, flash = {} }) {
+export default function Master({ masters, masterCount = 0, filters = {}, canEdit = false, canDelete = false, deleteRequiresApproval = false, canImport = false, canTransfer = false, transferDefaults = {}, scopeLabel, flash = {} }) {
     const exportHref = `/payroll/master/export${filters.search ? `?${new URLSearchParams({ search: filters.search })}` : ''}`;
     const [selectedDelete, setSelectedDelete] = useState(null);
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
     const [transferOpen, setTransferOpen] = useState(false);
     const deleteDialog = useRef(null);
+    const bulkDeleteDialog = useRef(null);
     const transferDialog = useRef(null);
     const deleteForm = useForm({ confirmation: '' });
+    const bulkDeleteForm = useForm({ confirmation: '' });
     const transferForm = useForm({
         tahun: String(transferDefaults.tahun || new Date().getFullYear()),
         bulan: String(transferDefaults.bulan || new Date().getMonth() + 1),
@@ -44,6 +48,12 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
         if (selectedDelete && !dialog.open) dialog.showModal();
         if (!selectedDelete && dialog.open) dialog.close();
     }, [selectedDelete]);
+    useEffect(() => {
+        const dialog = bulkDeleteDialog.current;
+        if (!dialog) return;
+        if (bulkDeleteOpen && !dialog.open) dialog.showModal();
+        if (!bulkDeleteOpen && dialog.open) dialog.close();
+    }, [bulkDeleteOpen]);
     useEffect(() => {
         const dialog = transferDialog.current;
         if (!dialog) return;
@@ -81,6 +91,30 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
         });
     }
 
+    function openDeleteAll() {
+        bulkDeleteForm.reset();
+        bulkDeleteForm.clearErrors();
+        setBulkDeleteOpen(true);
+    }
+
+    function closeDeleteAll() {
+        if (bulkDeleteForm.processing) return;
+        setBulkDeleteOpen(false);
+        bulkDeleteForm.reset();
+        bulkDeleteForm.clearErrors();
+    }
+
+    function submitDeleteAll(event) {
+        event.preventDefault();
+        bulkDeleteForm.delete('/payroll/edit', {
+            preserveScroll: true,
+            onSuccess: () => {
+                setBulkDeleteOpen(false);
+                bulkDeleteForm.reset();
+            },
+        });
+    }
+
     function openTransfer() {
         transferForm.clearErrors();
         setTransferOpen(true);
@@ -112,6 +146,7 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <ExportDropdown items={[{ href: exportHref, label: 'Export XLSX' }]} />
+                    {canDelete && <button type="button" onClick={openDeleteAll} disabled={!Number(masterCount)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-700/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30"><Trash2 aria-hidden="true" className="h-4 w-4" />Hapus semua</button>}
                     {canTransfer && <button type="button" onClick={openTransfer} disabled={!Number(masters.total || 0)} className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"><ArrowUpRight aria-hidden="true" className="h-4 w-4" />Transfer ke Payroll</button>}
                     {canImport && <Link href="/payroll/import" className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Import XLSX</Link>}
                 </div>
@@ -151,10 +186,8 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
                                 <td className="simpeg-muted px-4 py-4">{row.updated_at || '—'}{row.updated_by && <span className="mt-1 block text-xs">oleh {row.updated_by}</span>}</td>
                                 <td className="px-5 py-4">
                                     <div className="flex flex-wrap justify-end gap-2">
-                                        {canEdit && <Link href={`/payroll/edit/${encodeURIComponent(row.employee_id)}`} className="simpeg-utility inline-flex min-h-9 items-center justify-center rounded-lg border px-3 text-sm font-semibold">Edit gaji</Link>}
-                                        {canDelete && <button type="button" onClick={() => openDelete(row)} aria-label={`Hapus Master Gaji ${row.employee_name} (${row.employee_id})`} className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 text-sm font-semibold text-red-700 transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-600/20 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/40">
-                                            <Trash2 aria-hidden="true" className="h-4 w-4" />Hapus
-                                        </button>}
+                                        {canEdit && <IconAction href={`/payroll/edit/${encodeURIComponent(row.employee_id)}`} label={`Edit Master Gaji ${row.employee_name} (${row.employee_id})`} />}
+                                        {canDelete && <IconAction variant="delete" onClick={() => openDelete(row)} label={`Hapus Master Gaji ${row.employee_name} (${row.employee_id})`} />}
                                         {!canEdit && !canDelete && <span className="simpeg-muted text-xs">Lihat saja</span>}
                                     </div>
                                 </td>
@@ -166,6 +199,51 @@ export default function Master({ masters, filters = {}, canEdit = false, canDele
                     {masters.links.map((link, index) => link.url ? <Link key={`${index}-${link.label}`} href={link.url} preserveScroll className={`simpeg-utility inline-flex min-h-9 items-center rounded-lg border px-3 text-sm ${link.active ? 'font-bold' : ''}`}>{pageLabel(link.label)}</Link> : <span key={`${index}-${link.label}`} className="simpeg-muted inline-flex min-h-9 items-center rounded-lg border px-3 text-sm opacity-60">{pageLabel(link.label)}</span>)}
                 </nav>}
             </section>
+
+            <dialog
+                ref={bulkDeleteDialog}
+                onClose={() => setBulkDeleteOpen(false)}
+                aria-labelledby="delete-all-payroll-master-title"
+                aria-describedby="delete-all-payroll-master-description"
+                className="simpeg-card m-auto w-[min(34rem,calc(100%-2rem))] max-w-none rounded-2xl border p-0 shadow-2xl backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm"
+            >
+                {bulkDeleteOpen && <form onSubmit={submitDeleteAll} className="p-5 sm:p-6">
+                    <div className="mb-4 flex items-start gap-3">
+                        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300">
+                            <Trash2 aria-hidden="true" className="h-5 w-5" />
+                        </span>
+                        <div>
+                            <h2 id="delete-all-payroll-master-title" className="simpeg-text text-lg font-bold">Hapus semua Master Gaji?</h2>
+                            <p id="delete-all-payroll-master-description" className="simpeg-muted mt-1 text-sm leading-6">
+                                {deleteRequiresApproval ? 'Penghapusan massal akan diterapkan setelah disetujui.' : 'Semua Master Gaji dalam cakupan akun ini akan dihapus.'} Riwayat payroll yang sudah tercatat tetap tersimpan.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="simpeg-card-soft mb-4 rounded-xl border px-3 py-3">
+                        <p className="simpeg-text text-sm font-semibold">{Number(masterCount).toLocaleString('id-ID')} Master Gaji</p>
+                        <p className="simpeg-muted mt-1 text-xs leading-5">Data yang tampil pada pencarian tidak membatasi penghapusan; seluruh data dalam cakupan kantor akun akan diproses.</p>
+                    </div>
+                    <label htmlFor="delete-all-payroll-master-confirmation" className="simpeg-text mb-2 block text-sm font-semibold">Ketik HAPUS SEMUA untuk melanjutkan</label>
+                    <input
+                        id="delete-all-payroll-master-confirmation"
+                        autoFocus
+                        autoComplete="off"
+                        value={bulkDeleteForm.data.confirmation}
+                        onChange={(event) => bulkDeleteForm.setData('confirmation', event.target.value)}
+                        aria-invalid={Boolean(bulkDeleteForm.errors.confirmation)}
+                        aria-describedby={bulkDeleteForm.errors.confirmation ? 'delete-all-payroll-master-confirmation-error' : undefined}
+                        className="simpeg-input h-11 w-full rounded-xl border px-3 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]"
+                        placeholder="HAPUS SEMUA"
+                    />
+                    {bulkDeleteForm.errors.confirmation && <p id="delete-all-payroll-master-confirmation-error" role="alert" className="mt-2 text-sm font-medium text-red-700 dark:text-red-300">{bulkDeleteForm.errors.confirmation}</p>}
+                    <div className="mt-6 flex flex-col-reverse justify-end gap-2 sm:flex-row">
+                        <button type="button" onClick={closeDeleteAll} disabled={bulkDeleteForm.processing} className="simpeg-utility inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)] disabled:opacity-60">Batal</button>
+                        <button type="submit" disabled={bulkDeleteForm.processing || bulkDeleteForm.data.confirmation !== 'HAPUS SEMUA'} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-700 px-4 text-sm font-bold text-white transition hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-700/30 disabled:cursor-not-allowed disabled:opacity-50">
+                            <Trash2 aria-hidden="true" className="h-4 w-4" />{bulkDeleteForm.processing ? 'Memproses…' : deleteRequiresApproval ? 'Ajukan penghapusan massal' : 'Hapus semua Master Gaji'}
+                        </button>
+                    </div>
+                </form>}
+            </dialog>
 
             <dialog
                 ref={transferDialog}

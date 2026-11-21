@@ -64,7 +64,7 @@ class RequireLegacySession
 
         $routeName = $request->route()?->getName();
         $permission = $this->rbac->permissionForRoute($routeName);
-        $allowed = $routeName === 'logout'
+        $allowed = in_array($routeName, ['logout', 'session.activity'], true)
             || ($permission !== null
                 && (is_array($permission)
                     ? collect($permission)->contains(fn (string $required): bool => $this->rbac->can($request, $required))

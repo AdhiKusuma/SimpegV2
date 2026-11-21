@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbPegawai;
+use App\Models\Legacy\TbKantor;
 use App\Models\Legacy\TbPenugasan;
 use App\Models\Legacy\TbRecycleBin;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,6 +24,7 @@ class PenugasanController extends Controller
         $unit = $role === 'kepala' ? (string) $request->session()->get('kode_kantor') : '';
         $search = $request->string('search')->trim()->value();
         $year = $request->string('tahun')->trim()->value();
+        $office = $request->string('kantor')->trim()->value();
 
         $query = TbPenugasan::query()
             ->from('tb_penugasan as penugasan')
@@ -31,6 +33,9 @@ class PenugasanController extends Controller
                 $scope->selectRaw('1')->from('tb_jabatan as jabatan_scope')->whereColumn('jabatan_scope.id_peg', 'penugasan.id_peg')->where('jabatan_scope.status_jab', 'Aktif')->where('jabatan_scope.unit_kerja', $unit);
             }))
             ->when($year !== '', fn (Builder $builder) => $builder->where('penugasan.tahun', $year))
+            ->when($office !== '', fn (Builder $builder) => $builder->whereExists(function (QueryBuilder $scope) use ($office): void {
+                $scope->selectRaw('1')->from('tb_jabatan as jabatan_filter')->whereColumn('jabatan_filter.id_peg', 'penugasan.id_peg')->where('jabatan_filter.status_jab', 'Aktif')->where('jabatan_filter.unit_kerja', $office);
+            }))
             ->when($search !== '', function (Builder $builder) use ($search): void {
                 $like = "%{$search}%";
                 $builder->where(function (QueryBuilder $scope) use ($like): void {
@@ -51,7 +56,8 @@ class PenugasanController extends Controller
         return Inertia::render('Penugasan/Index', [
             'items' => $items,
             'years' => TbPenugasan::query()->whereNotNull('tahun')->where('tahun', '<>', '')->distinct()->orderByDesc('tahun')->pluck('tahun')->values(),
-            'filters' => ['search' => $search, 'tahun' => $year],
+            'offices' => TbKantor::query()->whereIn('level', ['KC', 'KP'])->when($unit !== '', fn (Builder $builder) => $builder->where('kode_kantor_detail', $unit))->orderBy('nama_kantor')->get(['kode_kantor_detail', 'nama_kantor'])->map(fn (TbKantor $office): array => ['kode' => $office->kode_kantor_detail, 'nama' => $office->nama_kantor])->all(),
+            'filters' => ['search' => $search, 'tahun' => $year, 'kantor' => $office],
             'canManage' => $this->canManage($request),
         ]);
     }

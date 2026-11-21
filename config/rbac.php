@@ -119,6 +119,7 @@ return [
 
     'route_permissions' => [
         'dashboard' => 'dashboard.view',
+        'dashboard.chart' => 'dashboard.view',
         'dashboard.employee-trend' => 'dashboard.view',
         'dashboard.cabang' => 'dashboard.view',
         'dashboard.tenure.employees' => 'dashboard.view',
@@ -327,6 +328,7 @@ return [
         'payroll.master.employee' => 'payroll.master.edit',
         'payroll.master.update' => 'payroll.master.edit',
         'payroll.master.destroy' => 'payroll.master.delete',
+        'payroll.master.destroy-all' => 'payroll.master.delete',
         'payroll.approvals.index' => 'payroll.approval.manage',
         'payroll.approvals.show' => 'payroll.approval.manage',
         'payroll.approvals.decision' => 'payroll.approval.manage',
@@ -381,6 +383,9 @@ return [
         'audit.cleanup.preview' => 'audit.cleanup',
         'audit.cleanup' => 'audit.cleanup',
         'profile' => 'profile.view',
+        // Controller enforces the role and employee scope for these writes.
+        'profile.biodata-request' => 'profile.view',
+        'profile.biodata.update' => 'profile.view',
         'profile.payslip' => 'profile.view',
         'profile.payslip.show' => 'profile.view',
         'notifications.index' => 'notifications.view',

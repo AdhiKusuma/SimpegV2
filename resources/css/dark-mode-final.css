@@ -63,7 +63,7 @@ html.dark body .simpeg-app-canvas .simpeg-main-shell {
 }
 
 html.dark body .simpeg-app-canvas .simpeg-header {
-    background: #1B2A4A !important;
+    background: #22345C !important;
     border-color: rgb(214 226 245 / 0.22) !important;
     color: #F1F5F9 !important;
 }
@@ -135,12 +135,15 @@ html.dark body .simpeg-app-canvas .simpeg-shell-footer {
     color: #0B1F4B !important;
 }
 
-html.dark body .simpeg-app-canvas .simpeg-header,
 html.dark body .simpeg-app-canvas :is(
     .simpeg-sidebar,
     #primary-navigation.simpeg-sidebar
 ) {
     background: #1B2A4A !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-header {
+    background: #22345C !important;
 }
 
 html.dark body .simpeg-app-canvas :is(.simpeg-card-soft) {
@@ -398,7 +401,7 @@ html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
     --sb-hover: rgb(255 255 255 / 0.08) !important;
     --sb-active-bg: #FFA20F !important;
     --sb-active-text: #0B1F4B !important;
-    background: linear-gradient(180deg, #0F2A6B 0%, #0A2A66 100%) !important;
+    background: linear-gradient(180deg, #0a2a66 0%, #0f3a8a 100%) !important;
     border-right-color: rgb(255 255 255 / 0.12) !important;
     color: #FFFFFF !important;
 }
@@ -1098,7 +1101,7 @@ html body .simpeg-app-canvas .simpeg-header .simpeg-live-datetime {
 }
 
 html:not(.dark) body .simpeg-app-canvas .simpeg-header {
-    background: #FFFFFF !important;
+    background: linear-gradient(90deg, #ffffff 0%, #eaf1fd 100%) !important;
     border-color: #D6E2F5 !important;
     color: #0B1F4B !important;
 }
@@ -1110,7 +1113,7 @@ html:not(.dark) body .simpeg-app-canvas .simpeg-live-datetime .simpeg-muted {
 }
 
 html.dark body .simpeg-app-canvas .simpeg-header {
-    background: #1B2A4A !important;
+    background: #22345C !important;
     border-color: rgb(214 226 245 / 0.22) !important;
     color: #F1F5F9 !important;
 }
@@ -1137,7 +1140,7 @@ html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar:is(
     --sb-label: #C9D6F2 !important;
     --sb-active-bg: #FFA20F !important;
     --sb-active-text: #0B1F4B !important;
-    background: #0F2A6B !important;
+    background: linear-gradient(180deg, #0a2a66 0%, #0f3a8a 100%) !important;
 }
 
 html.dark body .simpeg-app-canvas #primary-navigation.simpeg-sidebar {
@@ -1627,7 +1630,6 @@ html.dark body .simpeg-app-canvas .simpeg-shell-footer {
 }
 
 html.dark body .simpeg-app-canvas :is(
-    .simpeg-header,
     .simpeg-sidebar,
     #primary-navigation.simpeg-sidebar
 ) {
@@ -1881,7 +1883,7 @@ html body .simpeg-app-canvas .simpeg-shell-content main :is(
     .simpeg-quota-filter-apply,
     .simpeg-dashboard-action--primary,
     [data-dashboard-action='primary']
-) :is(svg, svg *, span, strong) {
+) :is(svg, svg *, span:not(.simpeg-filter-active-count), strong) {
     color: #FFFFFF !important;
     -webkit-text-fill-color: #FFFFFF !important;
     stroke: currentColor !important;
@@ -1954,7 +1956,7 @@ html body .simpeg-app-canvas .simpeg-shell-content main :is(
     .simpeg-mobile-filter-toggle,
     .simpeg-filter-dropdown-trigger,
     .simpeg-section-tab:not(.simpeg-section-tab--active)
-) :is(svg, svg *, span, strong) {
+) :is(svg, svg *, span:not(.simpeg-filter-active-count), strong) {
     color: #0B1F4B !important;
     -webkit-text-fill-color: #0B1F4B !important;
     stroke: currentColor !important;
@@ -2090,7 +2092,7 @@ html.dark body .simpeg-app-canvas .simpeg-shell-content main :is(
     .simpeg-filter-dropdown-trigger,
     .simpeg-section-tabs,
     .simpeg-section-tab:not(.simpeg-section-tab--active)
-) :is(svg, svg *, span, strong) {
+) :is(svg, svg *, span:not(.simpeg-filter-active-count), strong) {
     color: #0B1F4B !important;
     -webkit-text-fill-color: #0B1F4B !important;
     stroke: currentColor !important;
@@ -2162,9 +2164,7 @@ html:not(.dark) body .simpeg-app-canvas #primary-navigation.simpeg-sidebar[data-
     --sb-hover: rgb(255 255 255 / 0.10) !important;
     --sb-active-bg: #FFA20F !important;
     --sb-active-text: #0B1F4B !important;
-    background: #0B3D80 !important;
-    background-color: #0B3D80 !important;
-    background-image: none !important;
+    background: linear-gradient(180deg, #0a2a66 0%, #0f3a8a 100%) !important;
     border-right-color: #174F91 !important;
     color: #F8FBFF !important;
 }
@@ -2183,4 +2183,26 @@ html body .simpeg-app-canvas .simpeg-shell-content main section.employees-index-
     background-image: none !important;
     border-color: transparent !important;
     box-shadow: none !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-shell-content main section.employees-index-page > .employees-index-table-card > .employees-index-table-scroll {
+    background: #E8F0FD !important;
+    border: 0 !important;
+}
+
+/* The shared dark table-surface rule is intentionally broad, but its
+ * specificity was still painting this page's outer section white and
+ * rounding the table itself. Keep the canvas transparent and let the card
+ * wrapper clip the table so no white square corners peek through. */
+html.dark body .simpeg-app-canvas.simpeg-app-canvas .simpeg-shell-content main section.employees-index-page.employees-index-page {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+html.dark body .simpeg-app-canvas.simpeg-app-canvas .simpeg-shell-content main section.employees-index-page.employees-index-page > .employees-index-table-card > .employees-index-table-scroll > table.min-w-full {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-color: transparent !important;
 }
