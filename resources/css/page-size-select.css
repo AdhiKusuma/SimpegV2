@@ -48,8 +48,8 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero
     pointer-events: none !important;
     user-select: none !important;
     mix-blend-mode: multiply !important;
-    filter: brightness(1.08) saturate(.9) !important;
-    opacity: .78 !important;
+    filter: brightness(1.18) saturate(.82) contrast(.94) !important;
+    opacity: 1 !important;
 }
 
 /* Fallback selector for shells that are rendered without the canvas marker. */
@@ -65,8 +65,8 @@ html body .simpeg-app-canvas:has(.simpeg-dashboard-shell) .simpeg-dashboard-hero
     object-position: right center !important;
     pointer-events: none !important;
     mix-blend-mode: multiply !important;
-    filter: brightness(1.08) saturate(.9) !important;
-    opacity: .78 !important;
+    filter: brightness(1.18) saturate(.82) contrast(.94) !important;
+    opacity: 1 !important;
 }
 
 /* The building is rendered by the explicit image above. Disable the legacy
