@@ -240,11 +240,13 @@ class XlsxExportService
             .'<border><left style="thin"><color rgb="FFD1D5DB"/></left><right style="thin"><color rgb="FFD1D5DB"/></right><top style="thin"><color rgb="FFD1D5DB"/></top><bottom style="thin"><color rgb="FFD1D5DB"/></bottom><diagonal/></border>'
             .'</borders>'
             .'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-            .'<cellXfs count="4">'
+            .'<cellXfs count="6">'
             .'<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>'
             .'<xf numFmtId="0" fontId="1" fillId="0" borderId="0"/>'
             .'<xf numFmtId="0" fontId="0" fillId="0" borderId="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1" indent="1"/></xf>'
             .'<xf numFmtId="0" fontId="1" fillId="0" borderId="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1" indent="1"/></xf>'
+            .'<xf numFmtId="49" fontId="0" fillId="0" borderId="0" applyNumberFormat="1"/>'
+            .'<xf numFmtId="49" fontId="0" fillId="0" borderId="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1" indent="1"/></xf>'
             .'</cellXfs>'
             .'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
             .'</styleSheet>';
@@ -255,6 +257,7 @@ class XlsxExportService
         $columnWidths = $withBorders ? $this->columnWidths($rows) : [];
         $columnCount = max(1, count($columnWidths));
         $lastRow = max(1, count($rows));
+        $textColumns = $this->textColumns($rows);
         $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
 
@@ -264,7 +267,10 @@ class XlsxExportService
 
             foreach ($columnWidths as $index => $width) {
                 $column = $index + 1;
-                $xml .= '<col min="'.$column.'" max="'.$column.'" width="'.number_format($width, 1, '.', '').'" customWidth="1"/>';
+                $columnStyle = in_array($index, $textColumns, true)
+                    ? ' style="'.($withBorders ? 5 : 4).'"'
+                    : '';
+                $xml .= '<col min="'.$column.'" max="'.$column.'" width="'.number_format($width, 1, '.', '').'" customWidth="1"'.$columnStyle.'/>';
             }
 
             $xml .= '</cols><sheetData>';
@@ -282,10 +288,13 @@ class XlsxExportService
             $xml .= '<row r="'.($rowIndex + 1).'"'.$rowAttributes.'>';
             foreach (array_values((array) $row) as $columnIndex => $value) {
                 $reference = $this->columnName($columnIndex + 1).($rowIndex + 1);
-                $styleIndex = $withBorders ? ($rowIndex === 0 ? 3 : 2) : ($rowIndex === 0 ? 1 : null);
+                $isTextColumn = in_array($columnIndex, $textColumns, true) && $rowIndex > 0;
+                $styleIndex = $isTextColumn
+                    ? ($withBorders ? 5 : 4)
+                    : ($withBorders ? ($rowIndex === 0 ? 3 : 2) : ($rowIndex === 0 ? 1 : null));
                 $style = $styleIndex === null ? '' : ' s="'.$styleIndex.'"';
 
-                if (is_int($value) || is_float($value)) {
+                if (! $isTextColumn && (is_int($value) || is_float($value))) {
                     $xml .= '<c r="'.$reference.'"'.$style.'><v>'.(string) $value.'</v></c>';
 
                     continue;
@@ -322,6 +331,27 @@ class XlsxExportService
         }
 
         return $xml.'</worksheet>';
+    }
+
+    /**
+     * Return zero-based columns that must remain text in Excel. Identifiers
+     * such as NIK must never be written as numeric cells because Excel only
+     * preserves 15 significant digits for numbers.
+     *
+     * @return array<int, int>
+     */
+    private function textColumns(array $rows): array
+    {
+        $headers = array_values((array) ($rows[0] ?? []));
+        $columns = [];
+
+        foreach ($headers as $index => $header) {
+            if (preg_match('/(^|\\s)nik(\\s|$)/i', trim((string) $header)) === 1) {
+                $columns[] = $index;
+            }
+        }
+
+        return $columns;
     }
 
     private function normaliseListDefinitions(array $lists): array

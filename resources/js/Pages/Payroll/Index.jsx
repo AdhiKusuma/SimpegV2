@@ -79,7 +79,9 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
         ...offices.map((office) => ({ value: office.value, label: `${office.label} (${office.code})` })),
     ];
     const exportParams = new URLSearchParams({ tahun: String(filters.tahun), bulan: String(filters.bulan) });
+    const summaryExportParams = new URLSearchParams({ tahun: String(filters.tahun), bulan: String(filters.bulan) });
     if (filters.office) exportParams.set('office', filters.office);
+    if (filters.office) summaryExportParams.set('office', filters.office);
 
     function applyFilters(event) {
         event.preventDefault();
@@ -126,7 +128,14 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                         {canClearHistory && <button type="button" disabled={payrollHistoryCount === 0} title={payrollHistoryCount === 0 ? 'Belum ada batch payroll yang dapat dihapus.' : 'Hapus riwayat payroll lama dan aktif'} onClick={() => { if (payrollHistoryCount === 0) return; clearHistoryForm.reset(); clearHistoryForm.clearErrors(); setClearHistoryOpen(true); }} className="simpeg-utility inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50">
                             <Trash2 aria-hidden="true" className="h-4 w-4" /> Hapus riwayat payroll
                         </button>}
-                        <ExportDropdown items={payrollImport ? [{ href: `/payroll/export?${exportParams.toString()}`, label: 'Export XLSX' }] : []} disabled={!payrollImport} label="Export" />
+                        <ExportDropdown
+                            items={payrollImport ? [
+                                { href: `/payroll/export/rekap?${summaryExportParams.toString()}`, label: 'Export rekap kantor' },
+                                { href: `/payroll/export?${exportParams.toString()}`, label: 'Export rincian pegawai' },
+                            ] : []}
+                            disabled={!payrollImport}
+                            label="Export"
+                        />
                         {canImport && <Link href="/payroll/import" className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold">
                             <Upload aria-hidden="true" className="h-4 w-4" /> Import XLSX
                         </Link>}

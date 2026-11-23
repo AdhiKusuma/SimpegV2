@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, FileSpreadsheet, Upload } from 'lucide-react';
+import { ArrowLeft, Database, FileSpreadsheet, Upload, UploadCloud } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 
@@ -56,42 +56,53 @@ export default function JabatanImport() {
     return (
         <LegacyPageShell title="Import jabatan">
             <Head title="Import jabatan" />
-            <div className="mx-auto max-w-7xl">
-                <div className="mb-6">
-                    <Link href="/jabatan" className="simpeg-muted inline-flex items-center gap-2 text-sm font-semibold hover:underline"><ArrowLeft aria-hidden="true" className="h-4 w-4" />Kembali ke jabatan</Link>
-                    <p className="simpeg-muted mb-2 mt-5 text-sm font-semibold uppercase tracking-[0.18em]">Referensi Kepegawaian</p>
-                    <h1 className="simpeg-text text-3xl font-extrabold tracking-tight">Import jabatan</h1>
-                    <p className="simpeg-muted mt-2">Unggah template, tinjau hasil pencocokan, lalu simpan jabatan pegawai.</p>
-                </div>
+            <div className="simpeg-import-page mx-auto max-w-[1400px]">
+                <header className="simpeg-import-header">
+                    <div className="simpeg-import-heading">
+                        <Link href="/jabatan" className="mb-5 inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 transition hover:text-blue-700"><ArrowLeft aria-hidden="true" className="h-4 w-4" />Kembali ke jabatan</Link>
+                        <p className="simpeg-import-kicker">Referensi kepegawaian</p>
+                        <h1 className="simpeg-text mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Import jabatan</h1>
+                        <p className="simpeg-muted mt-3 max-w-3xl text-sm leading-6 sm:text-base">Unggah template, tinjau hasil pencocokan, lalu simpan jabatan pegawai.</p>
+                    </div>
+                    <div className="simpeg-import-stepper" aria-label="Tahapan import jabatan">
+                        <span className="simpeg-import-step simpeg-import-step--active"><span className="simpeg-import-step-number">1</span>Template</span>
+                        <span className="simpeg-import-step-divider" aria-hidden="true" />
+                        <span className={`simpeg-import-step ${preview ? '' : 'simpeg-import-step--active'}`}><span className="simpeg-import-step-number">2</span>Unggah</span>
+                        <span className="simpeg-import-step-divider" aria-hidden="true" />
+                        <span className={`simpeg-import-step ${preview ? 'simpeg-import-step--active' : ''}`}><span className="simpeg-import-step-number">3</span>Preview</span>
+                    </div>
+                </header>
 
-                <section className="simpeg-card rounded-2xl border p-4 shadow-sm sm:p-6">
-                    <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+                <section className="simpeg-import-card">
+                    <div className="mb-5 flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 p-5 sm:p-6">
                         <div className="flex items-start gap-3">
-                            <span className="simpeg-card-soft inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"><FileSpreadsheet aria-hidden="true" className="h-5 w-5" /></span>
+                            <span className="simpeg-import-card-icon"><FileSpreadsheet aria-hidden="true" className="h-5 w-5" /></span>
                             <div>
                                 <h2 className="simpeg-text font-semibold">Template import jabatan</h2>
                                 <p className="simpeg-muted mt-1 max-w-3xl text-sm">Isi Kode Jabatan atau Nama Jabatan; jika keduanya diisi, nilainya harus cocok dengan master yang sama. Tanggal SK digunakan sebagai TMT. Untuk status Aktif, jabatan aktif sebelumnya pegawai akan ditutup.</p>
                             </div>
                         </div>
-                        <a href="/jabatan/import/template" className="simpeg-utility inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-semibold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Unduh template XLSX</a>
+                        <a href="/jabatan/import/template" className="simpeg-action-primary inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold"><FileSpreadsheet aria-hidden="true" className="h-4 w-4" />Unduh template</a>
                     </div>
 
-                    <form onSubmit={previewFile} className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                    <form onSubmit={previewFile} className="grid gap-4 px-5 pb-5 lg:grid-cols-[1fr_auto] lg:items-end sm:px-6 sm:pb-6">
                         <div>
                             <label htmlFor="jabatan-import-file" className="simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide">File XLSX</label>
-                            <input id="jabatan-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required onChange={(event) => { setFile(event.target.files?.[0] || null); setPreview(null); setRequestError(''); }} className="simpeg-input block min-h-12 w-full rounded-xl border p-2 text-sm file:mr-3 file:min-h-9 file:rounded-lg file:border-0 file:px-3 file:font-semibold" />
+                            <label htmlFor="jabatan-import-file" className={`simpeg-import-dropzone ${file ? 'simpeg-import-dropzone--selected' : ''}`}>
+                                <span className="simpeg-import-dropzone-icon"><UploadCloud className="h-6 w-6" aria-hidden="true" /></span>
+                                <span className="min-w-0"><span className="simpeg-import-file-name simpeg-text block text-sm font-bold">{file?.name || 'Pilih file jabatan XLSX dari perangkat'}</span><span className="simpeg-muted mt-1 block text-xs">{file ? `${(file.size / 1024 / 1024).toFixed(2)} MB · Siap diperiksa` : 'Format .xlsx · Maksimal 20 MB'}</span></span>
+                                <input id="jabatan-import-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required onChange={(event) => { setFile(event.target.files?.[0] || null); setPreview(null); setRequestError(''); }} className="sr-only" />
+                            </label>
                             <p className="simpeg-muted mt-2 text-xs">Maksimal 20 MB. ID pegawai harus aktif; jabatan dan unit kerja harus ditemukan pada data master.</p>
                             {requestError && <p role="alert" className="mt-2 text-sm font-medium text-red-600">{requestError}</p>}
                         </div>
-                        <button type="submit" disabled={loading} className="simpeg-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold disabled:opacity-60"><Upload aria-hidden="true" className="h-4 w-4" />{loading ? 'Memeriksa file…' : 'Periksa dan tampilkan preview'}</button>
+                        <button type="submit" disabled={loading} className="simpeg-action-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2 text-sm font-bold disabled:opacity-60"><Upload aria-hidden="true" className="h-4 w-4" />{loading ? 'Memeriksa file…' : 'Periksa dan tampilkan preview'}</button>
                     </form>
                 </section>
 
-                {preview && <section className="simpeg-card mt-6 overflow-hidden rounded-2xl border shadow-sm" aria-live="polite">
-                    <div className="border-b p-4 sm:p-5">
-                        <p className="simpeg-muted text-xs font-bold uppercase tracking-wide">Preview validasi</p>
-                        <h2 className="simpeg-text mt-1 break-all text-lg font-semibold">{preview.source_filename}</h2>
-                        <p className="simpeg-muted mt-1 text-sm">{preview.total} baris · {preview.valid_count} valid · {preview.invalid_count} bermasalah</p>
+                {preview && <section className="simpeg-import-card simpeg-import-preview-card" aria-live="polite">
+                    <div className="simpeg-import-preview-header">
+                        <div className="min-w-0"><div className="flex items-center gap-2"><span className="simpeg-import-card-icon h-9 w-9 rounded-lg"><Database className="h-4 w-4" aria-hidden="true" /></span><div><p className="simpeg-import-step-label">Langkah 3</p><h2 className="simpeg-text mt-1 text-lg font-bold">Preview validasi</h2></div></div><div className="simpeg-import-summary"><span className="simpeg-import-summary-item">{preview.total} baris</span><span className="simpeg-import-summary-item border-emerald-200 bg-emerald-50 text-emerald-700">{preview.valid_count} valid</span><span className={`simpeg-import-summary-item ${preview.invalid_count > 0 || preview.file_errors?.length ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>{preview.invalid_count || preview.file_errors?.length ? 'Perlu diperiksa' : 'Semua baris sesuai'}</span></div></div>
                     </div>
                     {preview.file_errors?.length > 0 && <div className="border-b border-red-200 bg-red-50 p-4 text-sm text-red-800"><ul className="list-inside list-disc">{preview.file_errors.map((error, index) => <li key={index}>{error}</li>)}</ul></div>}
                     {preview.invalid_count > 0 && <div className="border-b border-red-200 bg-red-50 p-4 sm:p-5">

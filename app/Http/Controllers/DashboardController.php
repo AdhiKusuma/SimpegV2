@@ -407,20 +407,20 @@ class DashboardController extends Controller
             ->get();
 
         $counts = [
-            'Pegawai Tetap' => 0,
-            'Calon Pegawai' => 0,
+            'Tetap' => 0,
             'Kontrak' => 0,
-            'Outsourcing' => 0,
+            'Outsource' => 0,
+            'Belum diisi' => 0,
             'Lainnya' => 0,
         ];
 
         foreach ($rows as $row) {
             $status = strtoupper(trim((string) $row->status_kepeg));
             $label = match (true) {
-                in_array($status, ['TETAP', 'PEGAWAI TETAP'], true) => 'Pegawai Tetap',
-                in_array($status, ['CAPEG', 'CALON PEGAWAI'], true) => 'Calon Pegawai',
+                $status === '' => 'Belum diisi',
+                in_array($status, ['TETAP', 'PEGAWAI TETAP'], true) => 'Tetap',
                 str_contains($status, 'KONTRAK') || $status === 'PKWT' => 'Kontrak',
-                str_contains($status, 'SOURCE') || $status === 'THL' => 'Outsourcing',
+                str_contains($status, 'SOURCE') || $status === 'THL' => 'Outsource',
                 default => 'Lainnya',
             };
 

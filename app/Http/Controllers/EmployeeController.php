@@ -3,16 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\Legacy\TbBahasa;
+use App\Models\Legacy\TbAngkat;
+use App\Models\Legacy\TbAnak;
 use App\Models\Legacy\TbCuti;
 use App\Models\Legacy\TbDp3;
+use App\Models\Legacy\TbDiklat;
+use App\Models\Legacy\TbHukuman;
+use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbKantor;
 use App\Models\Legacy\TbLatJabatan;
 use App\Models\Legacy\TbMasterJabatan;
 use App\Models\Legacy\TbMutasi;
+use App\Models\Legacy\TbOrtu;
 use App\Models\Legacy\TbPegawai;
+use App\Models\Legacy\TbPendidikan;
 use App\Models\Legacy\TbPenghargaan;
 use App\Models\Legacy\TbPenugasan;
 use App\Models\Legacy\TbSeminar;
+use App\Models\Legacy\TbSertifikasi;
+use App\Models\Legacy\TbSuamiIstri;
 use App\Models\Legacy\TbUser;
 use App\Services\ImportPreviewService;
 use App\Services\XlsxExportService;
@@ -229,19 +238,7 @@ class EmployeeController extends Controller
     {
         $this->ensureStaffAccess($request);
 
-        $query = TbPegawai::query()->where('id_peg', $id)->with([
-            'jabatan' => fn ($relation) => $relation
-                ->orderByRaw("CASE WHEN status_jab = 'Aktif' THEN 0 ELSE 1 END")
-                ->orderByDesc('tmt_jabatan'),
-            'pangkat' => fn ($relation) => $relation->orderBy('tgl_sk'),
-            'penghargaan' => fn ($relation) => $relation->orderByDesc('tahun'),
-            'penugasan' => fn ($relation) => $relation->orderByDesc('tahun'),
-            'seminar' => fn ($relation) => $relation->orderByDesc('tgl_mulai'),
-            'cuti' => fn ($relation) => $relation->orderByDesc('tgl_mulai'),
-            'bahasa' => fn ($relation) => $relation->orderBy('bahasa'),
-            'dp3' => fn ($relation) => $relation->orderByDesc('periode_akhir'),
-            'latihanJabatan' => fn ($relation) => $relation->orderByDesc('tahun_lat'),
-        ]);
+        $query = TbPegawai::query()->where('id_peg', $id);
 
         if (strtolower((string) $request->session()->get('hak_akses')) === 'kepala') {
             $query->whereHas('jabatan', function (Builder $builder) use ($request): void {
@@ -255,89 +252,56 @@ class EmployeeController extends Controller
         return Inertia::render('Employees/Show', [
             'employee' => [
                 'id_peg' => $employee->id_peg,
-                'nama' => $employee->nama,
                 'nik' => $employee->nik,
+                'nama' => $employee->nama,
                 'tempat_lhr' => $employee->tempat_lhr,
                 'tgl_lhr' => $employee->tgl_lhr?->format('d-m-Y'),
                 'jk' => $employee->jk,
-                'foto_url' => $employee->foto ? route('employees.photo', ['filename' => basename((string) $employee->foto)]) : null,
-                'status_kepeg' => $employee->status_kepeg,
+                'agama' => $employee->agama,
+                'gol_darah' => $employee->gol_darah,
+                'status_nikah' => $employee->status_nikah,
                 'alamat' => $employee->alamat,
                 'telp' => $employee->telp,
                 'email' => $employee->email,
+                'foto_url' => $employee->foto ? route('employees.photo', ['filename' => basename((string) $employee->foto)]) : null,
+                'status_kepeg' => $employee->status_kepeg,
                 'tmt_kerja' => $employee->tmt_kerja?->format('d-m-Y'),
-                'jabatan' => $employee->jabatan->map(fn ($job): array => [
-                    'jabatan' => $job->jabatan,
-                    'unit_kerja' => $job->unit_kerja,
-                    'tmt_jabatan' => $job->tmt_jabatan?->format('d-m-Y'),
-                    'sampai_tgl' => $job->sampai_tgl?->format('d-m-Y'),
-                    'status_jab' => $job->status_jab,
-                    'no_sk' => $job->no_sk,
-                    'tgl_sk' => $job->tgl_sk?->format('d-m-Y'),
-                ])->values(),
-                'pangkat' => $employee->pangkat->map(fn ($rank): array => [
-                    'id_pangkat' => $rank->id_pangkat,
-                    'pangkat' => $rank->pangkat,
-                    'gol' => $rank->gol,
-                    'jns_pangkat' => $rank->jns_pangkat,
-                    'pejabat_sk' => $rank->pejabat_sk,
-                    'no_sk' => $rank->no_sk,
-                    'tgl_sk' => $rank->tgl_sk?->format('d-m-Y'),
-                    'tmt_pangkat' => $rank->tmt_pangkat?->format('d-m-Y'),
-                    'status_pan' => $rank->status_pan,
-                ])->values(),
-                'penghargaan' => $employee->penghargaan->map(fn (TbPenghargaan $award): array => [
-                    'id_penghargaan' => $award->id_penghargaan,
-                    'penghargaan' => $award->penghargaan,
-                    'tahun' => $award->tahun,
-                    'pemberi' => $award->pemberi,
-                ])->values(),
-                'penugasan' => $employee->penugasan->map(fn (TbPenugasan $assignment): array => [
-                    'id_penugasan' => $assignment->id_penugasan,
-                    'tujuan' => $assignment->tujuan,
-                    'tahun' => $assignment->tahun,
-                    'lama' => $assignment->lama,
-                    'alasan' => $assignment->alasan,
-                ])->values(),
-                'seminar' => $employee->seminar->map(fn (TbSeminar $seminar): array => [
-                    'id_seminar' => $seminar->id_seminar,
-                    'seminar' => $seminar->seminar,
-                    'tempat' => $seminar->tempat,
-                    'penyelenggara' => $seminar->penyelenggara,
-                    'tgl_mulai' => $seminar->tgl_mulai?->format('d-m-Y'),
-                    'tgl_selesai' => $seminar->tgl_selesai?->format('d-m-Y'),
-                    'no_piagam' => $seminar->no_piagam,
-                ])->values(),
-                'cuti' => $employee->cuti->map(fn (TbCuti $leave): array => [
-                    'id_cuti' => $leave->id_cuti,
-                    'jns_cuti' => $leave->jns_cuti,
-                    'no_suratcuti' => $leave->no_suratcuti,
-                    'tgl_suratcuti' => $leave->tgl_suratcuti?->format('d-m-Y'),
-                    'tgl_mulai' => $leave->tgl_mulai?->format('d-m-Y'),
-                    'tgl_selesai' => $leave->tgl_selesai?->format('d-m-Y'),
-                    'ket' => $leave->ket,
-                ])->values(),
-                'bahasa' => $employee->bahasa->map(fn (TbBahasa $language): array => [
-                    'id_bhs' => $language->id_bhs,
-                    'jns_bhs' => $language->jns_bhs,
-                    'bahasa' => $language->bahasa,
-                    'kemampuan' => $language->kemampuan,
-                ])->values(),
-                'dp3' => $employee->dp3->map(fn (TbDp3 $record): array => [
-                    'id_dp3' => $record->id_dp3,
-                    'periode_akhir' => $record->periode_akhir?->format('d-m-Y'),
-                    'hasil_penilaian' => $record->hasil_penilaian,
-                    'nilai_total' => collect(['nilai_kesetiaan', 'nilai_prestasi', 'nilai_tgjwb', 'nilai_ketaatan', 'nilai_kejujuran', 'nilai_kerjasama', 'nilai_prakarsa', 'nilai_kepemimpinan'])->sum(fn (string $score): int => (int) $record->{$score}),
-                ])->values(),
-                'latihan_jabatan' => $employee->latihanJabatan->map(fn (TbLatJabatan $record): array => [
-                    'id_lat_jabatan' => $record->id_lat_jabatan,
-                    'nama_pelatih' => $record->nama_pelatih,
-                    'tahun_lat' => $record->tahun_lat,
-                    'jml_jam' => $record->jml_jam,
-                ])->values(),
+                'tgl_pensiun' => $employee->tgl_pensiun?->format('d-m-Y'),
+            ],
+            'family' => [
+                'spouses' => $this->profileRecords(TbSuamiIstri::class, 'id_peg', $employee->id_peg, ['id_si', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'hp']),
+                'children' => $this->profileRecords(TbAnak::class, 'id_peg', $employee->id_peg, ['id_anak', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'anak_ke']),
+                'parents' => $this->profileRecords(TbOrtu::class, 'id_peg', $employee->id_peg, ['id_ortu', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub']),
+            ],
+            'history' => [
+                'appointment' => $this->profileRecords(TbAngkat::class, 'id_peg_baru', $employee->id_peg, ['id_angkat', 'jns_mutasi', 'tgl_mutasi', 'no_mutasi', 'tmt', 'tmt_selesai'], 'tgl_mutasi'),
+                'training' => $this->profileRecords(TbDiklat::class, 'id_peg', $employee->id_peg, ['id_diklat', 'diklat', 'penyelenggara', 'tempat', 'tahun', 'biaya'], 'tahun'),
+                'certification' => $this->profileRecords(TbSertifikasi::class, 'id_peg', $employee->id_peg, ['id_sertif', 'sertifikasi', 'penyelenggara', 'tgl_sertifikat', 'tgl_expired', 'sertifikat'], 'tgl_sertifikat'),
+                'discipline' => $this->profileRecords(TbHukuman::class, 'id_peg', $employee->id_peg, ['id_hukum', 'hukuman', 'tgl_sk', 'no_sk', 'keterangan'], 'tgl_sk'),
+                'position' => $this->profileRecords(TbJabatan::class, 'id_peg', $employee->id_peg, ['id_jab', 'jabatan', 'unit_kerja', 'tmt_jabatan', 'sampai_tgl', 'status_jab', 'no_sk'], 'tmt_jabatan'),
+                'education' => $this->profileRecords(TbPendidikan::class, 'id_peg', $employee->id_peg, ['id_pendidikan', 'jenjang', 'nama_sekolah', 'jurusan', 'tgl_ijazah', 'th_lulus'], 'tgl_ijazah'),
             ],
             'canManage' => in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'it_admin'], true),
         ]);
+    }
+
+    private function profileRecords(string $model, string $column, string $id, array $fields, ?string $orderBy = null): array
+    {
+        $query = $model::query()->where($column, $id);
+
+        if ($orderBy !== null) {
+            $query->orderByDesc($orderBy);
+        }
+
+        return $query->get()->map(function ($record) use ($fields): array {
+            $data = [];
+            foreach ($fields as $field) {
+                $value = $record->{$field};
+                $data[$field] = $value instanceof \DateTimeInterface ? $value->format('d-m-Y') : $value;
+            }
+
+            return $data;
+        })->values()->all();
     }
 
     public function create(Request $request): Response

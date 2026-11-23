@@ -95,6 +95,42 @@
         margin: 14mm;
     }
 
+    html,
+    body,
+    #app,
+    .simpeg-app-canvas,
+    .simpeg-shell-frame,
+    .simpeg-shell-content,
+    main[data-simpeg-export-root] {
+        min-height: 0 !important;
+        height: auto !important;
+    }
+
+    body {
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
+    .simpeg-app-canvas,
+    .simpeg-shell-frame,
+    .simpeg-shell-content,
+    main[data-simpeg-export-root],
+    .simpeg-profile-page {
+        display: block !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+    }
+
+    .simpeg-sidebar,
+    .simpeg-header,
+    .simpeg-shell-footer,
+    .simpeg-profile-intro,
+    .simpeg-profile-hero,
+    .simpeg-profile-actions,
+    .simpeg-profile-workspace {
+        display: none !important;
+    }
+
     body * {
         visibility: hidden !important;
     }
@@ -109,78 +145,240 @@
         inset: 0 auto auto 0 !important;
         display: block !important;
         width: 100% !important;
-        color: #172746 !important;
+        height: 269mm !important;
+        box-sizing: border-box !important;
+        min-height: 0 !important;
+        color: #172a28 !important;
         background: #fff !important;
-        font: 10pt/1.45 Arial, sans-serif !important;
+        font: 10pt/1.35 Arial, sans-serif !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 
-    .simpeg-profile-cv-print header {
-        border-bottom: 2px solid #1257d6;
-        margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
+    .simpeg-profile-cv-print header,
+    .simpeg-profile-cv-print section,
+    .simpeg-profile-cv-print footer,
+    .simpeg-profile-cv-print p,
+    .simpeg-profile-cv-print h1,
+    .simpeg-profile-cv-print h2,
+    .simpeg-profile-cv-print dl,
+    .simpeg-profile-cv-print dd {
+        margin: 0;
     }
 
-    .simpeg-profile-cv-print header p {
-        color: #52627e;
-        font-size: 8pt;
+    .simpeg-profile-cv-heading {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        border-bottom: 0.45mm solid #087b73;
+        padding-bottom: 3mm;
+        color: #111;
+        font-size: 14pt;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        line-height: 1.15;
+        text-align: center;
     }
 
-    .simpeg-profile-cv-print h1 {
-        margin: 0.2rem 0;
-        color: #1b2a4a;
-        font-size: 20pt;
-        font-weight: 700;
+    .simpeg-profile-cv-heading span {
+        margin-top: 1mm;
+        font-size: 12pt;
+        text-decoration: underline;
+    }
+
+    .simpeg-profile-cv-heading strong {
+        letter-spacing: 0.015em;
+    }
+
+    .simpeg-profile-cv-personal {
+        margin-top: 7mm !important;
     }
 
     .simpeg-profile-cv-print h2 {
-        margin: 1rem 0 0.4rem;
-        color: #1b2a4a;
-        font-size: 12pt;
+        display: flex;
+        align-items: center;
+        gap: 4mm;
+        color: #087b73;
+        font-size: 11pt;
         font-weight: 700;
+        letter-spacing: 0.02em;
+        line-height: 1.2;
     }
 
-    .simpeg-profile-cv-print dl {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.4rem 1.25rem;
+    .simpeg-profile-cv-print h2::after {
+        display: block;
+        flex: 1;
+        height: 0.25mm;
+        background: #cfe0dc;
+        content: '';
     }
 
-    .simpeg-profile-cv-print dl div {
+    .simpeg-profile-cv-personal-body {
+        position: relative;
+        min-height: 76mm;
+        margin-top: 4mm;
+    }
+
+    .simpeg-profile-cv-personal-body dl {
+        width: calc(100% - 44mm);
+    }
+
+    .simpeg-profile-cv-personal-body dl > div {
         display: grid;
-        grid-template-columns: 8rem 1fr;
-        border-bottom: 1px solid #e1e7f2;
-        padding: 0.25rem 0;
+        min-height: 7.1mm;
+        grid-template-columns: 8mm 28mm 5mm minmax(0, 1fr);
+        align-items: start;
+        border-bottom: 0.2mm solid #e8f0ee;
+        padding: 0.75mm 0;
+        column-gap: 0;
     }
 
     .simpeg-profile-cv-print dt,
-    .simpeg-profile-cv-empty {
-        color: #52627e;
+    .simpeg-profile-cv-print dd,
+    .simpeg-profile-cv-number,
+    .simpeg-profile-cv-colon {
+        color: #111;
+        font-size: 10pt;
+        line-height: 1.35;
+    }
+
+    .simpeg-profile-cv-number,
+    .simpeg-profile-cv-colon {
+        display: block;
+        color: #087b73;
+        font-weight: 700;
+    }
+
+    .simpeg-profile-cv-print dt {
+        color: #42534f;
+        font-weight: 400;
     }
 
     .simpeg-profile-cv-print dd {
-        margin: 0;
-        font-weight: 600;
+        min-width: 0;
         overflow-wrap: anywhere;
+        color: #172a28;
+        font-weight: 400;
     }
 
-    .simpeg-profile-cv-print table {
+    .simpeg-profile-cv-photo-wrap {
+        position: absolute;
+        top: -5mm;
+        right: 0;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        width: 37mm;
+        color: #111;
+        font-size: 9pt;
+    }
+
+    .simpeg-profile-cv-photo {
+        box-sizing: border-box;
+        width: 37mm;
+        height: 46.5mm;
+        overflow: hidden;
+        border: 0.4mm solid #b9cec9;
+        padding: 1.1mm;
+        background: #f2f2f2;
+        box-shadow: 0 1.2mm 2.4mm rgb(23 42 40 / 0.12);
+    }
+
+    .simpeg-profile-cv-photo img {
+        display: block;
         width: 100%;
-        border-collapse: collapse;
+        height: 100%;
+        object-fit: cover;
     }
 
-    .simpeg-profile-cv-print td {
-        border: 1px solid #e1e7f2;
-        padding: 0.35rem 0.5rem;
+    .simpeg-profile-cv-photo-wrap > span {
+        margin-top: 1mm;
+        color: #42534f;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    .simpeg-profile-cv-section {
+        margin-top: 5mm !important;
+        break-inside: avoid;
+    }
+
+    .simpeg-profile-cv-position,
+    .simpeg-profile-cv-training {
+        margin: 3mm 0 0 2.5mm !important;
+        border-left: 0.9mm solid #087b73;
+        padding-left: 3.5mm;
+        break-inside: avoid;
+    }
+
+    .simpeg-profile-cv-line {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8mm;
+    }
+
+    .simpeg-profile-cv-line strong {
+        max-width: 82%;
+        color: #172a28;
+        font-size: 10pt;
+        line-height: 1.35;
+    }
+
+    .simpeg-profile-cv-line > span {
+        flex: 0 0 auto;
+        color: #40504d;
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .simpeg-profile-cv-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1mm 5mm;
+        margin-top: 3mm;
+        color: #40504d;
+        font-size: 9pt;
+        line-height: 1.35;
+    }
+
+    .simpeg-profile-cv-meta b {
+        font-weight: 700;
+    }
+
+    .simpeg-profile-cv-empty {
+        margin: 3mm 0 0 2.5mm !important;
+        color: #40504d;
+        font-size: 9pt;
+    }
+
+    .simpeg-profile-cv-signature {
+        width: 55mm;
+        margin: 15mm 0 0 auto !important;
+        color: #111;
+        font-size: 9.5pt;
+        text-align: center;
+        break-inside: avoid;
+    }
+
+    .simpeg-profile-cv-signature p {
+        line-height: 1.35;
+    }
+
+    .simpeg-profile-cv-signature-name {
+        margin-top: 22mm;
+        border-bottom: 0.3mm solid #111;
+        font-weight: 700;
+        line-height: 1.4;
     }
 
     .simpeg-profile-cv-print footer {
-        margin-top: 1.5rem;
-        border-top: 1px solid #e1e7f2;
-        padding-top: 0.5rem;
-        color: #52627e;
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        color: #111;
         font-size: 8pt;
+        font-style: italic;
+        text-align: right;
     }
 }
 

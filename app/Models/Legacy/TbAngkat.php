@@ -15,6 +15,7 @@ class TbAngkat extends Model
     protected $casts = [
         'tgl_mutasi' => 'date',
         'tmt' => 'date',
+        'tmt_selesai' => 'date',
         'date_reg' => 'datetime',
     ];
 

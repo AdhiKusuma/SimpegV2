@@ -83,6 +83,7 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::post('/payroll/approvals/{id}/decision', [PayrollMasterController::class, 'decide'])->whereNumber('id')->name('payroll.approvals.decision');
     Route::get('/payroll/import', [PayrollController::class, 'importForm'])->name('payroll.import');
     Route::get('/payroll/template', [PayrollController::class, 'downloadTemplate'])->name('payroll.template');
+    Route::get('/payroll/export/rekap', [PayrollController::class, 'exportSummary'])->name('payroll.export.summary');
     Route::get('/payroll/export', [PayrollController::class, 'export'])->name('payroll.export');
     Route::get('/payroll/import/preview', [PayrollController::class, 'previewImportGet'])->name('payroll.import.preview.form');
     Route::post('/payroll/import/preview', [PayrollController::class, 'previewImport'])->name('payroll.import.preview');
@@ -175,6 +176,10 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
 
     Route::get('/pengangkatan', [PengangkatanController::class, 'index'])->name('pengangkatan.index');
     Route::get('/pengangkatan/create', [PengangkatanController::class, 'create'])->name('pengangkatan.create');
+    Route::get('/pengangkatan/import', [PengangkatanController::class, 'importForm'])->name('pengangkatan.import');
+    Route::get('/pengangkatan/import/template', [PengangkatanController::class, 'importTemplate'])->name('pengangkatan.import.template');
+    Route::post('/pengangkatan/import/preview', [PengangkatanController::class, 'previewImport'])->name('pengangkatan.import.preview');
+    Route::post('/pengangkatan/import', [PengangkatanController::class, 'storeImport'])->name('pengangkatan.import.store');
     Route::post('/pengangkatan', [PengangkatanController::class, 'store'])->name('pengangkatan.store');
     Route::get('/pengangkatan/{id}/edit', [PengangkatanController::class, 'edit'])->whereNumber('id')->name('pengangkatan.edit');
     Route::put('/pengangkatan/{id}', [PengangkatanController::class, 'update'])->whereNumber('id')->name('pengangkatan.update');
@@ -266,6 +271,9 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::get('/biaya-pendidikan/{id}/participants', [BiayaPendidikanController::class, 'participants'])->whereNumber('id')->name('biaya-pendidikan.participants');
 
     Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+    Route::get('/users/roles/{role}/members', [UserManagementController::class, 'roleMembers'])
+        ->where('role', '[A-Za-z0-9._-]+')
+        ->name('users.roles.members');
     Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
     Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
     Route::get('/users/access', [AccessMatrixController::class, 'index'])->name('users.access');
@@ -332,6 +340,10 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::get('/mutasi/filter-options', [MutationController::class, 'filterOptions'])->name('mutasi.filter-options');
     Route::get('/mutasi', [MutationController::class, 'index'])->name('mutasi.index');
     Route::get('/mutasi/create', [MutationController::class, 'create'])->name('mutasi.create');
+    Route::get('/mutasi/import', [MutationController::class, 'importForm'])->name('mutasi.import');
+    Route::get('/mutasi/import/template', [MutationController::class, 'importTemplate'])->name('mutasi.import.template');
+    Route::post('/mutasi/import/preview', [MutationController::class, 'previewImport'])->name('mutasi.import.preview');
+    Route::post('/mutasi/import', [MutationController::class, 'storeImport'])->name('mutasi.import.store');
     Route::post('/mutasi', [MutationController::class, 'store'])->name('mutasi.store');
     Route::get('/mutasi/{id}/edit', [MutationController::class, 'edit'])->whereNumber('id')->name('mutasi.edit');
     Route::put('/mutasi/{id}', [MutationController::class, 'update'])->whereNumber('id')->name('mutasi.update');

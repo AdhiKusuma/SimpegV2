@@ -13,6 +13,7 @@ use App\Services\PayrollEntryValidationService;
 use App\Services\PayrollPublicationService;
 use App\Services\PayrollWorkbookService;
 use App\Services\RbacService;
+use App\Services\XlsxExportService;
 use Carbon\Carbon;
 use DateTimeImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +26,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Shuchkin\SimpleXLSX;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PayrollController extends Controller
 {
@@ -40,6 +42,15 @@ class PayrollController extends Controller
     ];
 
     private const SUMMARY_AMOUNT_FIELDS = self::ENTRY_AMOUNT_FIELDS;
+
+    private const SUMMARY_EXPORT_FIELDS = [
+        ['gaji_pokok', 'Gaji Pokok'], ['golongan_pegawai', 'Golongan Pegawai'], ['tunj_suami_istri', 'Tunj. Suami/Istri'], ['tunj_anak', 'Tunj. Anak'],
+        ['tunj_jabatan', 'Tunj. Jabatan'], ['tunj_ops', 'Tunj. Operasional'], ['tunj_kinerja', 'Tunj. Kinerja'], ['tunj_masa_kerja', 'Tunj. Masa Kerja'],
+        ['tunj_fungsional', 'Tunj. Fungsional'], ['honor_kontrak', 'Honor Kontrak'], ['thl', 'Tenaga Harian Lepas'], ['tunj_pajak', 'Tunj. Pajak'],
+        ['uang_makan_kontrak', 'Uang Makan Kontrak'], ['jumlah_gaji', 'Jumlah Gaji'], ['bpjs_kesehatan', 'BPJS Kesehatan'],
+        ['bpjs_tenaga_kerja', 'BPJS Tenaga Kerja'], ['absensi', 'Absensi'], ['angsuran_kredit', 'Angsuran Kredit'], ['keris', 'Keris'],
+        ['jumlah_potongan', 'Jumlah Potongan'], ['gaji_bersih', 'Gaji Bersih'], ['total', 'Total'],
+    ];
 
     private const PAYROLL_HEADERS = [
         'kodekantor' => 'office_code',
@@ -342,6 +353,82 @@ class PayrollController extends Controller
         return response()->download($path, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ])->deleteFileAfterSend(true);
+    }
+
+    public function exportSummary(Request $request, RbacService $rbac, XlsxExportService $xlsxExport): StreamedResponse
+    {
+        abort_unless($rbac->can($request, 'payroll.view'), 403);
+        $validated = $request->validate([
+            'tahun' => ['required', 'integer', 'between:2000,2100'],
+            'bulan' => ['required', 'integer', 'between:1,12'],
+            'office' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $scope = $this->officeScope($request);
+        $officeCode = trim((string) ($validated['office'] ?? ''));
+        abort_if($scope['restricted'] && $officeCode !== '' && ! in_array($officeCode, $scope['codes'], true), 403);
+
+        $payrollImport = PayrollImport::query()
+            ->where('is_current', true)
+            ->where('tahun', $validated['tahun'])
+            ->where('bulan', $validated['bulan'])
+            ->when($scope['restricted'], fn ($query) => $query->whereHas(
+                'officeSummaries',
+                fn ($summaries) => $summaries->whereIn('office_code', $scope['codes']),
+            ))
+            ->orderByDesc('id')
+            ->firstOrFail();
+
+        $summaryQuery = $payrollImport->officeSummaries()->orderBy('office_code');
+        if ($scope['restricted']) {
+            $summaryQuery->whereIn('office_code', $scope['codes']);
+        }
+        if ($officeCode !== '') {
+            $summaryQuery->where('office_code', $officeCode);
+        }
+
+        $officeIndex = TbKantor::query()
+            ->get(['kode_kantor_detail', 'kode_cabang', 'nama_kantor'])
+            ->keyBy(fn (TbKantor $office): string => (string) $office->kode_kantor_detail);
+        $fields = self::SUMMARY_EXPORT_FIELDS;
+        $rows = [['No', 'Kode Kantor', 'Nama Kantor', 'Kode Cabang', 'Jumlah Pegawai', ...array_column($fields, 1)]];
+        $totalEmployees = 0;
+        $totals = array_fill_keys(array_column($fields, 0), '0.00');
+
+        foreach ($summaryQuery->get() as $summary) {
+            $office = $officeIndex->get((string) $summary->office_code);
+            $totalEmployees += (int) $summary->employee_count;
+            $row = [
+                count($rows),
+                (string) $summary->office_code,
+                trim((string) ($office?->nama_kantor ?: $summary->source_label ?: 'Kantor tidak terdaftar')),
+                (string) ($office?->kode_cabang ?? ''),
+                (int) $summary->employee_count,
+            ];
+            foreach ($fields as [$field]) {
+                $value = (string) $summary->{$field};
+                $row[] = $value;
+                $totals[$field] = $this->addAmounts($totals[$field], $value);
+            }
+            $rows[] = $row;
+        }
+
+        if (count($rows) > 1) {
+            $totalRow = ['TOTAL', '', '', '', $totalEmployees];
+            foreach ($fields as [$field]) {
+                $totalRow[] = $totals[$field];
+            }
+            $rows[] = $totalRow;
+        }
+
+        $content = $xlsxExport->make($rows, 'Rekap Kantor', true);
+        $filename = sprintf('Rekap_Payroll_Kantor_%04d_%02d%s.xlsx', $validated['tahun'], $validated['bulan'], $officeCode !== '' ? '_'.$officeCode : '');
+
+        return response()->streamDownload(static function () use ($content): void {
+            echo $content;
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function previewImport(Request $request, RbacService $rbac, PayrollEntryValidationService $entryValidator): Response

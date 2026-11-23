@@ -82,6 +82,9 @@ class DataImportExportController extends Controller
         'suami-istri' => 'spouses',
     ];
 
+    /** @var array<string, array<int, string>> */
+    private array $tableColumns = [];
+
     public function __construct(private readonly XlsxImportService $xlsxImport) {}
 
     public function form(Request $request, string $resource, ?string $type = null): Response
@@ -855,17 +858,18 @@ class DataImportExportController extends Controller
     {
         if ($resource === 'family') {
             $fields = array_keys(self::FAMILY_MODELS[$type]['columns']);
+            $table = self::FAMILY_MODELS[$type]['table'];
             $payload = [];
             foreach ($fields as $field) {
-                if ($field === 'id_pekerjaan' && ! Schema::hasColumn(self::FAMILY_MODELS[$type]['table'], $field)) {
+                if ($field === 'id_pekerjaan' && ! $this->hasTableColumn($table, $field)) {
                     continue;
                 }
                 $payload[$field] = $data[$field] ?? null;
             }
             $payload['tgl_lhr'] = $this->xlsxImport->date($data['tgl_lhr'] ?? '');
             $payload['date_reg'] = now()->toDateString();
-            $payload['created_by'] = $actor;
-            if ($type === 'spouses' && Schema::hasColumn(self::FAMILY_MODELS[$type]['table'], 'id_pekerjaan')) {
+            $payload = $this->withCreatedByIfSupported($payload, $table, $actor);
+            if ($type === 'spouses' && $this->hasTableColumn($table, 'id_pekerjaan')) {
                 $payload['id_pekerjaan'] = '';
             }
 
@@ -873,10 +877,30 @@ class DataImportExportController extends Controller
         }
 
         if ($resource === 'education') {
-            return [...$data, 'jenjang' => strtoupper($data['jenjang']), 'tgl_ijazah' => $this->xlsxImport->date($data['tgl_ijazah']), 'date_reg' => now()->toDateString(), 'created_by' => $actor];
+            $payload = [...$data, 'jenjang' => strtoupper($data['jenjang']), 'tgl_ijazah' => $this->xlsxImport->date($data['tgl_ijazah']), 'date_reg' => now()->toDateString()];
+
+            return $this->withCreatedByIfSupported($payload, 'tb_pendidikan', $actor);
         }
 
-        return [...$data, 'tgl_sertifikat' => $this->xlsxImport->date($data['tgl_sertifikat']), 'tgl_expired' => $this->xlsxImport->date($data['tgl_expired']), 'date_reg' => now(), 'created_by' => $actor];
+        $payload = [...$data, 'tgl_sertifikat' => $this->xlsxImport->date($data['tgl_sertifikat']), 'tgl_expired' => $this->xlsxImport->date($data['tgl_expired']), 'date_reg' => now()];
+
+        return $this->withCreatedByIfSupported($payload, 'tb_sertifikasi', $actor);
+    }
+
+    private function withCreatedByIfSupported(array $payload, string $table, mixed $actor): array
+    {
+        if ($this->hasTableColumn($table, 'created_by')) {
+            $payload['created_by'] = $actor;
+        }
+
+        return $payload;
+    }
+
+    private function hasTableColumn(string $table, string $column): bool
+    {
+        $columns = $this->tableColumns[$table] ??= Schema::getColumnListing($table);
+
+        return in_array($column, $columns, true);
     }
 
     private function modelFor(string $resource, ?string $type): string

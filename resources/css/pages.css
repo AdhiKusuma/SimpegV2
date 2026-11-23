@@ -6,6 +6,7 @@
 @import './reports.css';
 @import './audit.css';
 @import './filters.css';
+@import './imports.css';
 
 .employees-index-header {
     display: grid;

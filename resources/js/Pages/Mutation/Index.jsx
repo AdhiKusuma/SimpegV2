@@ -118,7 +118,7 @@ export default function MutationIndex({ items, filters, offices, divisions, posi
                 <div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Mutasi Kepegawaian</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Penonaktifan pegawai</h1><p className="mt-2 text-slate-500">Data pensiun, meninggal dunia, pengunduran diri, PTDH, dan pemberhentian lainnya.</p></div>
                 <div className="flex flex-wrap items-center gap-3">
                     <ExportDropdown items={[{ href: exportHref, label: 'Export XLSX' }]} />
-                    {canManage && <Link href="/mutasi/create" className="simpeg-action-primary rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Tambah Data</Link>}
+                    {canManage && <><Link href="/mutasi/import" className="inline-flex min-h-11 items-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-600/20">Import XLSX</Link><Link href="/mutasi/create" className="simpeg-action-primary rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Tambah Data</Link></>}
                 </div>
             </div>
 

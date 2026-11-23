@@ -64,7 +64,7 @@ class ProfileController extends Controller
             'canManageBiodata' => $employee !== null && in_array($role, ['admin', 'it_admin'], true),
             'canManageFamily' => in_array($role, ['admin', 'it_admin'], true) && app(RbacService::class)->can($request, 'family.manage'),
             'history' => $employee ? [
-                'appointment' => $this->records(TbAngkat::class, 'id_peg_baru', $employee->id_peg, ['id_angkat', 'jns_mutasi', 'tgl_mutasi', 'no_mutasi', 'tmt', 'sk_mutasi'], 'tgl_mutasi'),
+                'appointment' => $this->records(TbAngkat::class, 'id_peg_baru', $employee->id_peg, ['id_angkat', 'jns_mutasi', 'tgl_mutasi', 'no_mutasi', 'tmt', 'tmt_selesai', 'sk_mutasi'], 'tgl_mutasi'),
                 'mutation' => $this->records(TbMutasi::class, 'id_peg', $employee->id_peg, ['id_mutasi', 'jns_mutasi', 'tgl_mutasi', 'no_mutasi', 'jabatan'], 'tgl_mutasi'),
                 'training' => $this->records(TbDiklat::class, 'id_peg', $employee->id_peg, ['id_diklat', 'diklat', 'penyelenggara', 'tempat', 'tahun', 'biaya'], 'tahun'),
                 'certification' => $this->records(TbSertifikasi::class, 'id_peg', $employee->id_peg, ['id_sertif', 'sertifikasi', 'penyelenggara', 'tgl_sertifikat', 'tgl_expired', 'sertifikat'], 'tgl_sertifikat'),

@@ -41,7 +41,7 @@ export default function SectionTabs({ items, ariaLabel }) {
     const { url } = usePage();
     const path = currentPath(url);
 
-    if (!items || items.length < 2) return null;
+    if (!items || items.length === 0) return null;
 
     return (
         <nav className="simpeg-section-tabs" aria-label={ariaLabel}>

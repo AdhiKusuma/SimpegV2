@@ -7,6 +7,7 @@ use App\Models\Legacy\TbRecycleBin;
 use App\Models\Legacy\TbUser;
 use App\Services\RbacService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,27 @@ class UserManagementController extends Controller
         $this->ensureViewAccess($request);
         $role = $request->string('role')->trim()->lower()->value();
         $search = $request->string('search')->trim()->value();
+        $roleDefinitions = collect(app(RbacService::class)->roleDefinitions())
+            ->mapWithKeys(fn (array $definition): array => [strtolower((string) $definition['code']) => $definition]);
+        $roleCounts = TbUser::query()
+            ->selectRaw('LOWER(hak_akses) as role_code, COUNT(*) as total')
+            ->groupBy('role_code')
+            ->pluck('total', 'role_code')
+            ->map(fn ($total): int => (int) $total);
+        $roleCodes = $roleDefinitions->keys()
+            ->merge($roleCounts->keys())
+            ->unique()
+            ->values();
+        $roleSummaries = $roleCodes->map(function (string $roleCode) use ($roleDefinitions, $roleCounts): array {
+            $definition = $roleDefinitions->get($roleCode, []);
+
+            return [
+                'code' => $roleCode,
+                'name' => $definition['name'] ?? $roleCode,
+                'description' => $definition['description'] ?? null,
+                'total' => (int) ($roleCounts->get($roleCode, 0)),
+            ];
+        })->sortBy('name')->values()->all();
 
         $users = TbUser::query()
             ->when($role !== '', fn (Builder $builder) => $builder->whereRaw('LOWER(hak_akses) = ?', [$role]))
@@ -46,7 +68,38 @@ class UserManagementController extends Controller
         return Inertia::render('Users/Index', [
             'users' => $users,
             'filters' => ['role' => $role, 'search' => $search],
+            'roleSummaries' => $roleSummaries,
             'canManage' => app(RbacService::class)->can($request, 'users.manage'),
+        ]);
+    }
+
+    public function roleMembers(Request $request, string $role): JsonResponse
+    {
+        $this->ensureViewAccess($request);
+        $roleCode = strtolower(trim($role));
+        $definition = collect(app(RbacService::class)->roleDefinitions())
+            ->first(fn (array $item): bool => strtolower((string) $item['code']) === $roleCode);
+
+        $definition ??= ['code' => $roleCode, 'name' => $roleCode];
+
+        $members = TbUser::query()
+            ->whereRaw('LOWER(hak_akses) = ?', [$roleCode])
+            ->orderBy('nama_user')
+            ->paginate(min(max($request->integer('per_page', 25), 10), 100))
+            ->through(fn (TbUser $user): array => [
+                'id_user' => $user->id_user,
+                'nama_user' => $user->nama_user,
+                'id_pegawai' => $user->id_pegawai,
+                'jabatan' => $user->jabatan,
+                'status_aktif' => $user->status_aktif,
+            ]);
+
+        return response()->json([
+            'role' => [
+                'code' => $roleCode,
+                'name' => $definition['name'] ?? $roleCode,
+            ],
+            'members' => $members,
         ]);
     }
 

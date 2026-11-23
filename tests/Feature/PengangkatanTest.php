@@ -46,6 +46,7 @@ class PengangkatanTest extends TestCase
             $table->date('tgl_mutasi')->nullable();
             $table->string('no_mutasi', 50)->nullable();
             $table->date('tmt')->nullable();
+            $table->date('tmt_selesai')->nullable();
             $table->string('sk_mutasi', 255)->nullable();
             $table->dateTime('date_reg')->nullable();
         });

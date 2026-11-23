@@ -37,7 +37,7 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                     <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Pengangkatan pegawai</h1>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Daftar riwayat pengangkatan pegawai.</p>
                 </div>
-                {canManage && <Link href="/pengangkatan/create" className="simpeg-action-primary inline-flex min-h-11 items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Pengangkatan baru</Link>}
+                {canManage && <div className="flex flex-wrap items-center gap-3"><Link href="/pengangkatan/import" className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Import XLSX</Link><Link href="/pengangkatan/create" className="simpeg-action-primary inline-flex min-h-11 items-center rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Pengangkatan baru</Link></div>}
             </div>
 
             {flash?.success && <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800" role="status">{flash.success}</div>}
@@ -71,7 +71,7 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                             <tr>
                                 <th className="whitespace-nowrap px-6 py-4 font-bold">Pegawai</th>
                                 <th className="whitespace-nowrap px-6 py-4 font-bold">Pengangkatan</th>
-                                <th className="whitespace-nowrap px-6 py-4 font-bold">Tanggal SK / TMT</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold">Tanggal SK / Masa berlaku</th>
                                 <th className="whitespace-nowrap px-6 py-4 font-bold">Nomor SK</th>
                                 <th className="whitespace-nowrap px-6 py-4 font-bold">Lampiran</th>
                                 {canManage && <th className="whitespace-nowrap px-6 py-4 text-right font-bold">Aksi</th>}
@@ -87,10 +87,10 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                                         <span className="mt-1 block text-xs simpeg-muted">ID pegawai: {item.id_peg_baru || '-'}</span>
                                     </td>
                                     <td className="px-6 py-5"><span className="inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">{item.jns_mutasi || '-'}</span></td>
-                                    <td className="px-6 py-5 text-sm text-slate-600"><span className="block whitespace-nowrap font-medium">{item.tgl_mutasi || '-'}</span><span className="mt-1 block text-xs simpeg-muted">TMT: {item.tmt || '-'}</span></td>
+                                    <td className="px-6 py-5 text-sm text-slate-600"><span className="block whitespace-nowrap font-medium">SK: {item.tgl_mutasi || '-'}</span><span className="mt-1 block text-xs simpeg-muted">Mulai: {item.tmt || '-'}</span>{item.tmt_selesai && <span className="mt-1 block text-xs simpeg-muted">Selesai: {item.tmt_selesai}</span>}</td>
                                     <td className="px-6 py-5 text-sm text-slate-600">{item.no_mutasi || '-'}</td>
                                     <td className="px-6 py-5">{item.document_url ? <a href={item.document_url} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Lihat SK</a> : <span className="text-sm simpeg-muted">Tidak ada file</span>}</td>
-                                    {canManage && <td className="whitespace-nowrap px-6 py-5"><div className="flex justify-end gap-2"><IconAction href={"/pengangkatan/" + item.id_angkat + "/edit"} label="Edit TMT" /><IconAction variant="delete" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} label="Hapus" /></div></td>}
+                                    {canManage && <td className="whitespace-nowrap px-6 py-5"><div className="flex justify-end gap-2"><IconAction href={"/pengangkatan/" + item.id_angkat + "/edit"} label="Edit masa berlaku" /><IconAction variant="delete" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} label="Hapus" /></div></td>}
                                 </tr>
                             ))}
                         </tbody>

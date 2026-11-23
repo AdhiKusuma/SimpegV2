@@ -177,7 +177,7 @@ class BiayaPendidikanController extends Controller
         ]);
     }
 
-    public function previewImport(Request $request, ImportPreviewService $previewStore): Response
+    public function previewImport(Request $request, ImportPreviewService $previewStore): Response|JsonResponse
     {
         $this->ensureCanManage($request);
         $file = $this->validatedImportFile($request);
@@ -197,6 +197,46 @@ class BiayaPendidikanController extends Controller
                 'biaya-pendidikan-import-previews',
                 $file,
             );
+        }
+
+        if ($request->expectsJson()) {
+            $visibleRows = array_values(array_slice($previewRows, 0, 15));
+
+            return response()->json([
+                'columns' => [
+                    'Kode Kategori',
+                    'Kode Pihak',
+                    'Judul Pengembangan SDM',
+                    'Waktu Pelaksanaan',
+                    'Nama Pihak',
+                    'Jumlah SDM',
+                    'Total Biaya',
+                    'Tgl Mulai (YYYY-MM-DD)',
+                ],
+                'preview' => array_map(
+                    static fn (array $row, int $index): array => [
+                        'row_number' => $index + 2,
+                        'status' => $row['status'],
+                        'errors' => $row['errors'],
+                        'values' => [
+                            $row['kode_kategori'],
+                            $row['kode_pihak'],
+                            $row['judul'],
+                            $row['waktu'],
+                            $row['pihak'],
+                            $row['jumlah_sdm'],
+                            (string) $row['total_biaya'],
+                            $row['tanggal'],
+                        ],
+                    ],
+                    $visibleRows,
+                    array_keys($visibleRows),
+                ),
+                'rows' => $previewRows,
+                'total' => count($previewRows),
+                'invalid_count' => count(array_filter($previewRows, static fn (array $row): bool => $row['errors'] !== [])),
+                'token' => $previewToken,
+            ]);
         }
 
         return Inertia::render('BiayaPendidikan/Import', [

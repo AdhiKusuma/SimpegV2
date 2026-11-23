@@ -219,6 +219,14 @@ function sectionTabsForPath(url, permissions, role) {
         return roleAllowed && permissions.includes(item.permission);
     });
 
+    const employeeDetailPath = /^\/pegawai\/[^/]+$/.test(path) && !['/pegawai/import', '/pegawai/create'].includes(path);
+
+    if (group.ariaLabel === 'Status data pegawai' && employeeDetailPath) {
+        const currentItem = visibleItems.find((item) => item.activeWhen?.(url)) || visibleItems[0];
+
+        return currentItem ? { ...group, items: [currentItem] } : null;
+    }
+
     return visibleItems.length > 1 ? { ...group, items: visibleItems } : null;
 }
 
@@ -228,7 +236,10 @@ const navigationCatalog = [
         label: 'Kepegawaian',
         icon: UsersRound,
         items: [
-            navItem('/pegawai', 'Data Pegawai', UsersRound),
+            navItem('/pegawai', 'Data Pegawai', UsersRound, {
+                activePrefixes: ['/pegawai/'],
+                matchDescendants: true,
+            }),
             navItem('/pengangkatan', 'Mutasi Kepegawaian', BriefcaseBusiness, {
                 permission: ['appointments.view', 'mutations.view'],
                 hrefOptions: ['/pengangkatan', '/mutasi'],

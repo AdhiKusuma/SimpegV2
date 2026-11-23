@@ -20,6 +20,24 @@ function valueOrDash(value) {
     return value || '-';
 }
 
+function formatIndonesianDate(value) {
+    if (!value) return '-';
+
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const raw = String(value).trim();
+    const dateParts = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+
+    if (dateParts) {
+        return `${Number(dateParts[1])} ${months[Number(dateParts[2]) - 1] || dateParts[2]} ${dateParts[3]}`;
+    }
+
+    const date = value instanceof Date ? value : new Date(raw);
+
+    return Number.isNaN(date.getTime())
+        ? raw
+        : `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
 function dateInputValue(value) {
     if (!value) return '';
     const parts = String(value).split('-');
@@ -164,7 +182,7 @@ function HistoryTab({ history }) {
 
     return (
         <div className="space-y-4">
-            <DataTable title="Pengangkatan" items={history.appointment} columns={[["Jenis", 'jns_mutasi'], ['Tanggal', 'tgl_mutasi'], ['Nomor SK', 'no_mutasi'], ['TMT', 'tmt']]} />
+            <DataTable title="Pengangkatan" items={history.appointment} columns={[["Jenis", 'jns_mutasi'], ['Tanggal', 'tgl_mutasi'], ['Nomor SK', 'no_mutasi'], ['TMT mulai', 'tmt'], ['TMT selesai', 'tmt_selesai']]} />
             <DataTable title="Diklat" items={history.training} columns={[["Diklat", 'diklat'], ['Penyelenggara', 'penyelenggara'], ['Tempat', 'tempat'], ['Tahun', 'tahun']]} />
             <DataTable title="Sertifikasi" items={history.certification} columns={[["Sertifikasi", 'sertifikasi'], ['Penyelenggara', 'penyelenggara'], ['Tanggal', 'tgl_sertifikat'], ['Berlaku sampai', 'tgl_expired']]} />
             <DataTable title="Pelanggaran" items={history.discipline} columns={[["Pelanggaran", 'hukuman'], ['Tanggal SK', 'tgl_sk'], ['Nomor SK', 'no_sk'], ['Keterangan', 'keterangan']]} />
@@ -174,7 +192,7 @@ function HistoryTab({ history }) {
     );
 }
 
-export default function Profile({ employee, family, familyRequests = [], canRequestFamily, canRequestBiodata, canManageBiodata, canManageFamily, history, flash = {} }) {
+export default function Profile({ employee, family, familyRequests = [], canRequestFamily, canRequestBiodata, canManageBiodata, canManageFamily, history, flash = {}, readOnly = false, backUrl = null, pageTitle = 'Profil Saya', pageEyebrow = 'Profil Saya', pageHeading = 'Ruang profil', pageDescription = 'Kelola informasi pribadi, keluarga, dan data kepegawaian yang terkait dengan akun ini.', canManageEmployee = false }) {
     const [activeTab, setActiveTab] = useState('biodata');
     const [biodataDialogOpen, setBiodataDialogOpen] = useState(false);
     const [fotoPreview, setFotoPreview] = useState(employee?.foto_url || null);
@@ -210,13 +228,13 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
     }
 
     return (
-        <LegacyPageShell title="Profil Saya">
-            <Head title="Profil Saya" />
+        <LegacyPageShell title={pageTitle}>
+            <Head title={pageTitle} />
             <div className="simpeg-profile-intro">
                 <div>
-                    <p className="simpeg-profile-eyebrow">Profil Saya</p>
-                    <h1 className="simpeg-text mt-2 text-3xl font-medium sm:text-4xl">Ruang profil</h1>
-                    <p className="simpeg-muted mt-3 max-w-2xl text-sm leading-6 sm:text-base">Kelola informasi pribadi, keluarga, dan data kepegawaian yang terkait dengan akun ini.</p>
+                    <p className="simpeg-profile-eyebrow">{pageEyebrow}</p>
+                    <h1 className="simpeg-text mt-2 text-3xl font-medium sm:text-4xl">{pageHeading}</h1>
+                    <p className="simpeg-muted mt-3 max-w-2xl text-sm leading-6 sm:text-base">{pageDescription}</p>
                 </div>
                 <span className="simpeg-profile-intro-mark" aria-hidden="true">SIMPEG</span>
             </div>
@@ -246,8 +264,10 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                 </section>
 
                 <div className="simpeg-profile-actions">
+                    {readOnly && backUrl && <Link href={backUrl} className="simpeg-config-secondary-action simpeg-profile-print-button">← Kembali ke Data Pegawai</Link>}
+                    {readOnly && canManageEmployee && <Link href={`/pegawai/${encodeURIComponent(employee.id_peg)}/edit`} className="simpeg-action-primary simpeg-profile-request-button"><FilePenLine aria-hidden="true" />Edit Biodata</Link>}
                     {canRequestBiodata && <button type="button" onClick={openBiodataRequest} className="simpeg-action-primary simpeg-profile-request-button"><FilePenLine aria-hidden="true" />Ajukan Edit Biodata</button>}
-                    {canManageBiodata && <button type="button" onClick={openBiodataRequest} className="simpeg-action-primary simpeg-profile-request-button"><FilePenLine aria-hidden="true" />Edit Biodata</button>}
+                    {!readOnly && canManageBiodata && <button type="button" onClick={openBiodataRequest} className="simpeg-action-primary simpeg-profile-request-button"><FilePenLine aria-hidden="true" />Edit Biodata</button>}
                     <button type="button" onClick={() => window.print()} className="simpeg-config-secondary-action simpeg-profile-print-button"><Printer aria-hidden="true" />Cetak CV</button>
                 </div>
 
@@ -274,11 +294,84 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                 </div>
 
                 <article className="simpeg-profile-cv-print">
-                    <header><p>SIMPEG · DAFTAR RIWAYAT HIDUP</p><h1>{employee.nama}</h1><span>ID Pegawai: {employee.id_peg}</span></header>
-                    <h2>Data Pribadi</h2>
-                    <dl>{[['NIK', employee.nik], ['Tempat, tanggal lahir', [employee.tempat_lhr, employee.tgl_lhr].filter(Boolean).join(', ')], ['Jenis kelamin', employee.jk], ['Agama', employee.agama], ['Golongan darah', employee.gol_darah], ['Status nikah', employee.status_nikah], ['Alamat', employee.alamat], ['Telepon', employee.telp], ['Email', employee.email], ['Status kepegawaian', employee.status_kepeg], ['TMT kerja', employee.tmt_kerja]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{valueOrDash(value)}</dd></div>)}</dl>
-                    {[['Data Keluarga', [...family.children, ...family.spouses, ...family.parents].map((item) => [item.nama, item.status_hub || item.pekerjaan || '-', item.tgl_lhr || '-'])], ['Riwayat Jabatan', history.position.map((item) => [item.jabatan, item.unit_kerja, item.tmt_jabatan])], ['Pendidikan', history.education.map((item) => [item.jenjang, item.nama_sekolah, item.th_lulus])], ['Diklat', history.training.map((item) => [item.diklat, item.penyelenggara, item.tahun])], ['Sertifikasi', history.certification.map((item) => [item.sertifikasi, item.penyelenggara, item.tgl_sertifikat])]].map(([title, rows]) => <section key={title}><h2>{title}</h2>{rows.length ? <table><tbody>{rows.map((row, index) => <tr key={`${title}-${index}`}>{row.map((value, cell) => <td key={cell}>{valueOrDash(value)}</td>)}</tr>)}</tbody></table> : <p className="simpeg-profile-cv-empty">Belum ada data.</p>}</section>)}
-                    <footer>Dicetak dari SIMPEG · {new Date().toLocaleDateString('id-ID')}</footer>
+                    <header className="simpeg-profile-cv-heading">
+                        <strong>PT BPR BKK JATENG (PERSERODA)</strong>
+                        <span>BIODATA PEGAWAI</span>
+                    </header>
+
+                    <section className="simpeg-profile-cv-personal" aria-labelledby="cv-personal-title">
+                        <h2 id="cv-personal-title">I. DATA PRIBADI</h2>
+                        <div className="simpeg-profile-cv-personal-body">
+                            <dl>
+                                {[
+                                    ['NIP', employee.id_peg],
+                                    ['Nama Lengkap', employee.nama],
+                                    ['Tempat, Tgl Lahir', [employee.tempat_lhr, employee.tgl_lhr].filter(Boolean).join(', ')],
+                                    ['Jenis Kelamin', employee.jk],
+                                    ['Agama', employee.agama],
+                                    ['Status Nikah', employee.status_nikah],
+                                    ['Status Kepegawaian', employee.status_kepeg],
+                                    ['Alamat', employee.alamat],
+                                    ['No. Telepon / HP', employee.telp],
+                                    ['Email', employee.email],
+                                ].map(([label, value], index) => (
+                                    <div key={label}>
+                                        <span className="simpeg-profile-cv-number">{index + 1}.</span>
+                                        <dt>{label}</dt>
+                                        <span className="simpeg-profile-cv-colon">:</span>
+                                        <dd>{valueOrDash(value)}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                            <div className="simpeg-profile-cv-photo-wrap">
+                                <div className="simpeg-profile-cv-photo">
+                                    <ProfileAvatar gender={employee.jk} photoUrl={employee.foto_url} alt={`Foto ${employee.nama}`} />
+                                </div>
+                                <span>{valueOrDash(employee.id_peg)}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="simpeg-profile-cv-section" aria-labelledby="cv-position-title">
+                        <h2 id="cv-position-title">2. RIWAYAT JABATAN</h2>
+                        {history.position?.length ? history.position.map((item, index) => (
+                            <div className="simpeg-profile-cv-position" key={item.id_jab || `${item.jabatan}-${index}`}>
+                                <div className="simpeg-profile-cv-line">
+                                    <strong>{valueOrDash(item.jabatan)}</strong>
+                                    <span>{valueOrDash(item.status_jab)}</span>
+                                </div>
+                                <div className="simpeg-profile-cv-meta">
+                                    <span><b>Unit:</b> {valueOrDash(item.unit_kerja)}</span>
+                                    <span><b>TMT:</b> {valueOrDash(item.tmt_jabatan)}</span>
+                                </div>
+                            </div>
+                        )) : <p className="simpeg-profile-cv-empty">Belum ada riwayat jabatan.</p>}
+                    </section>
+
+                    <section className="simpeg-profile-cv-section" aria-labelledby="cv-training-title">
+                        <h2 id="cv-training-title">3. RIWAYAT DIKLAT</h2>
+                        {history.training?.length ? history.training.map((item, index) => (
+                            <div className="simpeg-profile-cv-training" key={item.id_diklat || `${item.diklat}-${index}`}>
+                                <div className="simpeg-profile-cv-line">
+                                    <strong>{valueOrDash(item.diklat)}</strong>
+                                    <span>{valueOrDash(item.tahun)}</span>
+                                </div>
+                                <div className="simpeg-profile-cv-meta">
+                                    <span><b>Penyelenggara:</b> {valueOrDash(item.penyelenggara)}</span>
+                                    <span><b>Tempat:</b> {valueOrDash(item.tempat)}</span>
+                                </div>
+                            </div>
+                        )) : <p className="simpeg-profile-cv-empty">Belum ada riwayat diklat.</p>}
+                    </section>
+
+                    <div className="simpeg-profile-cv-signature">
+                        <p>Semarang, {formatIndonesianDate(new Date())}</p>
+                        <p>Pegawai Yang Bersangkutan,</p>
+                        <div className="simpeg-profile-cv-signature-name">{valueOrDash(employee.nama)}</div>
+                        <p>NIP. {valueOrDash(employee.id_peg)}</p>
+                    </div>
+
+                    <footer>Halaman 1/1 | Dicetak: {formatIndonesianDate(new Date())}</footer>
                 </article>
             </div>}
 

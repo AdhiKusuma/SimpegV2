@@ -9,18 +9,28 @@ const defaults = {
     tgl_mutasi: '',
     no_mutasi: '',
     tmt: '',
+    tmt_selesai: '',
     sk_mutasi: null,
 };
 
 export default function PengangkatanForm({ mode, record, employees, types }) {
     const isEdit = mode === 'edit';
     const form = useForm({ ...defaults, ...(record || {}) });
+    const hasEndDate = ['Kontrak', 'Calon Pegawai'].includes(form.data.jns_mutasi);
+
+    function changeType(value) {
+        form.setData('jns_mutasi', value);
+
+        if (value === 'Tetap') {
+            form.setData('tmt_selesai', '');
+        }
+    }
 
     function submit(event) {
         event.preventDefault();
 
         if (isEdit) {
-            form.transform((data) => ({ tmt: data.tmt, _method: 'put' })).post(`/pengangkatan/${record.id_angkat}`);
+            form.transform((data) => ({ tmt: data.tmt, tmt_selesai: data.tmt_selesai || null, _method: 'put' })).post(`/pengangkatan/${record.id_angkat}`);
             return;
         }
 
@@ -73,8 +83,9 @@ export default function PengangkatanForm({ mode, record, employees, types }) {
                                 {input('no_mutasi', 'Nomor SK', 'text', false, true)}
                                 {input('tgl_mutasi', 'Tanggal SK', 'date', false, true)}
                                 {input('tmt', 'TMT', 'date', true)}
+                                {hasEndDate && input('tmt_selesai', 'TMT selesai', 'date', true)}
                             </div>
-                            <p className="mt-5 text-xs text-slate-500">Sesuai handler sistem, mode edit hanya memperbarui TMT pengangkatan.</p>
+                            <p className="mt-5 text-xs text-slate-500">TMT selesai wajib diisi untuk pengangkatan Kontrak atau Calon Pegawai dan harus sama atau setelah TMT mulai.</p>
                         </>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2">
@@ -82,11 +93,15 @@ export default function PengangkatanForm({ mode, record, employees, types }) {
                                 <EmployeeCombobox employees={employees} value={form.data.id_peg || ''} onChange={(value) => form.setData('id_peg', value)} label="Pegawai" error={form.errors.id_peg} />
                             </div>
                             <div className="min-w-0">
-                                <SelectCombobox id="jns_mutasi" name="jns_mutasi" label="Jenis pengangkatan" value={form.data.jns_mutasi || ''} onChange={(value) => form.setData('jns_mutasi', value)} options={types} emptyLabel="Pilih jenis" required error={form.errors.jns_mutasi} />
+                                <SelectCombobox id="jns_mutasi" name="jns_mutasi" label="Jenis pengangkatan" value={form.data.jns_mutasi || ''} onChange={changeType} options={types} emptyLabel="Pilih jenis" required error={form.errors.jns_mutasi} />
                             </div>
                             {input('no_mutasi', 'Nomor SK pengangkatan', 'text', true)}
                             {input('tgl_mutasi', 'Tanggal SK', 'date', true)}
                             {input('tmt', 'TMT', 'date', true)}
+                            {hasEndDate && <div className="min-w-0">
+                                {input('tmt_selesai', 'TMT selesai', 'date', true)}
+                                <p className="mt-1 text-xs text-slate-500">Wajib untuk Kontrak/Calon Pegawai.</p>
+                            </div>}
                             <div className="min-w-0 md:col-span-2">
                                 <label htmlFor="sk_mutasi" className={labelClass}>SK pengangkatan <span className="text-xs font-normal text-slate-400">(PDF, opsional)</span></label>
                                 <input id="sk_mutasi" name="sk_mutasi" type="file" accept="application/pdf,.pdf" onChange={(event) => form.setData('sk_mutasi', event.target.files?.[0] || null)} className="block min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-medium file:text-blue-700" />
@@ -97,7 +112,7 @@ export default function PengangkatanForm({ mode, record, employees, types }) {
 
                     <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-5">
                         <Link href="/pengangkatan" className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600">Batal</Link>
-                        <button type="submit" disabled={form.processing} className="min-h-11 rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{form.processing ? 'Menyimpan...' : isEdit ? 'Update TMT' : 'Simpan pengangkatan'}</button>
+                        <button type="submit" disabled={form.processing} className="min-h-11 rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{form.processing ? 'Menyimpan...' : isEdit ? 'Simpan perubahan' : 'Simpan pengangkatan'}</button>
                     </div>
                 </form>
             </div>

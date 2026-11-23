@@ -1,0 +1,274 @@
+@layer utilities {
+    .simpeg-import-page {
+        display: grid;
+        min-width: 0;
+        gap: 1.5rem;
+    }
+
+    .simpeg-import-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1.5rem;
+        border-bottom: 1px solid var(--simpeg-border);
+        padding-bottom: 1.5rem;
+    }
+
+    .simpeg-import-heading {
+        min-width: 0;
+    }
+
+    .simpeg-import-kicker,
+    .simpeg-import-step-label {
+        color: var(--simpeg-muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .simpeg-import-stepper {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 0.65rem;
+        color: var(--simpeg-muted);
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .simpeg-import-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        white-space: nowrap;
+    }
+
+    .simpeg-import-step-number {
+        display: inline-flex;
+        height: 1.65rem;
+        width: 1.65rem;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--simpeg-border);
+        border-radius: 999px;
+        background: var(--simpeg-card);
+        color: var(--simpeg-muted);
+        font-size: 0.75rem;
+    }
+
+    .simpeg-import-step--active {
+        color: var(--simpeg-primary);
+    }
+
+    .simpeg-import-step--active .simpeg-import-step-number {
+        border-color: var(--simpeg-primary);
+        background: var(--simpeg-primary);
+        color: var(--simpeg-primary-foreground);
+    }
+
+    .simpeg-import-step-divider {
+        height: 1px;
+        width: 1.25rem;
+        background: var(--simpeg-border);
+    }
+
+    .simpeg-import-card {
+        min-width: 0;
+        border: 1px solid var(--simpeg-border);
+        border-radius: 1.25rem;
+        background: var(--simpeg-card);
+        box-shadow: var(--simpeg-shadow-card);
+    }
+
+    .simpeg-import-card-heading {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+        padding: 1.25rem 1.25rem 0;
+    }
+
+    .simpeg-import-card-icon {
+        display: inline-flex;
+        height: 2.5rem;
+        width: 2.5rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.8rem;
+        background: var(--simpeg-primary-soft);
+        color: var(--simpeg-primary);
+    }
+
+    .simpeg-import-card-body {
+        padding: 1.25rem;
+    }
+
+    .simpeg-import-template-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        border: 1px solid var(--simpeg-primary-border);
+        border-radius: 1rem;
+        background: var(--simpeg-primary-soft);
+        padding: 1.1rem 1.25rem;
+    }
+
+    .simpeg-import-template-list {
+        display: grid;
+        gap: 0.4rem;
+        margin-top: 0.85rem;
+        color: var(--simpeg-muted);
+        font-size: 0.8125rem;
+        line-height: 1.5;
+    }
+
+    .simpeg-import-template-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.45rem;
+    }
+
+    .simpeg-import-template-list li::before {
+        display: inline-block;
+        flex: 0 0 auto;
+        margin-top: 0.45rem;
+        height: 0.35rem;
+        width: 0.35rem;
+        border-radius: 999px;
+        background: var(--simpeg-primary);
+        content: '';
+    }
+
+    .simpeg-import-upload-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 1rem;
+    }
+
+    .simpeg-import-dropzone {
+        display: flex;
+        min-height: 8.5rem;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        gap: 0.85rem;
+        border: 1.5px dashed var(--simpeg-border);
+        border-radius: 1rem;
+        background: var(--simpeg-card-soft);
+        padding: 1.25rem;
+        text-align: center;
+        transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .simpeg-import-dropzone:hover,
+    .simpeg-import-dropzone:focus-within {
+        border-color: var(--simpeg-primary);
+        background: var(--simpeg-primary-soft);
+        box-shadow: 0 0 0 4px var(--simpeg-focus-ring);
+    }
+
+    .simpeg-import-dropzone--selected {
+        border-style: solid;
+        border-color: var(--simpeg-primary);
+        background: var(--simpeg-primary-soft);
+    }
+
+    .simpeg-import-dropzone-icon {
+        display: inline-flex;
+        height: 2.75rem;
+        width: 2.75rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.8rem;
+        background: var(--simpeg-card);
+        color: var(--simpeg-primary);
+        box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+    }
+
+    .simpeg-import-file-name {
+        overflow: hidden;
+        max-width: 100%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .simpeg-import-preview-card {
+        overflow: hidden;
+    }
+
+    .simpeg-import-preview-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 1px solid var(--simpeg-border);
+        padding: 1.25rem;
+    }
+
+    .simpeg-import-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .simpeg-import-summary-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border: 1px solid var(--simpeg-border);
+        border-radius: 999px;
+        background: var(--simpeg-card-soft);
+        color: var(--simpeg-muted);
+        padding: 0.35rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .simpeg-import-table-wrap {
+        max-height: 36rem;
+        overflow: auto;
+    }
+
+    .simpeg-import-table-wrap thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--simpeg-table-header);
+    }
+
+    @media (max-width: 767px) {
+        .simpeg-import-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .simpeg-import-stepper {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .simpeg-import-step-divider {
+            flex: 1;
+            width: auto;
+        }
+
+        .simpeg-import-template-card,
+        .simpeg-import-preview-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .simpeg-import-upload-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .simpeg-import-upload-grid button {
+            width: 100%;
+        }
+    }
+}
