@@ -52,7 +52,6 @@ class AuditLogController extends Controller
                         ->orWhere('description', 'like', $like)
                         ->orWhere('entity_type', 'like', $like)
                         ->orWhere('entity_id', 'like', $like)
-                        ->orWhere('location_label', 'like', $like)
                         ->orWhere('ip_address', 'like', $like);
                 });
             })
@@ -77,11 +76,6 @@ class AuditLogController extends Controller
                 'route_name' => $log->route_name,
                 'method' => $log->method,
                 'ip_address' => $log->ip_address,
-                'location_source' => $log->location_source,
-                'location_label' => $log->location_label,
-                'location_latitude' => $log->location_latitude,
-                'location_longitude' => $log->location_longitude,
-                'location_accuracy_meters' => $log->location_accuracy_meters,
                 'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
             ]);
 

@@ -253,12 +253,11 @@ export default function AuditLogIndex({ logs, filters, modules, actions }) {
                                     <th>Deskripsi</th>
                                     <th>Entitas</th>
                                     <th>IP</th>
-                                    <th>Lokasi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {logs.data.length === 0 ? (
-                                    <tr><td colSpan="8" className="simpeg-audit-empty">Belum ada aktivitas yang sesuai dengan filter.</td></tr>
+                                    <tr><td colSpan="7" className="simpeg-audit-empty">Belum ada aktivitas yang sesuai dengan filter.</td></tr>
                                 ) : logs.data.map((log) => (
                                     <tr key={log.id}>
                                         <td className="simpeg-audit-time">{formatDate(log.created_at)}</td>
@@ -277,17 +276,6 @@ export default function AuditLogIndex({ logs, filters, modules, actions }) {
                                             {log.entity_type && <span className="simpeg-audit-entity-type">{log.entity_type}</span>}
                                         </td>
                                         <td className="simpeg-audit-ip">{log.ip_address || '-'}</td>
-                                        <td className="simpeg-audit-location">
-                                            <span>{log.location_label || '-'}</span>
-                                            {log.location_source && <small>{log.location_source === 'browser' ? 'Browser' : 'Perkiraan IP'}</small>}
-                                            {log.location_latitude !== null && log.location_longitude !== null && (
-                                                <a
-                                                    href={'https://www.openstreetmap.org/?mlat=' + encodeURIComponent(log.location_latitude) + '&mlon=' + encodeURIComponent(log.location_longitude) + '#map=16/' + encodeURIComponent(log.location_latitude) + '/' + encodeURIComponent(log.location_longitude)}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                >Peta</a>
-                                            )}
-                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

@@ -27,7 +27,6 @@ class AuditLogService
         'audit.cleanup.preview',
         'audit.cleanup',
         'session.activity',
-        'session.location',
         'config.application.logo',
         'employees.photo',
         'files.show',
@@ -53,8 +52,6 @@ class AuditLogService
             $metadata = ['value' => $metadata];
         }
 
-        $location = $data['location'] ?? $this->browserLocationForRequest($request);
-
         try {
             WriteAuditLog::dispatch([
                 'actor_id' => $data['actor_id'] ?? $session->get('id_user'),
@@ -69,11 +66,6 @@ class AuditLogService
                 'method' => strtoupper((string) ($data['method'] ?? $request->method())),
                 'url' => isset($data['url']) ? Str::limit((string) $data['url'], 2048, '') : Str::limit($request->fullUrl(), 2048, ''),
                 'ip_address' => $data['ip_address'] ?? $request->ip(),
-                'location_source' => $location['source'] ?? null,
-                'location_label' => isset($location['label']) ? Str::limit((string) $location['label'], 255, '') : null,
-                'location_latitude' => $location['latitude'] ?? null,
-                'location_longitude' => $location['longitude'] ?? null,
-                'location_accuracy_meters' => $location['accuracy_meters'] ?? null,
                 'user_agent' => isset($data['user_agent']) ? Str::limit((string) $data['user_agent'], 1000, '') : Str::limit((string) $request->userAgent(), 1000, ''),
                 'metadata' => $metadata,
                 'created_at' => $data['created_at'] ?? now(),
@@ -82,18 +74,6 @@ class AuditLogService
             // Audit logging must never make the business request fail.
             report($exception);
         }
-    }
-
-    private function browserLocationForRequest(Request $request): array
-    {
-        $browserLocation = $request->session()->get('audit_location');
-        if (is_array($browserLocation)
-            && is_numeric($browserLocation['latitude'] ?? null)
-            && is_numeric($browserLocation['longitude'] ?? null)) {
-            return $browserLocation;
-        }
-
-        return [];
     }
 
     public function recordRequest(Request $request, Response $response): void
