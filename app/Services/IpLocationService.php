@@ -48,13 +48,17 @@ class IpLocationService
 
         try {
             if (Schema::hasTable('audit_ip_locations')) {
+                $expiresAt = $location === null
+                    ? now()->addMinutes(max(1, (int) config('services.ip_geolocation.failure_cache_minutes', 10)))
+                    : now()->addDays($cacheDays);
+
                 DB::table('audit_ip_locations')->updateOrInsert(
                     ['ip_address' => $ip],
                     [
                         'location_label' => $location['label'] ?? null,
                         'latitude' => $location['latitude'] ?? null,
                         'longitude' => $location['longitude'] ?? null,
-                        'expires_at' => now()->addDays($cacheDays),
+                        'expires_at' => $expiresAt,
                         'updated_at' => now(),
                         'created_at' => $now,
                     ],

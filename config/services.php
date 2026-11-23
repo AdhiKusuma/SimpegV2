@@ -51,6 +51,7 @@ return [
         'base_url' => env('IP_GEOLOCATION_BASE_URL', 'https://ipwho.is'),
         'timeout' => (int) env('IP_GEOLOCATION_TIMEOUT', 2),
         'cache_days' => (int) env('IP_GEOLOCATION_CACHE_DAYS', 30),
+        'failure_cache_minutes' => (int) env('IP_GEOLOCATION_FAILURE_CACHE_MINUTES', 10),
     ],
 
 ];
