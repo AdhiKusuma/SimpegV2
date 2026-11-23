@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class IpLocationService
@@ -17,50 +18,96 @@ class IpLocationService
             return null;
         }
 
-        $cacheKey = 'audit-ip-location:'.hash('sha256', $ip);
         $cacheDays = max(1, (int) config('services.ip_geolocation.cache_days', 30));
+        $now = now();
 
-        return Cache::remember($cacheKey, now()->addDays($cacheDays), function () use ($ip): ?array {
-            try {
-                $baseUrl = rtrim((string) config('services.ip_geolocation.base_url', 'https://ipwho.is'), '/');
-                $timeout = max(1, (int) config('services.ip_geolocation.timeout', 2));
-                $response = Http::acceptJson()
-                    ->connectTimeout(min($timeout, 2))
-                    ->timeout($timeout)
-                    ->get($baseUrl.'/'.rawurlencode($ip), [
-                        'fields' => 'country,region,city,latitude,longitude',
-                    ]);
+        try {
+            if (Schema::hasTable('audit_ip_locations')) {
+                $cached = DB::table('audit_ip_locations')
+                    ->where('ip_address', $ip)
+                    ->where(function ($query) use ($now): void {
+                        $query->whereNull('expires_at')->orWhere('expires_at', '>', $now);
+                    })
+                    ->first(['location_label', 'latitude', 'longitude']);
 
-                if (! $response->successful()) {
-                    return null;
+                if ($cached !== null) {
+                    return $cached->location_label === null ? null : [
+                        'source' => 'ip',
+                        'label' => $cached->location_label,
+                        'latitude' => $cached->latitude !== null ? (float) $cached->latitude : null,
+                        'longitude' => $cached->longitude !== null ? (float) $cached->longitude : null,
+                        'accuracy_meters' => null,
+                    ];
                 }
+            }
+        } catch (Throwable) {
+            // Continue to the provider if the optional cache table is unavailable.
+        }
 
-                $payload = $response->json();
-                if (! is_array($payload) || ($payload['success'] ?? false) !== true) {
-                    return null;
-                }
+        $location = $this->lookupProvider($ip);
 
-                $label = implode(', ', array_values(array_filter([
-                    trim((string) ($payload['city'] ?? '')),
-                    trim((string) ($payload['region'] ?? '')),
-                    trim((string) ($payload['country'] ?? '')),
-                ])));
+        try {
+            if (Schema::hasTable('audit_ip_locations')) {
+                DB::table('audit_ip_locations')->updateOrInsert(
+                    ['ip_address' => $ip],
+                    [
+                        'location_label' => $location['label'] ?? null,
+                        'latitude' => $location['latitude'] ?? null,
+                        'longitude' => $location['longitude'] ?? null,
+                        'expires_at' => now()->addDays($cacheDays),
+                        'updated_at' => now(),
+                        'created_at' => $now,
+                    ],
+                );
+            }
+        } catch (Throwable) {
+            // Location enrichment must never block the audited request.
+        }
 
-                if ($label === '') {
-                    return null;
-                }
+        return $location;
+    }
 
-                return [
-                    'source' => 'ip',
-                    'label' => $label,
-                    'latitude' => is_numeric($payload['latitude'] ?? null) ? (float) $payload['latitude'] : null,
-                    'longitude' => is_numeric($payload['longitude'] ?? null) ? (float) $payload['longitude'] : null,
-                    'accuracy_meters' => null,
-                ];
-            } catch (Throwable) {
-                // Location enrichment must never block the audited request.
+    private function lookupProvider(string $ip): ?array
+    {
+        try {
+            $baseUrl = rtrim((string) config('services.ip_geolocation.base_url', 'https://ipwho.is'), '/');
+            $timeout = max(1, (int) config('services.ip_geolocation.timeout', 2));
+            $response = Http::acceptJson()
+                ->connectTimeout(min($timeout, 2))
+                ->timeout($timeout)
+                ->get($baseUrl.'/'.rawurlencode($ip), [
+                    'fields' => 'country,region,city,latitude,longitude',
+                ]);
+
+            if (! $response->successful()) {
                 return null;
             }
-        });
+
+            $payload = $response->json();
+            if (! is_array($payload) || ($payload['success'] ?? false) !== true) {
+                return null;
+            }
+
+            $label = implode(', ', array_values(array_filter([
+                trim((string) ($payload['city'] ?? '')),
+                trim((string) ($payload['region'] ?? '')),
+                trim((string) ($payload['country'] ?? '')),
+            ])));
+
+            if ($label === '') {
+                return null;
+            }
+
+            return [
+                'source' => 'ip',
+                'label' => $label,
+                'latitude' => is_numeric($payload['latitude'] ?? null) ? (float) $payload['latitude'] : null,
+                'longitude' => is_numeric($payload['longitude'] ?? null) ? (float) $payload['longitude'] : null,
+                'accuracy_meters' => null,
+            ];
+        } catch (Throwable) {
+            // Location enrichment must never block the audited request.
+            return null;
+        }
     }
 }
