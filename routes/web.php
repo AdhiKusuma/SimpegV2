@@ -38,6 +38,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SeminarController;
 use App\Http\Controllers\SertifikasiController;
 use App\Http\Controllers\UserManagementController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [AuthController::class, 'create'])->name('login');
@@ -60,6 +61,24 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
             'expires_at' => now()->addSeconds($timeoutSeconds)->timestamp,
         ]);
     })->name('session.activity');
+
+    Route::post('/session/location', function (Request $request) {
+        $location = $request->validate([
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'accuracy' => ['nullable', 'numeric', 'min:0', 'max:100000'],
+        ]);
+
+        $request->session()->put('audit_location', [
+            'source' => 'browser',
+            'label' => 'Lokasi browser (GPS)',
+            'latitude' => (float) $location['latitude'],
+            'longitude' => (float) $location['longitude'],
+            'accuracy_meters' => isset($location['accuracy']) ? (float) $location['accuracy'] : null,
+        ]);
+
+        return response()->json(['ok' => true]);
+    })->name('session.location');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/employee-trend', [DashboardController::class, 'employeeTrend'])->name('dashboard.employee-trend');

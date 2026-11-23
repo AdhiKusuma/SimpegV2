@@ -30,7 +30,7 @@ class PruneAuditLogs implements ShouldQueue
             return;
         }
 
-        $days = max($this->olderThanDays, 30);
+        $days = max($this->olderThanDays, 0);
         $cutoff = now()->subDays($days);
         $deleted = 0;
         $batchSize = 1000;
@@ -74,7 +74,7 @@ class PruneAuditLogs implements ShouldQueue
                 'manual_cleanup' => true,
                 'deleted_count' => $deleted,
                 'retention_days' => $days,
-                'protected_days' => 30,
+                'protected_days' => $days,
             ],
             'created_at' => now(),
         ]);

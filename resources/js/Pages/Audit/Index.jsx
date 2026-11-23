@@ -25,11 +25,15 @@ const actionTone = {
 
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 const cleanupOptions = [
-    { value: '30', label: '30 hari' },
-    { value: '90', label: '90 hari' },
-    { value: '180', label: '180 hari' },
-    { value: '365', label: '1 tahun' },
-    { value: '730', label: '2 tahun' },
+    { value: '0', label: 'Semua log, termasuk hari ini' },
+    { value: '1', label: '1 hari terakhir' },
+    { value: '7', label: '7 hari terakhir' },
+    { value: '14', label: '14 hari terakhir' },
+    { value: '30', label: '30 hari terakhir' },
+    { value: '90', label: '90 hari terakhir' },
+    { value: '180', label: '180 hari terakhir' },
+    { value: '365', label: '1 tahun terakhir' },
+    { value: '730', label: '2 tahun terakhir' },
 ];
 
 function formatDate(value) {
@@ -106,15 +110,19 @@ export default function AuditLogIndex({ logs, filters, modules, actions }) {
 
     function submitCleanup() {
         const count = Number(cleanupPreview?.count || 0);
+        const days = Number(cleanupDays);
+        const retentionLabel = days === 0
+            ? 'semua log sebelum waktu sekarang'
+            : 'log yang lebih lama dari ' + days + ' hari';
         const confirmed = count > 0 && window.confirm(
-            'Hapus ' + count.toLocaleString('id-ID') + ' audit log yang lebih lama dari '
-            + cleanupDays + ' hari? Log 30 hari terakhir tetap dilindungi.',
+            'Hapus ' + count.toLocaleString('id-ID') + ' audit log: ' + retentionLabel + '?'
+            + (days > 0 ? ' Log ' + days + ' hari terakhir tetap dipertahankan.' : ''),
         );
         if (!confirmed) {
             return;
         }
 
-        router.post('/audit-log/cleanup', { older_than_days: Number(cleanupDays) }, {
+        router.post('/audit-log/cleanup', { older_than_days: days }, {
             preserveScroll: true,
             onStart: () => setCleanupLoading(true),
             onFinish: () => setCleanupLoading(false),
@@ -170,7 +178,7 @@ export default function AuditLogIndex({ logs, filters, modules, actions }) {
                         <div>
                             <p className="simpeg-audit-kicker">Pemeliharaan</p>
                             <h2>Bersihkan audit log lama</h2>
-                            <p>Proses dijalankan melalui queue agar tidak mengganggu request utama. Log 30 hari terakhir selalu dilindungi.</p>
+                            <p>Proses penghapusan dilakukan bertahap. Anda dapat memilih usia log yang ingin dipertahankan.</p>
                         </div>
                         <div className="simpeg-audit-cleanup-controls">
                             <label htmlFor="audit-cleanup-days">Hapus log lebih lama dari</label>
@@ -195,7 +203,7 @@ export default function AuditLogIndex({ logs, filters, modules, actions }) {
                             {cleanupPreview && !cleanupPreview.error && (
                                 <div className="simpeg-audit-cleanup-preview">
                                     <ShieldAlert className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-                                    <span>{Number(cleanupPreview.count || 0).toLocaleString('id-ID')} log siap dibersihkan.</span>
+                                    <span>{Number(cleanupPreview.count || 0).toLocaleString('id-ID')} log siap dibersihkan. {Number(cleanupDays) > 0 ? `Log ${cleanupDays} hari terakhir dipertahankan.` : 'Log sampai saat ini ikut dibersihkan.'}</span>
                                     <button type="button" className="simpeg-audit-delete-button" onClick={submitCleanup} disabled={!cleanupPreview.count || cleanupLoading}>
                                         <Trash2 className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
                                         Hapus sekarang
@@ -245,11 +253,12 @@ export default function AuditLogIndex({ logs, filters, modules, actions }) {
                                     <th>Deskripsi</th>
                                     <th>Entitas</th>
                                     <th>IP</th>
+                                    <th>Lokasi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {logs.data.length === 0 ? (
-                                    <tr><td colSpan="7" className="simpeg-audit-empty">Belum ada aktivitas yang sesuai dengan filter.</td></tr>
+                                    <tr><td colSpan="8" className="simpeg-audit-empty">Belum ada aktivitas yang sesuai dengan filter.</td></tr>
                                 ) : logs.data.map((log) => (
                                     <tr key={log.id}>
                                         <td className="simpeg-audit-time">{formatDate(log.created_at)}</td>
@@ -268,6 +277,17 @@ export default function AuditLogIndex({ logs, filters, modules, actions }) {
                                             {log.entity_type && <span className="simpeg-audit-entity-type">{log.entity_type}</span>}
                                         </td>
                                         <td className="simpeg-audit-ip">{log.ip_address || '-'}</td>
+                                        <td className="simpeg-audit-location">
+                                            <span>{log.location_label || '-'}</span>
+                                            {log.location_source && <small>{log.location_source === 'browser' ? 'Browser' : 'Perkiraan IP'}</small>}
+                                            {log.location_latitude !== null && log.location_longitude !== null && (
+                                                <a
+                                                    href={'https://www.openstreetmap.org/?mlat=' + encodeURIComponent(log.location_latitude) + '&mlon=' + encodeURIComponent(log.location_longitude) + '#map=16/' + encodeURIComponent(log.location_latitude) + '/' + encodeURIComponent(log.location_longitude)}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >Peta</a>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

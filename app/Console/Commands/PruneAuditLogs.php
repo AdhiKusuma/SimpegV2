@@ -23,7 +23,11 @@ class PruneAuditLogs extends Command
             return self::FAILURE;
         }
 
-        $days = max((int) ($this->option('days') ?: config('audit.retention_days', 180)), 1);
+        $daysOption = $this->option('days');
+        $days = max(
+            (int) ($daysOption !== null && $daysOption !== '' ? $daysOption : config('audit.retention_days', 180)),
+            0,
+        );
         $batch = max((int) $this->option('batch'), 1);
         $cutoff = now()->subDays($days);
         $candidates = AuditLog::query()->where('created_at', '<', $cutoff)->count();

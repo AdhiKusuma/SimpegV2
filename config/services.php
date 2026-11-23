@@ -45,4 +45,12 @@ return [
         'ca_bundle' => env('SSO_CA_BUNDLE', base_path('resources/certificates/lets-encrypt-yr1.pem')),
     ],
 
+    'ip_geolocation' => [
+        // Opt-in because enabling this sends public IPs to the configured provider.
+        'enabled' => filter_var(env('IP_GEOLOCATION_ENABLED', false), FILTER_VALIDATE_BOOL),
+        'base_url' => env('IP_GEOLOCATION_BASE_URL', 'https://ipwho.is'),
+        'timeout' => (int) env('IP_GEOLOCATION_TIMEOUT', 2),
+        'cache_days' => (int) env('IP_GEOLOCATION_CACHE_DAYS', 30),
+    ],
+
 ];

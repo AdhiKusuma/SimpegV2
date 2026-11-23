@@ -52,6 +52,7 @@ class AuditLogController extends Controller
                         ->orWhere('description', 'like', $like)
                         ->orWhere('entity_type', 'like', $like)
                         ->orWhere('entity_id', 'like', $like)
+                        ->orWhere('location_label', 'like', $like)
                         ->orWhere('ip_address', 'like', $like);
                 });
             })
@@ -76,6 +77,11 @@ class AuditLogController extends Controller
                 'route_name' => $log->route_name,
                 'method' => $log->method,
                 'ip_address' => $log->ip_address,
+                'location_source' => $log->location_source,
+                'location_label' => $log->location_label,
+                'location_latitude' => $log->location_latitude,
+                'location_longitude' => $log->location_longitude,
+                'location_accuracy_meters' => $log->location_accuracy_meters,
                 'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
             ]);
 
@@ -103,7 +109,7 @@ class AuditLogController extends Controller
         return response()->json([
             'count' => $this->cleanupQuery($days)->count(),
             'older_than_days' => $days,
-            'protected_days' => 30,
+            'protected_days' => $days,
         ]);
     }
 
@@ -127,13 +133,15 @@ class AuditLogController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        return back()->with(
-            'success',
-            sprintf(
-                'Pembersihan %s audit log dijadwalkan. Log 30 hari terakhir tetap dilindungi.',
+        $message = $days === 0
+            ? 'Pembersihan semua audit log lama dijadwalkan.'
+            : sprintf(
+                'Pembersihan %s audit log dijadwalkan. Log %s hari terakhir tetap dipertahankan.',
                 number_format($count, 0, ',', '.'),
-            ),
-        );
+                number_format($days, 0, ',', '.'),
+            );
+
+        return back()->with('success', $message);
     }
 
     private function ensureAccess(Request $request): void
@@ -149,12 +157,12 @@ class AuditLogController extends Controller
     private function validatedCleanupDays(Request $request): int
     {
         return (int) $request->validate([
-            'older_than_days' => ['required', 'integer', 'min:30', 'max:3650'],
+            'older_than_days' => ['required', 'integer', 'min:0', 'max:3650'],
         ])['older_than_days'];
     }
 
     private function cleanupQuery(int $days): Builder
     {
-        return AuditLog::query()->where('created_at', '<', now()->subDays(max($days, 30)));
+        return AuditLog::query()->where('created_at', '<', now()->subDays(max($days, 0)));
     }
 }
