@@ -13,8 +13,6 @@ class AuditLogService
 {
     private static ?bool $available = null;
 
-    public function __construct(private readonly IpLocationService $ipLocations) {}
-
     private const RECORDABLE_ACTIONS = [
         'Create',
         'Update',
@@ -55,7 +53,7 @@ class AuditLogService
             $metadata = ['value' => $metadata];
         }
 
-        $location = $data['location'] ?? $this->locationForRequest($request);
+        $location = $data['location'] ?? $this->browserLocationForRequest($request);
 
         try {
             WriteAuditLog::dispatch([
@@ -86,7 +84,7 @@ class AuditLogService
         }
     }
 
-    private function locationForRequest(Request $request): array
+    private function browserLocationForRequest(Request $request): array
     {
         $browserLocation = $request->session()->get('audit_location');
         if (is_array($browserLocation)
@@ -95,7 +93,7 @@ class AuditLogService
             return $browserLocation;
         }
 
-        return $this->ipLocations->resolve($request->ip()) ?? [];
+        return [];
     }
 
     public function recordRequest(Request $request, Response $response): void
