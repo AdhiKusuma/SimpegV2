@@ -80,7 +80,7 @@ class IpLocationService
                 ->connectTimeout(min($timeout, 2))
                 ->timeout($timeout)
                 ->get($baseUrl.'/'.rawurlencode($ip), [
-                    'fields' => 'country,region,city,latitude,longitude',
+                    'fields' => 'success,country,region,city,latitude,longitude',
                 ]);
 
             if (! $response->successful()) {
