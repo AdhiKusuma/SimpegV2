@@ -8,7 +8,7 @@ const religions = ['Islam', 'Protestan', 'Katolik', 'Hindu', 'Budha', 'KongHuCu'
 const genders = ['Laki-laki', 'Perempuan'];
 const bloodTypes = ['-', 'A', 'B', 'AB', 'O'];
 const maritalStatuses = ['Menikah', 'Belum Menikah', 'Janda', 'Duda'];
-const employmentStatuses = ['Tetap', 'Kontrak', 'Outsource'];
+const employmentStatuses = ['Tetap', 'Calon Pegawai', 'Kontrak', 'Outsourcing'];
 
 export default function EmployeeForm({ mode, record }) {
     const isEdit = mode === 'edit';

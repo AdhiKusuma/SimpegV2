@@ -410,8 +410,9 @@ class DashboardController extends Controller
 
         $counts = [
             'Tetap' => 0,
+            'Calon Pegawai' => 0,
             'Kontrak' => 0,
-            'Outsource' => 0,
+            'Outsourcing' => 0,
             'Belum diisi' => 0,
             'Lainnya' => 0,
         ];
@@ -421,8 +422,9 @@ class DashboardController extends Controller
             $label = match (true) {
                 $status === '' => 'Belum diisi',
                 in_array($status, ['TETAP', 'PEGAWAI TETAP'], true) => 'Tetap',
+                in_array($status, ['CAPEG', 'CALON PEGAWAI'], true) => 'Calon Pegawai',
                 str_contains($status, 'KONTRAK') || $status === 'PKWT' => 'Kontrak',
-                str_contains($status, 'SOURCE') || $status === 'THL' => 'Outsource',
+                in_array($status, ['OUTSOURCE', 'OUTSOURCING'], true) || $status === 'THL' => 'Outsourcing',
                 default => 'Lainnya',
             };
 

@@ -40,6 +40,8 @@ class EmployeeController extends Controller
 {
     private const ALL_DIVISIONS = '__all__';
 
+    private const EMPLOYMENT_STATUS_OPTIONS = ['Tetap', 'Calon Pegawai', 'Kontrak', 'Outsourcing'];
+
     private const IMPORT_HEADERS = [
         'ID Pegawai (Wajib)',
         'NIP',
@@ -76,6 +78,7 @@ class EmployeeController extends Controller
         $office = $request->string('kantor')->trim()->value();
         $requestedYear = $request->string('year')->trim()->value();
         $year = preg_match('/^\d{4}$/', $requestedYear) === 1 ? $requestedYear : '';
+        $statusKepeg = $request->string('status_kepeg')->trim()->value();
         $division = $request->string('divisi')->trim()->value();
         $position = $request->string('jabatan')->trim()->value();
         if ($division === '') {
@@ -108,6 +111,12 @@ class EmployeeController extends Controller
                 $builder->whereRaw('TRIM(mj.nama_jabatan) = ?', [$position])
                     ->orWhereRaw('TRIM(j.jabatan) = ?', [$position]);
             });
+        }
+
+        $employmentStatuses = collect(self::EMPLOYMENT_STATUS_OPTIONS);
+
+        if ($statusKepeg !== '') {
+            $this->applyEmploymentStatusFilter($query, $statusKepeg);
         }
 
         $yearsQuery = clone $query;
@@ -180,12 +189,14 @@ class EmployeeController extends Controller
             'offices' => $offices,
             'divisions' => $filterOptions['divisions'],
             'positions' => $filterOptions['positions'],
+            'employmentStatuses' => $employmentStatuses,
             'years' => $years,
             'filters' => [
                 'tab' => $tab,
                 'search' => $search,
                 'kantor' => $office,
                 'year' => $year,
+                'status_kepeg' => $statusKepeg,
                 'divisi' => $division,
                 'jabatan' => $position,
             ],
@@ -333,7 +344,7 @@ class EmployeeController extends Controller
                 'jenis_kelamin' => ['title' => 'Jenis kelamin', 'values' => ['Laki-laki', 'Perempuan']],
                 'gol_darah' => ['title' => 'Golongan darah', 'values' => ['-', 'A', 'B', 'AB', 'O']],
                 'status_nikah' => ['title' => 'Status pernikahan', 'values' => ['Menikah', 'Belum Menikah', 'Janda', 'Duda']],
-                'status_kepegawaian' => ['title' => 'Status kepegawaian', 'values' => ['Tetap', 'Kontrak', 'Outsource']],
+                'status_kepegawaian' => ['title' => 'Status kepegawaian', 'values' => ['Tetap', 'Calon Pegawai', 'Kontrak', 'Outsourcing']],
             ],
             [
                 ['column' => 'F', 'list' => 'agama'],
@@ -526,6 +537,23 @@ class EmployeeController extends Controller
         }
 
         return $query->where('p.status_aktif', 1)->whereNotNull('j.id_jab');
+    }
+
+    private function applyEmploymentStatusFilter(Builder $query, string $status): void
+    {
+        $normalizedStatus = mb_strtoupper(trim($status));
+        $acceptedStatuses = match ($normalizedStatus) {
+            'CALON PEGAWAI', 'CAPEG' => ['CALON PEGAWAI', 'CAPEG'],
+            'OUTSOURCE', 'OUTSOURCING' => ['OUTSOURCE', 'OUTSOURCING'],
+            default => [$normalizedStatus],
+        };
+
+        $query->whereRaw(
+            count($acceptedStatuses) === 1
+                ? 'UPPER(TRIM(p.status_kepeg)) = ?'
+                : 'UPPER(TRIM(p.status_kepeg)) IN (?, ?)',
+            $acceptedStatuses,
+        );
     }
 
     private function employeeFilterOptions(Builder $query, string $division = '', ?TbKantor $selectedOffice = null): array

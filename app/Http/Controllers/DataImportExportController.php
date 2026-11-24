@@ -12,8 +12,8 @@ use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbPendidikan;
 use App\Models\Legacy\TbSertifikasi;
 use App\Models\Legacy\TbSuamiIstri;
-use App\Services\ImportPreviewService;
 use App\Services\EmployeePdfService;
+use App\Services\ImportPreviewService;
 use App\Services\XlsxExportService;
 use App\Services\XlsxImportService;
 use Carbon\Carbon;
@@ -595,6 +595,7 @@ class DataImportExportController extends Controller
                 'divisi' => $request->string('divisi')->trim()->value(),
                 'jabatan' => $request->string('jabatan')->trim()->value(),
                 'year' => $request->string('year')->trim()->value(),
+                'status_kepeg' => $request->string('status_kepeg')->trim()->value(),
             ],
             'generatedAt' => now('Asia/Jakarta')->format('d-m-Y H:i'),
         ], 'data-pegawai-'.now()->format('Ymd_His').'.pdf');
@@ -643,8 +644,29 @@ class DataImportExportController extends Controller
         if ($request->filled('year')) {
             $query->whereYear('p.tmt_kerja', (int) $request->string('year')->trim());
         }
+        $statusKepeg = $request->string('status_kepeg')->trim()->value();
+        if ($statusKepeg !== '') {
+            $this->applyEmployeeEmploymentStatusFilter($query, $statusKepeg);
+        }
 
         return $query->select('p.*', 'j.jabatan', 'j.unit_kerja', 'k.nama_kantor', 'mj.nama_unit_kerja')->distinct()->orderBy('p.nama');
+    }
+
+    private function applyEmployeeEmploymentStatusFilter(Builder $query, string $status): void
+    {
+        $normalizedStatus = mb_strtoupper(trim($status));
+        $acceptedStatuses = match ($normalizedStatus) {
+            'CALON PEGAWAI', 'CAPEG' => ['CALON PEGAWAI', 'CAPEG'],
+            'OUTSOURCE', 'OUTSOURCING' => ['OUTSOURCE', 'OUTSOURCING'],
+            default => [$normalizedStatus],
+        };
+
+        $query->whereRaw(
+            count($acceptedStatuses) === 1
+                ? 'UPPER(TRIM(p.status_kepeg)) = ?'
+                : 'UPPER(TRIM(p.status_kepeg)) IN (?, ?)',
+            $acceptedStatuses,
+        );
     }
 
     public function exportPositions(Request $request, XlsxExportService $xlsxExport): StreamedResponse

@@ -8,7 +8,7 @@ import SearchableCombobox from '../../Components/SearchableCombobox';
 
 const religionOptions = ['Islam', 'Protestan', 'Katolik', 'Hindu', 'Budha', 'KongHuCu'];
 const genderOptions = ['Laki-laki', 'Perempuan'];
-const employmentStatusOptions = ['Tetap', 'Kontrak', 'Outsource'];
+const employmentStatusOptions = ['Tetap', 'Calon Pegawai', 'Kontrak', 'Outsourcing'];
 
 const tabs = [
     ['biodata', 'Biodata'],

@@ -47,6 +47,7 @@
     <p class="subtitle">Daftar pegawai sesuai filter yang dipilih di menu Data Pegawai.</p>
     <p class="meta">
         Status: {{ $filters['tab'] }}
+        @if ($filters['status_kepeg'] !== '') · Status kepegawaian: {{ $filters['status_kepeg'] }} @endif
         @if ($filters['year'] !== '') · Tahun mulai kerja: {{ $filters['year'] }} @endif
         @if ($filters['kantor'] !== '') · Kantor: {{ $filters['kantor'] }} @endif
         @if ($filters['divisi'] !== '' && $filters['divisi'] !== '__all__') · Divisi/unit: {{ preg_replace('/^(unit:|division:)/', '', $filters['divisi']) }} @endif

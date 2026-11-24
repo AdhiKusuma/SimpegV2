@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Jobs\PruneAuditLogs;
 use App\Models\AuditLog;
-use App\Services\AuditLogService;
 use App\Services\RbacService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,18 +16,10 @@ use Inertia\Response;
 
 class AuditLogController extends Controller
 {
-    public function __construct(private readonly AuditLogService $auditLogs) {}
-
     public function index(Request $request): Response
     {
         $this->ensureAccess($request);
         abort_unless(Schema::hasTable('audit_logs'), 503, 'Audit log belum tersedia. Jalankan migrasi database terlebih dahulu.');
-        $this->auditLogs->record($request, [
-            'module' => 'audit log',
-            'action' => 'View',
-            'description' => 'Pengguna membuka halaman audit log.',
-            'metadata' => ['page_view' => true],
-        ]);
 
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
@@ -44,6 +36,7 @@ class AuditLogController extends Controller
         $toDate = (string) ($filters['to_date'] ?? '');
 
         $logs = AuditLog::query()
+            ->where('action', '!=', 'View')
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $like = "%{$search}%";
                 $query->where(function (Builder $scope) use ($like): void {
@@ -76,7 +69,7 @@ class AuditLogController extends Controller
                 'route_name' => $log->route_name,
                 'method' => $log->method,
                 'ip_address' => $log->ip_address,
-                'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
+                'created_at' => $this->formatAuditTimestamp($log),
             ]);
 
         return Inertia::render('Audit/Index', [
@@ -89,8 +82,20 @@ class AuditLogController extends Controller
                 'to_date' => $toDate,
             ],
             'modules' => AuditLog::query()->whereNotNull('module')->distinct()->orderBy('module')->pluck('module')->values()->all(),
-            'actions' => AuditLog::query()->whereNotNull('action')->distinct()->orderBy('action')->pluck('action')->values()->all(),
+            'actions' => AuditLog::query()->whereNotNull('action')->where('action', '!=', 'View')->distinct()->orderBy('action')->pluck('action')->values()->all(),
         ]);
+    }
+
+    private function formatAuditTimestamp(AuditLog $log): ?string
+    {
+        $rawTimestamp = $log->getRawOriginal('created_at');
+        if ($rawTimestamp === null || trim((string) $rawTimestamp) === '') {
+            return null;
+        }
+
+        return Carbon::parse((string) $rawTimestamp, 'UTC')
+            ->setTimezone('Asia/Jakarta')
+            ->format('Y-m-d H:i:s');
     }
 
     public function cleanupPreview(Request $request): JsonResponse

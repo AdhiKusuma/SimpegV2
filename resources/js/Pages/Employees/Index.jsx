@@ -10,7 +10,7 @@ import SelectCombobox from '../../Components/SelectCombobox';
 
 const ALL_DIVISIONS = '__all__';
 
-export default function EmployeesIndex({ employees, offices, divisions, positions, years, filters, canManage }) {
+export default function EmployeesIndex({ employees, offices, divisions, positions, employmentStatuses, years, filters, canManage }) {
     const { flash } = usePage().props;
     const [officeValue, setOfficeValue] = useState(String(filters.kantor || ''));
     const [divisionValue, setDivisionValue] = useState(String(filters.divisi || ''));
@@ -102,6 +102,7 @@ export default function EmployeesIndex({ employees, offices, divisions, position
                 divisi: nextDivision,
                 jabatan: '',
                 year: filters.year || '',
+                status_kepeg: filters.status_kepeg || '',
             }, { preserveState: true, preserveScroll: true, replace: true });
         } catch (error) {
             if (error.name !== 'AbortError') setPositionOptions([]);
@@ -147,7 +148,7 @@ export default function EmployeesIndex({ employees, offices, divisions, position
 
             <div className="employees-index-controls">
                     <form onSubmit={submit} className="relative z-20 simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel employees-index-filter-form employees-index-filter-box simpeg-table-filter-form">
-                        <MobileFilterGroup id="employees-mobile-filters" activeCount={Number(Boolean(filters.search)) + Number(Boolean(officeValue)) + Number(Boolean(divisionValue)) + Number(Boolean(positionValue)) + Number(Boolean(filters.year))} toggleClassName="employees-index-filter-toggle" fieldsClassName="employees-index-filter-panel">
+                        <MobileFilterGroup id="employees-mobile-filters" activeCount={Number(Boolean(filters.search)) + Number(Boolean(officeValue)) + Number(Boolean(divisionValue)) + Number(Boolean(positionValue)) + Number(Boolean(filters.year)) + Number(Boolean(filters.status_kepeg))} toggleClassName="employees-index-filter-toggle" fieldsClassName="employees-index-filter-panel">
                             <div className="employees-index-filter-content">
                                 <div className="simpeg-mobile-filter-search employees-index-filter-search"><label htmlFor="search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari nama / ID pegawai</label><input id="search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="h-11 w-full rounded-xl border px-4 text-sm outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10" /></div>
                                 <div className="employees-index-filter-grid">
@@ -155,6 +156,7 @@ export default function EmployeesIndex({ employees, offices, divisions, position
                                     <SearchableCombobox id="employee-division" name="divisi" label="Divisi / Unit Kerja" value={divisionValue} onChange={changeDivision} options={divisionChoices} optionDescription={(option) => option.description || ''} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : loadingOptions && divisionChoices.length === 0 ? 'Memuat unit kerja…' : 'Pilih unit/divisi'} disabled={!officeValue || (loadingOptions && divisionChoices.length === 0)} description={officeValue && divisionOptions.length === 0 && !loadingOptions ? 'Belum ada unit/divisi yang terdata untuk kantor ini.' : undefined} />
                                     <SearchableCombobox id="employee-position" name="jabatan" label="Jabatan" value={positionValue} onChange={setPositionValue} options={positionOptions} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : !divisionValue ? 'Pilih unit dulu' : loadingOptions ? 'Memuat jabatan…' : 'Cari jabatan'} disabled={!officeValue || !divisionValue || loadingOptions} />
                                     <SelectCombobox id="employee-start-year" name="year" label="Tahun mulai kerja" value={filters.year} options={years} emptyLabel="Semua tahun" />
+                                    <SelectCombobox id="employee-employment-status" name="status_kepeg" label="Status kepegawaian" value={filters.status_kepeg} options={employmentStatuses} emptyLabel="Semua status" />
                                     <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply employees-index-filter-apply">Terapkan</button>
                                 </div>
                             </div>
