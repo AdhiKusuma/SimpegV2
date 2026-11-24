@@ -210,8 +210,9 @@ class PangkatController extends Controller
     {
         return TbPegawai::query()
             ->orderBy('nama')
+            ->toBase()
             ->get(['id_peg', 'nama'])
-            ->map(fn (TbPegawai $employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])
+            ->map(fn ($employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])
             ->all();
     }
 

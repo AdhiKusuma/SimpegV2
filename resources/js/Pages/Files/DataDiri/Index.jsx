@@ -108,7 +108,7 @@ export default function DataDiriIndex({ documents = [], employees = [], selected
                                     <span className="simpeg-muted min-w-0 truncate text-sm" title={selectedFileName}>{selectedFileName}</span>
                                 </div>
                                 <input key={inputKey} id="data-diri-file-pdf" ref={fileInput} type="file" accept="application/pdf,.pdf" onChange={(event) => uploadForm.setData('file_pdf', event.target.files?.[0] || null)} className="sr-only" />
-                                <p className="simpeg-muted mt-2 text-xs">PDF maksimal 2 MB. Sistem akan mengoptimalkan ukuran file bila memungkinkan.</p>
+                                <p className="simpeg-muted mt-2 text-xs">PDF maksimal 1 MB. File disimpan di storage private, bukan di database.</p>
                             </div>
 
                             <Button type="submit" disabled={uploadForm.processing || !uploadForm.data.file_pdf} className="w-full lg:mt-[1.65rem] lg:w-auto"><Upload className="h-4 w-4" />{uploadForm.processing ? 'Menyimpan...' : 'Simpan PDF'}</Button>

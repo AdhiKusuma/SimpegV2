@@ -339,12 +339,17 @@ class BiayaPendidikanController extends Controller
         $this->ensureStaffAccess($request);
         $record = TbBiayaPendidikan::query()->findOrFail($id);
         $page = max($request->integer('page', 1), 1);
-        $perPage = 3;
+        $requestedPerPage = $request->integer('per_page', 10);
+        $perPage = in_array($requestedPerPage, [10, 20, 30, 40, 50], true) ? $requestedPerPage : 10;
 
         $hasLinkedParticipants = DB::table('tb_diklat')->where('diklat_id', $record->biaya_id)->exists();
 
         $query = DB::table('tb_diklat as d')
             ->leftJoin('tb_pegawai as p', 'p.id_peg', '=', 'd.id_peg')
+            ->leftJoin('tb_jabatan as j', function ($join): void {
+                $join->on('j.id_peg', '=', 'd.id_peg')->where('j.status_jab', 'Aktif');
+            })
+            ->leftJoin('tb_kantor as k', 'j.unit_kerja', '=', 'k.kode_kantor_detail')
             ->when($hasLinkedParticipants, fn ($builder) => $builder->where('d.diklat_id', $record->biaya_id))
             ->when(! $hasLinkedParticipants, fn ($builder) => $builder
                 ->where('d.diklat', $record->pengembangan_sdm)
@@ -353,8 +358,9 @@ class BiayaPendidikanController extends Controller
 
         $total = (clone $query)->count();
         $participants = $query
-            ->select('p.nama', 'p.id_peg')
-            ->selectRaw('COALESCE(d.biaya_per_peserta, d.biaya, 0) as biaya')
+            ->select('p.nama', 'p.id_peg', 'j.jabatan', 'k.nama_kantor')
+            ->orderBy('p.nama')
+            ->orderBy('p.id_peg')
             ->offset(($page - 1) * $perPage)
             ->limit($perPage)
             ->get()
@@ -362,7 +368,8 @@ class BiayaPendidikanController extends Controller
                 'no' => (($page - 1) * $perPage) + $index + 1,
                 'nama' => $item->nama ?: '-',
                 'id_peg' => $item->id_peg ?: '-',
-                'biaya' => (int) ($item->biaya ?? 0),
+                'jabatan' => $item->jabatan ?: '-',
+                'unit_kerja' => $item->nama_kantor ?: '-',
             ])
             ->all();
 
@@ -374,6 +381,7 @@ class BiayaPendidikanController extends Controller
             ],
             'pagination' => [
                 'current_page' => $page,
+                'per_page' => $perPage,
                 'total_pages' => max((int) ceil($total / $perPage), 1),
                 'total_data' => $total,
             ],

@@ -46,7 +46,7 @@ class SertifikasiController extends Controller
                 });
             });
 
-        $items = $query->select('s.*', 'p.nama as nama_pegawai', 'k.nama_kantor')->orderByDesc('s.tgl_sertifikat')->orderByDesc('s.id_sertif')->paginate(min(max($request->integer('per_page', 10), 1), 50))->withQueryString()->through(fn (TbSertifikasi $item): array => $this->present($item));
+        $items = $query->select('s.*', 'p.nama as nama_pegawai', 'j.jabatan', 'k.kode_cabang', 'k.nama_kantor')->orderByDesc('s.tgl_sertifikat')->orderByDesc('s.id_sertif')->paginate(min(max($request->integer('per_page', 10), 1), 50))->withQueryString()->through(fn (TbSertifikasi $item): array => $this->present($item));
 
         return Inertia::render('Sertifikasi/Index', [
             'items' => $items,
@@ -123,7 +123,10 @@ class SertifikasiController extends Controller
 
     private function present(TbSertifikasi $item): array
     {
-        return ['id_sertif' => $item->id_sertif, 'id_peg' => $item->id_peg, 'nama_pegawai' => $item->nama_pegawai, 'sertifikasi' => $item->sertifikasi, 'sertifikat' => $item->sertifikat, 'penyelenggara' => $item->penyelenggara, 'tgl_sertifikat' => $item->tgl_sertifikat?->format('d-m-Y'), 'tgl_expired' => $item->tgl_expired?->format('d-m-Y'), 'nama_kantor' => $item->nama_kantor, 'status' => $item->tgl_expired === null ? 'Seumur Hidup' : ($item->tgl_expired->isBefore(today()) ? 'Expired' : 'Aktif')];
+        $branchCode = trim((string) ($item->kode_cabang ?? ''));
+        $branchCode = $branchCode === '' ? null : ($branchCode === '000000' ? '000' : $branchCode);
+
+        return ['id_sertif' => $item->id_sertif, 'id_peg' => $item->id_peg, 'nama_pegawai' => $item->nama_pegawai, 'sertifikasi' => $item->sertifikasi, 'sertifikat' => $item->sertifikat, 'penyelenggara' => $item->penyelenggara, 'tgl_sertifikat' => $item->tgl_sertifikat?->format('d-m-Y'), 'tgl_expired' => $item->tgl_expired?->format('d-m-Y'), 'nama_kantor' => $item->nama_kantor, 'kode_cabang' => $branchCode, 'jabatan' => $item->jabatan, 'status' => $item->tgl_expired === null ? 'Seumur Hidup' : ($item->tgl_expired->isBefore(today()) ? 'Expired' : 'Aktif')];
     }
 
     private function formRecord(TbSertifikasi $record): array
@@ -133,7 +136,7 @@ class SertifikasiController extends Controller
 
     private function employees(): array
     {
-        return TbPegawai::query()->where('status_aktif', 1)->orderBy('nama')->get(['id_peg', 'nama'])->map(fn (TbPegawai $employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])->all();
+        return TbPegawai::query()->where('status_aktif', 1)->orderBy('nama')->toBase()->get(['id_peg', 'nama'])->map(fn ($employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])->all();
     }
 
     private function years(string $unit): array

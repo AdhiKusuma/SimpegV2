@@ -400,7 +400,7 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                                             Pilih foto
                                             <input type="file" accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif" onChange={(event) => biodataForm.setData('foto', event.target.files?.[0] || null)} className="sr-only" />
                                         </label>
-                                        <p className="mt-1 max-w-full truncate text-xs font-normal simpeg-muted">{biodataForm.data.foto?.name || 'JPG, PNG, atau GIF · Maksimal 2 MB'}</p>
+                                        <p className="mt-1 max-w-full truncate text-xs font-normal simpeg-muted">{biodataForm.data.foto?.name || 'JPG, PNG, atau GIF · Maksimal 1 MB · otomatis dioptimalkan'}</p>
                                     </div>
                                 </div>
                                 {biodataForm.errors.foto && <span className="text-xs font-medium text-red-600" role="alert">{biodataForm.errors.foto}</span>}

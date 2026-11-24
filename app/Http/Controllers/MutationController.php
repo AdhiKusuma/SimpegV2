@@ -16,6 +16,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -216,7 +217,7 @@ class MutationController extends Controller
             });
     }
 
-    private function mutationFilterOffices(Request $request): \Illuminate\Support\Collection
+    private function mutationFilterOffices(Request $request): Collection
     {
         $role = strtolower((string) $request->session()->get('hak_akses'));
 
@@ -411,6 +412,7 @@ class MutationController extends Controller
         foreach ($preparedRows as $prepared) {
             if ($prepared['errors'] !== []) {
                 $errors[] = 'Baris '.$prepared['row_number'].': '.implode('; ', $prepared['errors']);
+
                 continue;
             }
 
@@ -595,14 +597,8 @@ class MutationController extends Controller
         $record = TbMutasi::query()->findOrFail($id);
         $this->ensureMutationVisible($request, $record);
 
-        $filename = basename((string) $record->sk_mutasi);
-        abort_if($filename === '' || $filename === '.', 404);
-
-        $paths = [
-            Storage::disk('public')->path('sk_mutasi/'.$filename),
-        ];
-
-        foreach ($paths as $path) {
+        foreach ($this->documentStoragePaths($record->sk_mutasi) as $storagePath) {
+            $path = Storage::disk('public')->path($storagePath);
             if (is_file($path)) {
                 return response()->file($path);
             }
@@ -618,7 +614,7 @@ class MutationController extends Controller
             'no_mutasi' => ['required', 'string', 'max:255'],
             'tgl_mutasi' => ['required', 'date'],
             'tmt' => ['required', 'date'],
-            'sk_mutasi' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+            'sk_mutasi' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:'.(int) config('uploads.mutation_document.max_upload_kb', 3072)],
         ];
 
         if (! $isEdit) {
@@ -633,8 +629,9 @@ class MutationController extends Controller
         return TbPegawai::query()
             ->where('status_aktif', 1)
             ->orderBy('nama')
+            ->toBase()
             ->get(['id_peg', 'nama'])
-            ->map(fn (TbPegawai $employee): array => [
+            ->map(fn ($employee): array => [
                 'id_peg' => $employee->id_peg,
                 'nama' => $employee->nama,
             ])
@@ -680,6 +677,7 @@ class MutationController extends Controller
             foreach (['tgl_mutasi' => 'Tanggal SK', 'tmt' => 'TMT efektif nonaktif'] as $field => $label) {
                 if (($data[$field] ?? '') === '' || $data[$field] === '-') {
                     $data[$field] = null;
+
                     continue;
                 }
 
@@ -790,7 +788,11 @@ class MutationController extends Controller
     private function deleteDocument(?string $filename): void
     {
         if ($filename) {
-            Storage::disk('public')->delete('sk_mutasi/'.basename($filename));
+            $safeFilename = basename($filename);
+            Storage::disk('public')->delete([
+                'sk_mutasi/'.$safeFilename,
+                'sk_angkat/'.$safeFilename,
+            ]);
         }
     }
 
@@ -814,9 +816,52 @@ class MutationController extends Controller
 
     private function documentExists(string $filename): bool
     {
-        $safeFilename = basename($filename);
+        foreach ($this->documentStoragePaths($filename) as $storagePath) {
+            if (is_file(Storage::disk('public')->path($storagePath))) {
+                return true;
+            }
+        }
 
-        return is_file(Storage::disk('public')->path('sk_mutasi/'.$safeFilename));
+        return false;
+    }
+
+    /**
+     * Legacy records may store only the filename while older deployments
+     * placed the file in sk_angkat. Keep both locations readable without
+     * trusting an arbitrary path from the database.
+     */
+    private function documentStoragePaths(?string $storedValue): array
+    {
+        $value = trim((string) $storedValue);
+        if ($value === '') {
+            return [];
+        }
+
+        $normalised = ltrim(str_replace('\\', '/', $value), '/');
+        foreach (['storage/app/public/', 'public/storage/', 'storage/', 'public/'] as $prefix) {
+            if (str_starts_with($normalised, $prefix)) {
+                $normalised = substr($normalised, strlen($prefix));
+                break;
+            }
+        }
+
+        $filename = basename($normalised);
+        if ($filename === '' || $filename === '.') {
+            return [];
+        }
+
+        $paths = [];
+        if (str_starts_with($normalised, 'sk_mutasi/')) {
+            $paths[] = $normalised;
+        }
+        if (str_starts_with($normalised, 'sk_angkat/')) {
+            $paths[] = $normalised;
+        }
+
+        $paths[] = 'sk_mutasi/'.$filename;
+        $paths[] = 'sk_angkat/'.$filename;
+
+        return array_values(array_unique($paths));
     }
 
     private function ensureMutationVisible(Request $request, TbMutasi $record): void

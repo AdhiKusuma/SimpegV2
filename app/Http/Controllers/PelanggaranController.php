@@ -235,6 +235,7 @@ class PelanggaranController extends Controller
         foreach ($preparedRows as $prepared) {
             if ($prepared['errors'] !== []) {
                 $errors[] = 'Baris '.$prepared['row_number'].': '.implode('; ', $prepared['errors']);
+
                 continue;
             }
 
@@ -347,6 +348,7 @@ class PelanggaranController extends Controller
 
             if ($rawDate === '' || $rawDate === '-') {
                 $data[$dateField] = null;
+
                 continue;
             }
 
@@ -650,8 +652,9 @@ class PelanggaranController extends Controller
     {
         return TbPegawai::query()
             ->orderBy('nama')
+            ->toBase()
             ->get(['id_peg', 'nama'])
-            ->map(fn (TbPegawai $employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])
+            ->map(fn ($employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])
             ->all();
     }
 

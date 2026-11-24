@@ -351,7 +351,7 @@ class JabatanController extends Controller
             ]);
         }
 
-        $employees = TbPegawai::query()->where('status_aktif', 1)->get(['id_peg', 'nama'])->keyBy('id_peg');
+        $employees = TbPegawai::query()->where('status_aktif', 1)->toBase()->get(['id_peg', 'nama'])->keyBy('id_peg');
         $positions = TbRefJabatan::query()->get(['kode_jabatan', 'jabatan']);
         $positionsByCode = [];
         $positionsByName = [];

@@ -44,7 +44,7 @@ class PayrollController extends Controller
     private const SUMMARY_AMOUNT_FIELDS = self::ENTRY_AMOUNT_FIELDS;
 
     private const SUMMARY_EXPORT_FIELDS = [
-        ['gaji_pokok', 'Gaji Pokok'], ['golongan_pegawai', 'Golongan Pegawai'], ['tunj_suami_istri', 'Tunj. Suami/Istri'], ['tunj_anak', 'Tunj. Anak'],
+        ['gaji_pokok', 'Gaji Pokok'], ['tunj_suami_istri', 'Tunj. Suami/Istri'], ['tunj_anak', 'Tunj. Anak'],
         ['tunj_jabatan', 'Tunj. Jabatan'], ['tunj_ops', 'Tunj. Operasional'], ['tunj_kinerja', 'Tunj. Kinerja'], ['tunj_masa_kerja', 'Tunj. Masa Kerja'],
         ['tunj_fungsional', 'Tunj. Fungsional'], ['honor_kontrak', 'Honor Kontrak'], ['thl', 'Tenaga Harian Lepas'], ['tunj_pajak', 'Tunj. Pajak'],
         ['uang_makan_kontrak', 'Uang Makan Kontrak'], ['jumlah_gaji', 'Jumlah Gaji'], ['bpjs_kesehatan', 'BPJS Kesehatan'],

@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\CarbonImmutable;
 use App\Models\Legacy\TbDiklat;
 use App\Models\Legacy\TbHukuman;
 use App\Models\Legacy\TbKantor;
+use App\Models\Legacy\TbMasterJabatan;
 use App\Models\Legacy\TbMutasi;
 use App\Models\Legacy\TbPegawai;
-use App\Models\Legacy\TbMasterJabatan;
 use App\Models\QuotaJabatan;
 use App\Services\RbacService;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
@@ -273,64 +273,66 @@ class DashboardController extends Controller
             ->whereNotNull('p.tmt_kerja')
             ->select(['p.id_peg', 'p.tmt_kerja', 'p.status_aktif']);
         $this->applyTrendEmployeeScope($employeesQuery, $unit);
-        $employees = $employeesQuery->get();
-        $employeeIds = $employees->pluck('id_peg')->filter()->values();
+        // Hitung per potongan agar dashboard tidak meng-hydrate seluruh
+        // pegawai dan seluruh riwayat mutasi ke memory sekaligus.
+        $years = [];
+        $employeesQuery
+            ->orderBy('p.id_peg')
+            ->toBase()
+            ->chunk(500, function ($employees) use (&$incoming, &$outgoing, &$active, &$inactive, &$years, $year): void {
+                $employeeIds = collect($employees)->pluck('id_peg')->filter()->values();
+                $exitDates = collect();
 
-        $exitDates = collect();
-        if ($employeeIds->isNotEmpty()) {
-            $exitDates = TbMutasi::query()
-                ->from('tb_mutasi as m')
-                ->whereIn('m.id_peg', $employeeIds->all())
-                ->whereNotNull('m.tmt')
-                ->selectRaw('m.id_peg, MAX(m.tmt) as exit_date')
-                ->groupBy('m.id_peg')
-                ->get()
-                ->mapWithKeys(fn ($row): array => [(string) $row->id_peg => $row->exit_date]);
-        }
-
-        $years = collect();
-        foreach ($employees as $employee) {
-            $joinDate = $employee->tmt_kerja instanceof CarbonImmutable
-                ? $employee->tmt_kerja
-                : CarbonImmutable::parse($employee->tmt_kerja);
-            $exitDateValue = $exitDates->get((string) $employee->id_peg);
-            $exitDate = $exitDateValue ? CarbonImmutable::parse($exitDateValue) : null;
-            $years->push($joinDate->year);
-            if ($exitDate) {
-                $years->push($exitDate->year);
-            }
-
-            if ($joinDate->year === $year && $joinDate->month >= 1 && $joinDate->month <= 12) {
-                $incoming[$joinDate->month - 1]++;
-            }
-            if ($exitDate && $exitDate->year === $year && $exitDate->month >= 1 && $exitDate->month <= 12) {
-                $outgoing[$exitDate->month - 1]++;
-            }
-
-            for ($month = 1; $month <= 12; $month++) {
-                $monthEnd = CarbonImmutable::create($year, $month, 1)->endOfMonth();
-                if ($joinDate->greaterThan($monthEnd)) {
-                    continue;
+                if ($employeeIds->isNotEmpty()) {
+                    $exitDates = TbMutasi::query()
+                        ->from('tb_mutasi as m')
+                        ->whereIn('m.id_peg', $employeeIds->all())
+                        ->whereNotNull('m.tmt')
+                        ->selectRaw('m.id_peg, MAX(m.tmt) as exit_date')
+                        ->groupBy('m.id_peg')
+                        ->toBase()
+                        ->get()
+                        ->mapWithKeys(fn ($row): array => [(string) $row->id_peg => $row->exit_date]);
                 }
 
-                $isInactive = (int) $employee->status_aktif === 3
-                    && ($exitDate === null || $exitDate->lessThanOrEqualTo($monthEnd));
+                foreach ($employees as $employee) {
+                    $joinDate = CarbonImmutable::parse($employee->tmt_kerja);
+                    $exitDateValue = $exitDates->get((string) $employee->id_peg);
+                    $exitDate = $exitDateValue ? CarbonImmutable::parse($exitDateValue) : null;
+                    $years[$joinDate->year] = true;
+                    if ($exitDate) {
+                        $years[$exitDate->year] = true;
+                    }
 
-                if ($isInactive) {
-                    $inactive[$month - 1]++;
-                } else {
-                    $active[$month - 1]++;
+                    if ($joinDate->year === $year && $joinDate->month >= 1 && $joinDate->month <= 12) {
+                        $incoming[$joinDate->month - 1]++;
+                    }
+                    if ($exitDate && $exitDate->year === $year && $exitDate->month >= 1 && $exitDate->month <= 12) {
+                        $outgoing[$exitDate->month - 1]++;
+                    }
+
+                    for ($month = 1; $month <= 12; $month++) {
+                        $monthEnd = CarbonImmutable::create($year, $month, 1)->endOfMonth();
+                        if ($joinDate->greaterThan($monthEnd)) {
+                            continue;
+                        }
+
+                        $isInactive = (int) $employee->status_aktif === 3
+                            && ($exitDate === null || $exitDate->lessThanOrEqualTo($monthEnd));
+
+                        if ($isInactive) {
+                            $inactive[$month - 1]++;
+                        } else {
+                            $active[$month - 1]++;
+                        }
+                    }
                 }
-            }
-        }
+            });
 
-        $years = $years->filter(fn ($value): bool => is_numeric($value))
-            ->map(fn ($value): int => (int) $value)
-            ->push($year)
-            ->unique()
-            ->sortDesc()
-            ->values()
-            ->all();
+        $years[$year] = true;
+        $years = array_keys($years);
+        rsort($years, SORT_NUMERIC);
+        $years = array_map(static fn ($value): int => (int) $value, $years);
 
         return [
             'labels' => $labels,
@@ -444,17 +446,21 @@ class DashboardController extends Controller
         $rows = $this->activeEmployeeQuery($unit)
             ->leftJoin('tb_pendidikan as edu', 'edu.id_peg', '=', 'p.id_peg')
             ->select(['p.id_peg', 'edu.jenjang'])
-            ->get();
+            ->orderBy('p.id_peg')
+            ->orderBy('edu.id_pendidikan')
+            ->toBase();
 
-        foreach ($rows as $row) {
-            $id = (string) $row->id_peg;
-            $highest[$id] ??= null;
-            $level = strtoupper(trim((string) $row->jenjang));
+        $rows->chunk(500, function ($chunk) use (&$highest, $rank): void {
+            foreach ($chunk as $row) {
+                $id = (string) $row->id_peg;
+                $highest[$id] ??= null;
+                $level = strtoupper(trim((string) $row->jenjang));
 
-            if (isset($rank[$level]) && ($highest[$id] === null || $rank[$level] < $rank[$highest[$id]])) {
-                $highest[$id] = $level;
+                if (isset($rank[$level]) && ($highest[$id] === null || $rank[$level] < $rank[$highest[$id]])) {
+                    $highest[$id] = $level;
+                }
             }
-        }
+        });
 
         $counts = array_fill_keys([...$levels, 'Belum Input'], 0);
         foreach ($highest as $level) {
@@ -637,7 +643,7 @@ class DashboardController extends Controller
             ? collect()
             : $this->configuredPositionQuotas($group, $unit);
 
-        $masterRows = $rows->map(function ($row) use ($configuredQuotas, $unit): array {
+        $masterRows = $rows->map(function ($row) use ($configuredQuotas): array {
             $positionId = (string) $row->kode_jabatan;
             $quota = $configuredQuotas->has($positionId)
                 ? (int) $configuredQuotas->get($positionId)

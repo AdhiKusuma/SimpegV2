@@ -88,7 +88,7 @@ export default function PayrollAmountInput({ id, value, onChange, required = fal
                 onBlur={blur}
                 aria-invalid={Boolean(error)}
                 aria-describedby={[descriptionId, error ? `${id}-error` : null].filter(Boolean).join(' ') || undefined}
-                className={`simpeg-text min-w-0 flex-1 bg-transparent text-sm outline-none${readOnly ? ' cursor-not-allowed' : ''}`}
+                className={`simpeg-payroll-amount-input simpeg-text min-w-0 flex-1 bg-transparent text-sm outline-none${readOnly ? ' cursor-not-allowed' : ''}`}
                 placeholder="0"
             />
         </div>

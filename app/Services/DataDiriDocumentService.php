@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\CompressDataDiriDocument;
 use App\Models\DataDiriDocument;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -14,8 +13,6 @@ use Throwable;
 
 class DataDiriDocumentService
 {
-    private const MAX_BYTES = 2_097_152;
-
     public function store(string $employeeId, string $type, UploadedFile $file, string $uploaderId): DataDiriDocument
     {
         $this->assertPdf($file);
@@ -68,12 +65,6 @@ class DataDiriDocumentService
             $this->deleteQuietly($oldPath);
         }
 
-        try {
-            CompressDataDiriDocument::dispatch((int) $document->id, $path);
-        } catch (Throwable $exception) {
-            report($exception);
-        }
-
         return $document->fresh();
     }
 
@@ -91,8 +82,9 @@ class DataDiriDocumentService
 
     private function assertPdf(UploadedFile $file): void
     {
-        if ((int) $file->getSize() > self::MAX_BYTES) {
-            throw ValidationException::withMessages(['file_pdf' => 'Ukuran PDF maksimal 2 MB.']);
+        $maxBytes = (int) config('uploads.data_diri_pdf.max_upload_kb', 1024) * 1024;
+        if ((int) $file->getSize() > $maxBytes) {
+            throw ValidationException::withMessages(['file_pdf' => 'Ukuran PDF maksimal 1 MB.']);
         }
 
         $realPath = $file->getRealPath();

@@ -2,28 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Legacy\TbBahasa;
-use App\Models\Legacy\TbAngkat;
 use App\Models\Legacy\TbAnak;
-use App\Models\Legacy\TbCuti;
-use App\Models\Legacy\TbDp3;
+use App\Models\Legacy\TbAngkat;
 use App\Models\Legacy\TbDiklat;
 use App\Models\Legacy\TbHukuman;
 use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbKantor;
-use App\Models\Legacy\TbLatJabatan;
 use App\Models\Legacy\TbMasterJabatan;
 use App\Models\Legacy\TbMutasi;
 use App\Models\Legacy\TbOrtu;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbPendidikan;
-use App\Models\Legacy\TbPenghargaan;
-use App\Models\Legacy\TbPenugasan;
-use App\Models\Legacy\TbSeminar;
 use App\Models\Legacy\TbSertifikasi;
 use App\Models\Legacy\TbSuamiIstri;
 use App\Models\Legacy\TbUser;
+use App\Services\EmployeeAccessService;
 use App\Services\ImportPreviewService;
+use App\Services\ProfileImageService;
 use App\Services\XlsxExportService;
 use App\Support\SimpegFieldRules;
 use Carbon\Carbon;
@@ -66,6 +61,11 @@ class EmployeeController extends Controller
         'No BPJS Kes',
     ];
 
+    public function __construct(
+        private readonly ProfileImageService $profileImages,
+        private readonly EmployeeAccessService $employeeAccess,
+    ) {}
+
     public function index(Request $request): Response
     {
         $this->ensureStaffAccess($request);
@@ -85,10 +85,7 @@ class EmployeeController extends Controller
         $selectedOffice = $this->resolveOfficeForFilter($office);
 
         $query = $this->baseQuery($tab);
-
-        if ($unit) {
-            $query->where('j.unit_kerja', $unit);
-        }
+        $this->employeeAccess->applyToEmployeeQuery($query, $request, 'p.id_peg');
 
         if ($office) {
             $officeCodes = $this->officeCodesForFilter($selectedOffice, $division);
@@ -212,10 +209,7 @@ class EmployeeController extends Controller
         $query = $this->baseQuery($tab);
         $role = strtolower((string) $request->session()->get('hak_akses'));
         $unit = $role === 'kepala' ? $request->session()->get('kode_kantor') : null;
-
-        if ($unit) {
-            $query->where('j.unit_kerja', $unit);
-        }
+        $this->employeeAccess->applyToEmployeeQuery($query, $request, 'p.id_peg');
 
         $selectedOffice = $this->resolveOfficeForFilter($office);
 
@@ -239,13 +233,7 @@ class EmployeeController extends Controller
         $this->ensureStaffAccess($request);
 
         $query = TbPegawai::query()->where('id_peg', $id);
-
-        if (strtolower((string) $request->session()->get('hak_akses')) === 'kepala') {
-            $query->whereHas('jabatan', function (Builder $builder) use ($request): void {
-                $builder->where('status_jab', 'Aktif')
-                    ->where('unit_kerja', $request->session()->get('kode_kantor'));
-            });
-        }
+        $this->employeeAccess->applyToEmployeeQuery($query, $request, 'id_peg');
 
         $employee = $query->firstOrFail();
 
@@ -491,11 +479,7 @@ class EmployeeController extends Controller
     {
         abort_unless($filename === basename($filename), 404);
 
-        $paths = [
-            public_path('uploads/pegawai/'.$filename),
-        ];
-
-        foreach ($paths as $path) {
+        foreach ($this->profilePhotoPaths($filename) as $path) {
             if (File::isFile($path)) {
                 return response()->file($path);
             }
@@ -869,6 +853,23 @@ class EmployeeController extends Controller
         }
     }
 
+    private function profilePhotoPaths(string $storedValue): array
+    {
+        $filename = basename(trim($storedValue));
+        if ($filename === '' || $filename === '.') {
+            return [];
+        }
+
+        $paths = [public_path('uploads/pegawai/'.$filename)];
+        if (pathinfo($filename, PATHINFO_EXTENSION) === '') {
+            foreach (['jpg', 'jpeg', 'png', 'gif'] as $extension) {
+                $paths[] = public_path('uploads/pegawai/'.$filename.'.'.$extension);
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
     private function emptyFormRecord(): array
     {
         return [
@@ -943,9 +944,9 @@ class EmployeeController extends Controller
 
     private function prepareEmployeeImportRows(array $rawRows): array
     {
-        $records = TbPegawai::query()->get(['id_peg', 'nama', 'nik']);
+        $records = TbPegawai::query()->toBase()->get(['id_peg', 'nama', 'nik']);
         $byId = $records->keyBy('id_peg');
-        $byNameNik = $records->keyBy(fn (TbPegawai $employee): string => $this->importMatchKey($employee->nama, $employee->nik));
+        $byNameNik = $records->keyBy(fn ($employee): string => $this->importMatchKey($employee->nama, $employee->nik));
         $rows = [];
         $seenIds = [];
         $seenMatchKeys = [];
@@ -1047,6 +1048,7 @@ class EmployeeController extends Controller
                 if ($required) {
                     $errors[] = "{$label} wajib diisi";
                 }
+
                 continue;
             }
 
@@ -1134,7 +1136,7 @@ class EmployeeController extends Controller
             'email' => ['required', 'email', 'max:64'],
             'bpjstk' => ['nullable', 'string', 'max:12', SimpegFieldRules::DIGITS_ONLY],
             'bpjskes' => ['nullable', 'string', 'max:12', SimpegFieldRules::DIGITS_ONLY],
-            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:'.(int) config('uploads.profile_photo.max_upload_kb', 1024)],
         ];
         $rules['id_peg'] = array_values(array_filter($rules['id_peg']));
 
@@ -1162,8 +1164,8 @@ class EmployeeController extends Controller
         File::ensureDirectoryExists($directory, 0755);
         $file = $request->file('foto');
         $id = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($data['id_peg'] ?? $request->route('id')));
-        $name = 'foto_'.$id.'_'.now()->format('YmdHisv').'_'.Str::lower(Str::random(6)).'.'.$file->extension();
-        $file->move($directory, $name);
+        $baseName = 'foto_'.$id.'_'.now()->format('YmdHisv').'_'.Str::lower(Str::random(6));
+        $name = $this->profileImages->store($file, $directory, $baseName);
         $data['foto'] = $name;
 
         if ($oldPhoto && basename($oldPhoto) === $oldPhoto) {

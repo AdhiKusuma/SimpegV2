@@ -5,6 +5,7 @@ import { useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SelectCombobox from '../../Components/SelectCombobox';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function PengangkatanIndex({ items, years, filters, canManage }) {
     const { flash } = usePage().props;
@@ -61,11 +62,10 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                     <table className="w-full min-w-[1080px] text-left">
                         <colgroup>
                             <col className="w-[24%]" />
-                            <col className="w-[13%]" />
-                            <col className="w-[17%]" />
-                            <col className="w-[18%]" />
-                            <col className="w-[13%]" />
-                            {canManage && <col className="w-[15%]" />}
+                            <col className="w-[16%]" />
+                            <col className="w-[22%]" />
+                            <col className="w-[23%]" />
+                            <col className="w-[15%]" />
                         </colgroup>
                         <thead className="simpeg-card-soft border-b text-xs uppercase tracking-wide text-slate-500">
                             <tr>
@@ -73,13 +73,12 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                                 <th className="whitespace-nowrap px-6 py-4 font-bold">Pengangkatan</th>
                                 <th className="whitespace-nowrap px-6 py-4 font-bold">Tanggal SK / Masa berlaku</th>
                                 <th className="whitespace-nowrap px-6 py-4 font-bold">Nomor SK</th>
-                                <th className="whitespace-nowrap px-6 py-4 font-bold">Lampiran</th>
-                                {canManage && <th className="whitespace-nowrap px-6 py-4 text-right font-bold">Aksi</th>}
+                                <th className="whitespace-nowrap px-6 py-4 font-bold">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {items.data.length === 0 ? (
-                                <tr><td colSpan={canManage ? 6 : 5} className="px-5 py-12 text-center text-sm simpeg-muted">Data pengangkatan tidak ditemukan.</td></tr>
+                                <tr><td colSpan="5" className="px-5 py-12 text-center text-sm simpeg-muted">Data pengangkatan tidak ditemukan.</td></tr>
                             ) : items.data.map((item) => (
                                 <tr key={item.id_angkat} className="align-top transition hover:bg-slate-50">
                                     <td className="px-6 py-5">
@@ -89,8 +88,7 @@ export default function PengangkatanIndex({ items, years, filters, canManage }) 
                                     <td className="px-6 py-5"><span className="inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">{item.jns_mutasi || '-'}</span></td>
                                     <td className="px-6 py-5 text-sm text-slate-600"><span className="block whitespace-nowrap font-medium">SK: {item.tgl_mutasi || '-'}</span><span className="mt-1 block text-xs simpeg-muted">Mulai: {item.tmt || '-'}</span>{item.tmt_selesai && <span className="mt-1 block text-xs simpeg-muted">Selesai: {item.tmt_selesai}</span>}</td>
                                     <td className="px-6 py-5 text-sm text-slate-600">{item.no_mutasi || '-'}</td>
-                                    <td className="px-6 py-5">{item.document_url ? <a href={item.document_url} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Lihat SK</a> : <span className="text-sm simpeg-muted">Tidak ada file</span>}</td>
-                                    {canManage && <td className="whitespace-nowrap px-6 py-5"><div className="flex justify-end gap-2"><IconAction href={"/pengangkatan/" + item.id_angkat + "/edit"} label="Edit masa berlaku" /><IconAction variant="delete" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} label="Hapus" /></div></td>}
+                                    <td className="whitespace-nowrap px-6 py-5"><div className="flex justify-end gap-2">{item.document_url ? <a href={item.document_url} target="_blank" rel="noreferrer" title="Lihat SK" aria-label="Lihat SK" className="simpeg-utility inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20 dark:hover:bg-blue-950/30"><Eye aria-hidden="true" className="h-4 w-4" /></a> : <span title="Dokumen SK tidak tersedia" aria-label="Dokumen SK tidak tersedia" className="simpeg-utility inline-flex h-9 w-9 shrink-0 cursor-not-allowed items-center justify-center rounded-lg border opacity-60"><EyeOff aria-hidden="true" className="h-4 w-4" /></span>}{canManage && <><IconAction href={"/pengangkatan/" + item.id_angkat + "/edit"} label="Edit masa berlaku" /><IconAction variant="delete" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} label="Hapus" /></>}</div></td>
                                 </tr>
                             ))}
                         </tbody>

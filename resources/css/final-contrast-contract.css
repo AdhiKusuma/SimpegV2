@@ -13,6 +13,27 @@ html body .simpeg-app-canvas .simpeg-export-menu {
     opacity: 1 !important;
 }
 
+/* Payroll amount fields use one bordered wrapper with an Rp prefix. The
+ * nested input must not receive the global form-field border/height rules. */
+html body .simpeg-app-canvas .simpeg-shell-content .simpeg-payroll-amount-input {
+    min-height: 0 !important;
+    height: auto !important;
+    border: 0 !important;
+    border-color: transparent !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+html body .simpeg-app-canvas .simpeg-shell-content .simpeg-payroll-amount-input:focus {
+    border: 0 !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
 html body .simpeg-app-canvas .simpeg-export-menu .simpeg-export-menu-title,
 html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item,
 html body .simpeg-app-canvas .simpeg-export-menu .simpeg-menu-item :is(*, svg *) {

@@ -215,8 +215,11 @@ class AuthorizationController extends Controller
         $actor = (string) $request->session()->get('id_user', '0');
         $comment = trim((string) ($validated['comment'] ?? ''));
 
-        DB::transaction(function () use ($actor, $comment, $id, $status): void {
-            $pending = TbEditPending::query()->lockForUpdate()->findOrFail($id);
+        DB::transaction(function () use ($request, $actor, $comment, $id, $status): void {
+            $pending = $this->pendingQuery($request)
+                ->where('ep.id_edit', $id)
+                ->lockForUpdate()
+                ->firstOrFail();
             if ($pending->status_otorisasi !== 'Menunggu') {
                 throw ValidationException::withMessages(['action' => 'Pengajuan ini sudah diproses sebelumnya.']);
             }
@@ -379,6 +382,7 @@ class AuthorizationController extends Controller
                     'old' => $oldValues[$key] ?? 'Belum ada foto',
                     'new' => 'Foto baru',
                 ];
+
                 continue;
             }
 

@@ -9,6 +9,7 @@ use App\Models\Legacy\TbOrtu;
 use App\Models\Legacy\TbPegawai;
 use App\Models\Legacy\TbRecycleBin;
 use App\Models\Legacy\TbSuamiIstri;
+use App\Services\EmployeeAccessService;
 use App\Services\NotificationService;
 use App\Services\RbacService;
 use App\Support\SimpegFieldRules;
@@ -25,7 +26,10 @@ use Inertia\Response;
 
 class FamilyController extends Controller
 {
-    public function __construct(private readonly NotificationService $notifications) {}
+    public function __construct(
+        private readonly NotificationService $notifications,
+        private readonly EmployeeAccessService $employeeAccess,
+    ) {}
 
     private const TYPES = [
         'children' => [
@@ -284,43 +288,19 @@ class FamilyController extends Controller
 
     private function applyScope(Builder $query, Request $request, string $uid): void
     {
-        $role = strtolower((string) $request->session()->get('hak_akses'));
         $alias = 'f';
 
         if ($uid !== '') {
             $query->where("{$alias}.id_peg", $uid);
         }
 
-        if ($role === 'user') {
-            $query->where("{$alias}.id_peg", $request->session()->get('id_pegawai'));
-        }
-
-        if ($role === 'kepala') {
-            $query->whereExists(function ($scope) use ($alias, $request): void {
-                $scope->selectRaw('1')
-                    ->from('tb_jabatan as scope_j')
-                    ->whereColumn('scope_j.id_peg', "{$alias}.id_peg")
-                    ->where('scope_j.status_jab', 'Aktif')
-                    ->where('scope_j.unit_kerja', $request->session()->get('kode_kantor'));
-            });
-        }
+        $this->employeeAccess->applyToEmployeeQuery($query, $request, "{$alias}.id_peg");
     }
 
     private function employeeForScope(Request $request, string $uid): ?TbPegawai
     {
         $query = TbPegawai::query()->where('id_peg', $uid);
-        $role = strtolower((string) $request->session()->get('hak_akses'));
-
-        if ($role === 'user') {
-            $query->where('id_peg', $request->session()->get('id_pegawai'));
-        }
-
-        if ($role === 'kepala') {
-            $query->whereHas('jabatan', function (Builder $builder) use ($request): void {
-                $builder->where('status_jab', 'Aktif')
-                    ->where('unit_kerja', $request->session()->get('kode_kantor'));
-            });
-        }
+        $this->employeeAccess->applyToEmployeeQuery($query, $request, 'id_peg');
 
         return $query->first();
     }
@@ -328,20 +308,9 @@ class FamilyController extends Controller
     private function employeesForScope(Request $request): array
     {
         $query = TbPegawai::query()->where('status_aktif', 1);
-        $role = strtolower((string) $request->session()->get('hak_akses'));
+        $this->employeeAccess->applyToEmployeeQuery($query, $request, 'id_peg');
 
-        if ($role === 'user') {
-            $query->where('id_peg', $request->session()->get('id_pegawai'));
-        }
-
-        if ($role === 'kepala') {
-            $query->whereHas('jabatan', function (Builder $builder) use ($request): void {
-                $builder->where('status_jab', 'Aktif')
-                    ->where('unit_kerja', $request->session()->get('kode_kantor'));
-            });
-        }
-
-        return $query->orderBy('nama')->get(['id_peg', 'nama'])->map(fn (TbPegawai $employee): array => [
+        return $query->orderBy('nama')->toBase()->get(['id_peg', 'nama'])->map(fn ($employee): array => [
             'id_peg' => $employee->id_peg,
             'nama' => $employee->nama,
         ])->all();
@@ -479,17 +448,13 @@ class FamilyController extends Controller
 
     private function ensureTargetScope(Request $request, string $idPeg): void
     {
-        if ($this->isRequest($request)) {
-            abort_unless((string) $request->session()->get('id_pegawai') === (string) $idPeg, 403);
-        }
+        abort_unless($this->employeeAccess->canAccessEmployee($request, $idPeg), 403);
     }
 
     private function recordForScope(Request $request, array $definition, string $id): Model
     {
         $query = $definition['model']::query()->where($definition['key'], $id);
-        if ($this->isRequest($request)) {
-            $query->where('id_peg', $request->session()->get('id_pegawai'));
-        }
+        $this->employeeAccess->applyToEmployeeQuery($query, $request, 'id_peg');
 
         return $query->firstOrFail();
     }

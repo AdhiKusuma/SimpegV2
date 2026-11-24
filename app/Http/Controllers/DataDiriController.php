@@ -68,7 +68,7 @@ class DataDiriController extends Controller
             : [];
 
         $employees = $isAdministrative
-            ? TbPegawai::query()->orderBy('nama')->get(['id_peg', 'nama', 'nik'])->map(fn (TbPegawai $item): array => [
+            ? TbPegawai::query()->orderBy('nama')->toBase()->get(['id_peg', 'nama', 'nik'])->map(fn ($item): array => [
                 'id_peg' => (string) $item->id_peg,
                 'nama' => (string) $item->nama,
                 'nik' => (string) ($item->nik ?? ''),

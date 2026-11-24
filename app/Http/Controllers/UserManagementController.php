@@ -202,7 +202,7 @@ class UserManagementController extends Controller
 
     private function employees(): array
     {
-        return TbPegawai::query()->where('status_aktif', 1)->orderBy('nama')->get(['id_peg', 'nama'])->map(fn (TbPegawai $employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])->all();
+        return TbPegawai::query()->where('status_aktif', 1)->orderBy('nama')->toBase()->get(['id_peg', 'nama'])->map(fn ($employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])->all();
     }
 
     private function availableRoles(): array

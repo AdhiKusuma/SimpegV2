@@ -616,6 +616,7 @@ select:focus {
     font-size: 0.75rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.03em !important;
+    text-align: center !important;
     text-transform: uppercase !important;
 }
 

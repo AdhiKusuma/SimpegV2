@@ -36,7 +36,10 @@ export default function PageJumpControls({ paginator, label = 'data', ariaLabel 
     const previousLink = links.find((link) => /previous|sebelumnya/i.test(String(link.label)));
     const numberedPages = links.map((link) => numericLabel(link.label)).filter(Boolean);
     const nextPage = nextLink?.url ? Number(queryDetails(nextLink.url).params.get(pageKey)) : null;
-    const lastPage = Math.max(1, ...numberedPages, currentPage, nextPage || 1);
+    const paginatorLastPage = Number(paginator?.last_page);
+    const lastPage = Number.isFinite(paginatorLastPage) && paginatorLastPage > 0
+        ? paginatorLastPage
+        : Math.max(1, ...numberedPages, currentPage, nextPage || 1);
     const [jumpPage, setJumpPage] = useState(String(currentPage));
     const paginationRef = useRef(null);
     const [toolbar, setToolbar] = useState(null);

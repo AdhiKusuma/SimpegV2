@@ -21,7 +21,7 @@ class StoreDataDiriDocumentRequest extends FormRequest
     {
         return [
             'jenis' => ['required', 'string', Rule::in(array_keys(DataDiriDocument::TYPES))],
-            'file_pdf' => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:2048'],
+            'file_pdf' => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:'.(int) config('uploads.data_diri_pdf.max_upload_kb', 1024)],
         ];
     }
 

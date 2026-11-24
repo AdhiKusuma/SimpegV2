@@ -19,6 +19,7 @@ use App\Models\Legacy\TbPendidikan;
 use App\Models\Legacy\TbSertifikasi;
 use App\Models\Legacy\TbSuamiIstri;
 use App\Services\NotificationService;
+use App\Services\ProfileImageService;
 use App\Services\RbacService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -27,9 +28,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -44,6 +45,8 @@ class ProfileController extends Controller
         'keluarga_pasangan_update' => 'Perubahan data pasangan',
         'keluarga_pasangan_delete' => 'Penghapusan data pasangan',
     ];
+
+    public function __construct(private readonly ProfileImageService $profileImages) {}
 
     public function show(Request $request): Response
     {
@@ -104,7 +107,7 @@ class ProfileController extends Controller
             'email' => ['nullable', 'email', 'max:100'],
             'status_kepeg' => ['nullable', 'string', 'max:30'],
             'request_comment' => ['nullable', 'string', 'max:500'],
-            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:'.(int) config('uploads.profile_photo.max_upload_kb', 1024)],
         ]);
 
         $employee = TbPegawai::query()->where('id_peg', $employeeId)->firstOrFail();
@@ -133,8 +136,11 @@ class ProfileController extends Controller
         if ($request->hasFile('foto')) {
             $photo = $request->file('foto');
             $safeEmployeeId = preg_replace('/[^A-Za-z0-9_-]/', '', $employeeId);
-            $pendingPhoto = 'biodata_'.$safeEmployeeId.'_'.Str::lower(Str::random(24)).'.'.$photo->extension();
-            Storage::disk('local')->putFileAs('pending-profile-photos', $photo, $pendingPhoto);
+            $pendingPhoto = $this->profileImages->store(
+                $photo,
+                Storage::disk('local')->path('pending-profile-photos'),
+                'biodata_'.$safeEmployeeId.'_'.Str::lower(Str::random(24)),
+            );
         }
 
         $old['foto_pending'] = $employee->foto ? 'Foto saat ini' : 'Belum ada foto';
@@ -152,7 +158,7 @@ class ProfileController extends Controller
             'id_user' => $request->session()->get('id_user'),
             'status_otorisasi' => 'Menunggu',
             'tanggal_pengajuan' => now(),
-            ... (Schema::hasColumn('tb_edit_pending', 'kode_kantor') ? ['kode_kantor' => (string) ($request->session()->get('kode_kantor') ?: '000')] : []),
+            ...(Schema::hasColumn('tb_edit_pending', 'kode_kantor') ? ['kode_kantor' => (string) ($request->session()->get('kode_kantor') ?: '000')] : []),
         ]);
         $notifications->notifyPendingCreated($pending);
 
@@ -180,7 +186,7 @@ class ProfileController extends Controller
             'telp' => ['nullable', 'digits_between:1,13'],
             'email' => ['nullable', 'email', 'max:100'],
             'status_kepeg' => ['nullable', 'string', 'max:30'],
-            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif', 'max:'.(int) config('uploads.profile_photo.max_upload_kb', 1024)],
         ]);
 
         $employee = TbPegawai::query()->where('id_peg', $employeeId)->firstOrFail();
@@ -190,8 +196,11 @@ class ProfileController extends Controller
             $directory = public_path('uploads/pegawai');
             File::ensureDirectoryExists($directory, 0755);
             $file = $request->file('foto');
-            $newPhoto = 'foto_'.preg_replace('/[^A-Za-z0-9_-]/', '', $employeeId).'_'.now()->format('YmdHisv').'_'.Str::lower(Str::random(6)).'.'.$file->extension();
-            $file->move($directory, $newPhoto);
+            $newPhoto = $this->profileImages->store(
+                $file,
+                $directory,
+                'foto_'.preg_replace('/[^A-Za-z0-9_-]/', '', $employeeId).'_'.now()->format('YmdHisv').'_'.Str::lower(Str::random(6)),
+            );
         }
 
         $employee->fill([

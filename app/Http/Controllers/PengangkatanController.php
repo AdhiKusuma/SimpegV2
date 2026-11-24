@@ -185,6 +185,7 @@ class PengangkatanController extends Controller
         foreach ($preparedRows as $prepared) {
             if ($prepared['errors'] !== []) {
                 $errors[] = 'Baris '.$prepared['row_number'].': '.implode('; ', $prepared['errors']);
+
                 continue;
             }
 
@@ -394,8 +395,9 @@ class PengangkatanController extends Controller
     {
         return TbPegawai::query()
             ->orderBy('nama')
+            ->toBase()
             ->get(['id_peg', 'nama', 'status_kepeg'])
-            ->map(fn (TbPegawai $employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama, 'status_kepeg' => $employee->status_kepeg])
+            ->map(fn ($employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama, 'status_kepeg' => $employee->status_kepeg])
             ->all();
     }
 
@@ -428,6 +430,7 @@ class PengangkatanController extends Controller
             foreach (['tgl_mutasi' => 'Tanggal SK', 'tmt' => 'TMT mulai', 'tmt_selesai' => 'TMT selesai'] as $field => $label) {
                 if (($data[$field] ?? '') === '' || $data[$field] === '-') {
                     $data[$field] = null;
+
                     continue;
                 }
 

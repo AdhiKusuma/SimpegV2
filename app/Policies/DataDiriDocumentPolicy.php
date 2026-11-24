@@ -3,10 +3,13 @@
 namespace App\Policies;
 
 use App\Models\DataDiriDocument;
+use App\Services\EmployeeAccessService;
 use Illuminate\Http\Request;
 
 class DataDiriDocumentPolicy
 {
+    public function __construct(private readonly EmployeeAccessService $employeeAccess) {}
+
     public function view(Request $request, DataDiriDocument $document): bool
     {
         return $this->canViewEmployee($request, (string) $document->pegawai_id);
@@ -24,8 +27,9 @@ class DataDiriDocumentPolicy
 
     public function canViewEmployee(Request $request, string $employeeId): bool
     {
-        return $this->isAdministrator($request)
-            || $this->sessionEmployeeId($request) === trim($employeeId);
+        return $this->employeeAccess->isAdministrator($request)
+            || ($this->employeeAccess->role($request) === 'user'
+                && $this->employeeAccess->employeeId($request) === trim($employeeId));
     }
 
     public function canManageEmployee(Request $request, string $employeeId): bool
@@ -35,16 +39,6 @@ class DataDiriDocumentPolicy
 
     public function canManageAll(Request $request): bool
     {
-        return $this->isAdministrator($request);
-    }
-
-    private function isAdministrator(Request $request): bool
-    {
-        return in_array(strtolower((string) $request->session()->get('hak_akses')), ['admin', 'superadmin', 'it_admin'], true);
-    }
-
-    private function sessionEmployeeId(Request $request): string
-    {
-        return trim((string) ($request->session()->get('id_pegawai') ?? ''));
+        return $this->employeeAccess->isAdministrator($request);
     }
 }

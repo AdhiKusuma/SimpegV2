@@ -29,6 +29,7 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
                 tahun: selectedRow.tahun,
                 penyelenggara: selectedRow.penyelenggara === '-' ? '' : selectedRow.penyelenggara,
                 page: '1',
+                per_page: '10',
             });
 
             try {
@@ -83,7 +84,7 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
         router.get('/laporan/rekap-diklat', Object.fromEntries(new FormData(event.currentTarget).entries()), { preserveState: true, replace: true });
     }
 
-    async function loadPage(page) {
+    async function loadPage(page, perPage = detail?.meta?.per_page || 10) {
         if (!selectedRow) {
             return;
         }
@@ -95,6 +96,7 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
             tahun: selectedRow.tahun,
             penyelenggara: selectedRow.penyelenggara === '-' ? '' : selectedRow.penyelenggara,
             page: String(page),
+            per_page: String(perPage),
         });
 
         try {
@@ -174,9 +176,9 @@ export default function TrainingCosts({ rows, years, filters, totals }) {
                         {detailLoading && <p className="py-8 text-center text-sm text-slate-500" role="status">Memuat rincian peserta...</p>}
                         {detailError && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" role="alert">{detailError}</p>}
                         {!detailLoading && !detailError && detail && <>
-                            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-500"><span>Total {detail.meta.total} peserta</span><span>Halaman {detail.meta.current_page} dari {detail.meta.last_page}</span></div>
-                            <div className="overflow-x-auto"><table className="min-w-[640px] w-full text-left"><thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4 font-semibold">No</th><th className="px-5 py-4 font-semibold">Nama pegawai</th><th className="px-5 py-4 font-semibold">Unit kerja</th><th className="px-5 py-4 text-right font-semibold">Biaya</th></tr></thead><tbody className="divide-y divide-slate-100">{detail.data.map((item, index) => <tr key={`${item.id_peg}-${index}`} className="align-top transition hover:bg-slate-50"><td className="px-5 py-4 text-sm text-slate-500">{(detail.meta.current_page - 1) * detail.meta.per_page + index + 1}</td><td className="px-5 py-4"><span className="block font-semibold text-slate-800">{item.nama}</span><span className="font-mono text-xs text-slate-500">{item.id_peg}</span></td><td className="px-5 py-4 text-sm text-slate-600">{item.nama_kantor || '-'}</td><td className="px-5 py-4 text-right font-mono text-sm font-bold text-slate-800">Rp {currency.format(item.biaya)}</td></tr>)}</tbody></table></div>
-                            {detail.meta.last_page > 1 && <div className="mt-4 flex flex-wrap items-center justify-center gap-2"><button type="button" disabled={detail.meta.current_page <= 1} onClick={() => loadPage(detail.meta.current_page - 1)} className="min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40">Sebelumnya</button><span className="px-2 text-sm font-semibold text-slate-500">{detail.meta.current_page} / {detail.meta.last_page}</span><button type="button" disabled={detail.meta.current_page >= detail.meta.last_page} onClick={() => loadPage(detail.meta.current_page + 1)} className="min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40">Berikutnya</button></div>}
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500"><span>Total {detail.meta.total} peserta</span><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-slate-600">Tampilkan</span><SelectCombobox id="training-participant-per-page" value={String(detail.meta.per_page)} options={[10, 20, 30, 40, 50]} optionLabel={(option) => String(option)} optionValue={(option) => String(option)} onChange={(value) => loadPage(1, Number(value))} placeholder="10" className="w-24" /><span className="ml-2">Halaman {detail.meta.current_page} dari {detail.meta.last_page}</span></div></div>
+                            <div className="overflow-x-auto"><table className="min-w-[640px] w-full text-left"><thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4 font-semibold">No</th><th className="px-5 py-4 font-semibold">Nama pegawai</th><th className="px-5 py-4 font-semibold">Unit kerja</th><th className="px-5 py-4 font-semibold">Jabatan aktif</th></tr></thead><tbody className="divide-y divide-slate-100">{detail.data.map((item, index) => <tr key={`${item.id_peg}-${index}`} className="align-top transition hover:bg-slate-50"><td className="px-5 py-4 text-sm text-slate-500">{(detail.meta.current_page - 1) * detail.meta.per_page + index + 1}</td><td className="px-5 py-4"><span className="block font-semibold text-slate-800">{item.nama}</span><span className="font-mono text-xs text-slate-500">{item.id_peg}</span></td><td className="px-5 py-4 text-sm text-slate-600">{item.nama_kantor || '-'}</td><td className="px-5 py-4 text-sm font-semibold text-slate-700">{item.jabatan}</td></tr>)}</tbody></table></div>
+                            {detail.meta.last_page > 1 && <div className="mt-4 flex flex-wrap items-center justify-center gap-2"><button type="button" disabled={detail.meta.current_page <= 1} onClick={() => loadPage(detail.meta.current_page - 1, detail.meta.per_page)} className="min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40">Sebelumnya</button><span className="px-2 text-sm font-semibold text-slate-500">{detail.meta.current_page} / {detail.meta.last_page}</span><button type="button" disabled={detail.meta.current_page >= detail.meta.last_page} onClick={() => loadPage(detail.meta.current_page + 1, detail.meta.per_page)} className="min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40">Berikutnya</button></div>}
                         </>}
                     </div>
                 </div>

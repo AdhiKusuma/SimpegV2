@@ -203,8 +203,11 @@ class ReportController extends Controller
             'tahun' => ['required', 'string', 'max:4'],
             'penyelenggara' => ['nullable', 'string', 'max:255'],
             'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:10', 'max:50'],
         ]);
         $page = (int) ($validated['page'] ?? 1);
+        $requestedPerPage = (int) ($validated['per_page'] ?? 10);
+        $perPage = in_array($requestedPerPage, [10, 20, 30, 40, 50], true) ? $requestedPerPage : 10;
 
         $query = TbDiklat::query()
             ->from('tb_diklat as d')
@@ -226,16 +229,16 @@ class ReportController extends Controller
         $this->applyTrainingAccessFilter($query, $request);
 
         $items = $query
-            ->select(['d.biaya', 'p.nama', 'p.id_peg', 'k.nama_kantor'])
+            ->select(['p.nama', 'p.id_peg', 'j.jabatan', 'k.nama_kantor'])
             ->orderBy('p.nama')
-            ->paginate(10, ['*'], 'page', $page);
+            ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'data' => $items->getCollection()->map(fn ($item): array => [
                 'nama' => $item->nama,
                 'id_peg' => $item->id_peg,
                 'nama_kantor' => $item->nama_kantor,
-                'biaya' => (int) ($item->biaya ?? 0),
+                'jabatan' => $item->jabatan ?: '-',
             ])->values(),
             'meta' => [
                 'current_page' => $items->currentPage(),

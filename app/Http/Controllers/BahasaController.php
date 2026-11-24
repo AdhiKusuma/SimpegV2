@@ -109,7 +109,7 @@ class BahasaController extends Controller
 
     private function employees(): array
     {
-        return TbPegawai::query()->orderBy('nama')->get(['id_peg', 'nama'])->map(fn (TbPegawai $employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])->all();
+        return TbPegawai::query()->orderBy('nama')->toBase()->get(['id_peg', 'nama'])->map(fn ($employee): array => ['id_peg' => $employee->id_peg, 'nama' => $employee->nama])->all();
     }
 
     private function nextId(): string
