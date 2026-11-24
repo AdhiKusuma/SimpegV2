@@ -59,7 +59,7 @@ class DataImportExportController extends Controller
             'key' => 'id_si',
             'columns' => [
                 'id_peg' => 'ID Pegawai', 'nik' => 'NIK', 'nama' => 'Nama Pasangan', 'tmp_lhr' => 'Tempat Lahir',
-                'tgl_lhr' => 'Tgl Lahir (dd-mm-yyyy)', 'pendidikan' => 'Pendidikan', 'id_pekerjaan' => 'ID Pekerjaan',
+                'tgl_lhr' => 'Tgl Lahir (dd-mm-yyyy)', 'pendidikan' => 'Pendidikan', 'id_pekerjaan' => 'Kategori Pekerjaan',
                 'pekerjaan' => 'Pekerjaan', 'status_hub' => 'Status Hub (Suami/Istri)', 'hp' => 'No HP', 'bpjs_pasangan' => 'BPJS Pasangan',
             ],
         ],
@@ -176,21 +176,29 @@ class DataImportExportController extends Controller
             $examples = match ($type) {
                 'children' => [['CONTOH-001', '1234567890123456', 'Contoh Anak', 'Semarang', '10-02-2015', 'SD', '', 'Pelajar', 'Anak Kandung', '1', '123456789012']],
                 'parents' => [['CONTOH-001', 'Contoh Nama Orang Tua', 'Ayah Kandung']],
-                default => [['CONTOH-001', '1234567890123456', 'Contoh Pasangan', 'Semarang', '20-05-1990', 'S1', '', 'Karyawan', 'Istri', '081234567890', '123456789012']],
+                default => [['CONTOH-001', '1234567890123456', 'Contoh Pasangan', 'Semarang', '20-05-1990', 'S1', 'Karyawan Swasta', 'Karyawan', 'Istri', '081234567890', '123456789012']],
             };
 
             $statusColumn = $type === 'parents' ? 'C' : ($type === 'children' ? 'I' : 'I');
 
+            $lists = [
+                'id_peg' => ['title' => 'ID Pegawai aktif', 'values' => $employeeIds],
+                'status_hub' => ['title' => 'Status hubungan', 'values' => $statusOptions],
+            ];
+            $validations = [
+                ['column' => 'A', 'list' => 'id_peg'],
+                ['column' => $statusColumn, 'list' => 'status_hub'],
+            ];
+
+            if ($type === 'spouses') {
+                $lists['job_category'] = ['title' => 'Kategori pekerjaan', 'values' => $this->jobCategoryLabels()];
+                $validations[] = ['column' => 'G', 'list' => 'job_category'];
+            }
+
             return [
                 'examples' => $examples,
-                'lists' => [
-                    'id_peg' => ['title' => 'ID Pegawai aktif', 'values' => $employeeIds],
-                    'status_hub' => ['title' => 'Status hubungan', 'values' => $statusOptions],
-                ],
-                'validations' => [
-                    ['column' => 'A', 'list' => 'id_peg'],
-                    ['column' => $statusColumn, 'list' => 'status_hub'],
-                ],
+                'lists' => $lists,
+                'validations' => $validations,
             ];
         }
 
@@ -219,6 +227,17 @@ class DataImportExportController extends Controller
                 ['column' => 'A', 'list' => 'id_peg'],
             ],
         ];
+    }
+
+    private function jobCategoryLabels(): array
+    {
+        return DB::table('tb_master_pekerjaan')
+            ->orderBy('id_pekerjaan')
+            ->pluck('desc_pekerjaan')
+            ->map(fn ($label): string => trim((string) $label))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     public function store(Request $request, ImportPreviewService $previewStore, string $resource, ?string $type = null): RedirectResponse
@@ -305,6 +324,9 @@ class DataImportExportController extends Controller
             }
 
             $data['id_peg'] = $this->resolveEmployeeId($data['id_peg'], $employees);
+            if ($resource === 'family' && $type === 'spouses') {
+                $data['id_pekerjaan'] = $this->resolveJobCategoryId($data['id_pekerjaan']);
+            }
             $errors = $this->validateImportRow($resource, $type, $data, $employees);
             $existing = $this->findExisting($resource, $type, $data);
             $prepared[] = [
@@ -791,7 +813,7 @@ class DataImportExportController extends Controller
 
     private function aliases(string $resource, ?string $type): array
     {
-        $common = ['id_peg' => ['ID Pegawai', 'ID Pegawai (Wajib)', 'NIK', 'NIK Pegawai'], 'nama' => ['Nama', 'Nama Anak', 'Nama Orang Tua', 'Nama Pasangan'], 'tmp_lhr' => ['Tempat Lahir'], 'tgl_lhr' => ['Tgl Lahir (dd-mm-yyyy)', 'Tgl Lahir (DD-MM-YYYY)', 'Tgl Lahir'], 'pendidikan' => ['Pendidikan'], 'id_pekerjaan' => ['ID Pekerjaan'], 'pekerjaan' => ['Pekerjaan'], 'status_hub' => ['Status Hubungan', 'Status Hub (Suami/Istri)', 'Status Hub (Kandung/Tiri)'], 'nik' => ['NIK', 'NIK Anak'], 'hp' => ['No HP', 'Nomor HP']];
+        $common = ['id_peg' => ['ID Pegawai', 'ID Pegawai (Wajib)', 'NIK', 'NIK Pegawai'], 'nama' => ['Nama', 'Nama Anak', 'Nama Orang Tua', 'Nama Pasangan'], 'tmp_lhr' => ['Tempat Lahir'], 'tgl_lhr' => ['Tgl Lahir (dd-mm-yyyy)', 'Tgl Lahir (DD-MM-YYYY)', 'Tgl Lahir'], 'pendidikan' => ['Pendidikan'], 'id_pekerjaan' => ['Kategori Pekerjaan', 'ID Pekerjaan'], 'pekerjaan' => ['Pekerjaan'], 'status_hub' => ['Status Hubungan', 'Status Hub (Suami/Istri)', 'Status Hub (Kandung/Tiri)'], 'nik' => ['NIK', 'NIK Anak'], 'hp' => ['No HP', 'Nomor HP']];
 
         if ($resource === 'family') {
             $common['bpjs_anak'] = ['No BPJS Anak', 'BPJS Anak'];
@@ -855,6 +877,15 @@ class DataImportExportController extends Controller
         $this->digitsField($data['nik'] ?? '', 'NIK', 16, $errors);
         $this->validateDateField($data['tgl_lhr'] ?? '', 'Tanggal lahir', $errors);
 
+        if ($type === 'spouses' && trim((string) ($data['id_pekerjaan'] ?? '')) !== '') {
+            $validCategory = DB::table('tb_master_pekerjaan')
+                ->where('id_pekerjaan', trim((string) $data['id_pekerjaan']))
+                ->exists();
+            if (! $validCategory) {
+                $errors[] = 'Kategori pekerjaan tidak sesuai pilihan yang tersedia.';
+            }
+        }
+
         if ($type === 'children') {
             $this->digitsField($data['bpjs_anak'] ?? '', 'BPJS Anak', 32, $errors);
             $this->lengthErrors($data, ['anak_ke' => 3], $errors);
@@ -891,10 +922,6 @@ class DataImportExportController extends Controller
             $payload['tgl_lhr'] = $this->xlsxImport->date($data['tgl_lhr'] ?? '');
             $payload['date_reg'] = now()->toDateString();
             $payload = $this->withCreatedByIfSupported($payload, $table, $actor);
-            if ($type === 'spouses' && $this->hasTableColumn($table, 'id_pekerjaan')) {
-                $payload['id_pekerjaan'] = '';
-            }
-
             return $payload;
         }
 
@@ -907,6 +934,21 @@ class DataImportExportController extends Controller
         $payload = [...$data, 'tgl_sertifikat' => $this->xlsxImport->date($data['tgl_sertifikat']), 'tgl_expired' => $this->xlsxImport->date($data['tgl_expired']), 'date_reg' => now()];
 
         return $this->withCreatedByIfSupported($payload, 'tb_sertifikasi', $actor);
+    }
+
+    private function resolveJobCategoryId(mixed $value): string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+
+        $id = DB::table('tb_master_pekerjaan')
+            ->where('id_pekerjaan', $value)
+            ->orWhereRaw('LOWER(desc_pekerjaan) = ?', [strtolower($value)])
+            ->value('id_pekerjaan');
+
+        return $id === null ? $value : (string) $id;
     }
 
     private function withCreatedByIfSupported(array $payload, string $table, mixed $actor): array

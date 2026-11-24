@@ -55,14 +55,14 @@ class AuthorizationController extends Controller
             'table' => 'tb_anak',
             'key' => 'id_anak',
             'action' => 'create',
-            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'anak_ke', 'bpjs_anak'],
+            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub', 'anak_ke', 'bpjs_anak'],
         ],
         'keluarga_anak_update' => [
             'model' => TbAnak::class,
             'table' => 'tb_anak',
             'key' => 'id_anak',
             'action' => 'update',
-            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'anak_ke', 'bpjs_anak'],
+            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub', 'anak_ke', 'bpjs_anak'],
         ],
         'keluarga_anak_delete' => [
             'model' => TbAnak::class,
@@ -76,14 +76,14 @@ class AuthorizationController extends Controller
             'table' => 'tb_ortu',
             'key' => 'id_ortu',
             'action' => 'create',
-            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub'],
+            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub'],
         ],
         'keluarga_ortu_update' => [
             'model' => TbOrtu::class,
             'table' => 'tb_ortu',
             'key' => 'id_ortu',
             'action' => 'update',
-            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub'],
+            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub'],
         ],
         'keluarga_ortu_delete' => [
             'model' => TbOrtu::class,
@@ -97,7 +97,7 @@ class AuthorizationController extends Controller
             'table' => 'tb_suamiistri',
             'key' => 'id_si',
             'action' => 'create',
-            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'hp', 'bpjs_pasangan'],
+            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub', 'hp', 'bpjs_pasangan'],
         ],
         'keluarga_pasangan_delete' => [
             'model' => TbSuamiIstri::class,
@@ -111,7 +111,7 @@ class AuthorizationController extends Controller
             'table' => 'tb_suamiistri',
             'key' => 'id_si',
             'action' => 'update',
-            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'hp', 'bpjs_pasangan'],
+            'fields' => ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub', 'hp', 'bpjs_pasangan'],
         ],
     ];
 
@@ -552,6 +552,7 @@ class AuthorizationController extends Controller
 
         Validator::make($payload, [
             'nik' => ['nullable', 'string', 'max:16', SimpegFieldRules::DIGITS_ONLY],
+            'id_pekerjaan' => ['nullable', 'string', 'max:3'],
             'pekerjaan' => ['nullable', 'string', 'max:64', SimpegFieldRules::CONTAINS_LETTER],
             'hp' => ['nullable', 'string', 'max:13', SimpegFieldRules::DIGITS_ONLY],
             'bpjs_anak' => ['nullable', 'string', 'max:32', SimpegFieldRules::DIGITS_ONLY],
@@ -578,8 +579,8 @@ class AuthorizationController extends Controller
             $attributes['id_peg'] = $pending->id_peg;
             $attributes['date_reg'] = now()->toDateString();
             if ($model === TbSuamiIstri::class) {
-                // Keep the legacy NOT NULL column compatible without exposing it in the form.
-                $attributes['id_pekerjaan'] = '';
+                // Keep the legacy NOT NULL column compatible when no category is selected.
+                $attributes['id_pekerjaan'] = (string) ($attributes['id_pekerjaan'] ?? '');
                 $attributes['id_si'] = $this->nextSpouseId();
             }
             $model::query()->create($attributes);

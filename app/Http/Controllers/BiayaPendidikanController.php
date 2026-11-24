@@ -10,7 +10,9 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -30,18 +32,10 @@ class BiayaPendidikanController extends Controller
         $party = $request->string('kode_pihak')->trim()->value();
         $search = $request->string('search')->trim()->value();
 
-        $participantStats = DB::table('tb_diklat')
-            ->whereNotNull('diklat_id')
-            ->select('diklat_id')
-            ->selectRaw('COUNT(*) as peserta_terdaftar')
-            ->selectRaw('COALESCE(SUM(COALESCE(biaya_per_peserta, biaya, 0)), 0) as realisasi_biaya')
-            ->groupBy('diklat_id');
-
         $query = TbBiayaPendidikan::query()
             ->from('tb_biaya_pendidikan as b')
             ->leftJoin('tb_ref_pengembangan as rp', 'b.kode_pengembangan', '=', 'rp.kode_sandi')
             ->leftJoin('tb_ref_pelaksana as rpl', 'b.kode_pihak', '=', 'rpl.kode_pihak')
-            ->leftJoinSub($participantStats, 'ps', 'ps.diklat_id', '=', 'b.biaya_id')
             ->when(preg_match('/^\d{4}$/', $year) === 1, fn (Builder $builder) => $builder->whereRaw('YEAR(b.tgl_pengembangan_sdm) = ?', [$year]))
             ->when(in_array($quarter, ['1', '2', '3', '4'], true), function (Builder $builder) use ($quarter): void {
                 [$startMonth, $endMonth] = match ($quarter) {
@@ -65,16 +59,53 @@ class BiayaPendidikanController extends Controller
                 });
             });
 
-        $items = $query
-            ->select('b.*', 'rp.kategori as nama_kategori', 'rpl.nama_pihak as jenis_pihak', 'ps.peserta_terdaftar', 'ps.realisasi_biaya')
+        $allMasters = TbBiayaPendidikan::query()
+            ->from('tb_biaya_pendidikan as b')
+            ->leftJoin('tb_ref_pengembangan as rp', 'b.kode_pengembangan', '=', 'rp.kode_sandi')
+            ->leftJoin('tb_ref_pelaksana as rpl', 'b.kode_pihak', '=', 'rpl.kode_pihak')
+            ->select('b.*', 'rp.kategori as nama_kategori', 'rpl.nama_pihak as jenis_pihak')
+            ->get();
+        $participantGroups = $this->participantActivityGroups();
+        $masterById = $allMasters->keyBy('biaya_id');
+        $masterByActivity = $allMasters->filter(fn (TbBiayaPendidikan $master): bool => $this->activityKey(
+            (string) $master->pengembangan_sdm,
+            (string) $master->pihak_pelaksana,
+            $master->tgl_pengembangan_sdm?->format('Y-m-d'),
+        ) !== '')->keyBy(fn (TbBiayaPendidikan $master): string => $this->activityKey(
+            (string) $master->pengembangan_sdm,
+            (string) $master->pihak_pelaksana,
+            $master->tgl_pengembangan_sdm?->format('Y-m-d'),
+        ));
+
+        $realizedRows = $this->realizedActivityRows($participantGroups, $masterById, $masterByActivity);
+        $realizedMasterIds = $realizedRows
+            ->pluck('master_id')
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->flip();
+
+        $plannedRows = $query
+            ->select('b.*', 'rp.kategori as nama_kategori', 'rpl.nama_pihak as jenis_pihak')
             ->orderByDesc('b.tgl_pengembangan_sdm')
             ->orderByDesc('b.created_at')
-            ->paginate(min(max($request->integer('per_page', 10), 1), 50))
-            ->withQueryString()
-            ->through(fn (TbBiayaPendidikan $item): array => $this->presentRecord($item));
+            ->get()
+            ->reject(fn (TbBiayaPendidikan $item): bool => $realizedMasterIds->has((int) $item->biaya_id))
+            ->map(fn (TbBiayaPendidikan $item): array => $this->presentRecord($item, 'Rencana'))
+            ->values();
+
+        $realizedRows = $this->filterRealizedRows($realizedRows, $year, $quarter, $category, $party, $search)
+            ->sortByDesc(fn (array $item): string => (string) ($item['tanggal_raw'] ?? ''))
+            ->values()
+            ->map(fn (array $item): array => $this->presentActivityRecord($item))
+            ->values();
+        $perPage = min(max($request->integer('per_page', 10), 1), 50);
+        $plannedItems = $this->paginateCollection($plannedRows, $perPage, $request, 'rencana_page');
+        $realizedItems = $this->paginateCollection($realizedRows, $perPage, $request, 'realisasi_page');
 
         return Inertia::render('BiayaPendidikan/Index', [
-            'items' => $items,
+            'items' => $plannedItems,
+            'plannedItems' => $plannedItems,
+            'realizedItems' => $realizedItems,
             'years' => $this->years(),
             ...$this->referenceData(),
             'filters' => [
@@ -355,6 +386,66 @@ class BiayaPendidikanController extends Controller
                 ->where('d.diklat', $record->pengembangan_sdm)
                 ->where('d.penyelenggara', $record->pihak_pelaksana)
                 ->where('d.date_reg', $record->tgl_pengembangan_sdm));
+
+        $total = (clone $query)->count();
+        $participants = $query
+            ->select('p.nama', 'p.id_peg', 'j.jabatan', 'k.nama_kantor')
+            ->orderBy('p.nama')
+            ->orderBy('p.id_peg')
+            ->offset(($page - 1) * $perPage)
+            ->limit($perPage)
+            ->get()
+            ->map(fn ($item, $index): array => [
+                'no' => (($page - 1) * $perPage) + $index + 1,
+                'nama' => $item->nama ?: '-',
+                'id_peg' => $item->id_peg ?: '-',
+                'jabatan' => $item->jabatan ?: '-',
+                'unit_kerja' => $item->nama_kantor ?: '-',
+            ])
+            ->all();
+
+        return response()->json([
+            'data' => $participants,
+            'summary' => [
+                'total_orang' => $total,
+                'total_biaya' => (int) ((clone $query)->sum(DB::raw('COALESCE(d.biaya_per_peserta, d.biaya, 0)'))),
+            ],
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total_pages' => max((int) ceil($total / $perPage), 1),
+                'total_data' => $total,
+            ],
+        ]);
+    }
+
+    public function participantsLegacy(Request $request): JsonResponse
+    {
+        $this->ensureStaffAccess($request);
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'party' => ['nullable', 'string', 'max:255'],
+            'date' => ['required', 'date'],
+        ]);
+        $page = max($request->integer('page', 1), 1);
+        $requestedPerPage = $request->integer('per_page', 10);
+        $perPage = in_array($requestedPerPage, [10, 20, 30, 40, 50], true) ? $requestedPerPage : 10;
+
+        $query = DB::table('tb_diklat as d')
+            ->leftJoin('tb_pegawai as p', 'p.id_peg', '=', 'd.id_peg')
+            ->leftJoin('tb_jabatan as j', function ($join): void {
+                $join->on('j.id_peg', '=', 'd.id_peg')->where('j.status_jab', 'Aktif');
+            })
+            ->leftJoin('tb_kantor as k', 'j.unit_kerja', '=', 'k.kode_kantor_detail')
+            ->where('d.diklat', $validated['title'])
+            ->where(function ($builder) use ($validated): void {
+                $party = (string) ($validated['party'] ?? '');
+                $builder->where('d.penyelenggara', $party);
+                if ($party === '') {
+                    $builder->orWhereNull('d.penyelenggara');
+                }
+            })
+            ->whereDate('d.date_reg', $validated['date']);
 
         $total = (clone $query)->count();
         $participants = $query
@@ -702,7 +793,166 @@ class BiayaPendidikanController extends Controller
         }
     }
 
-    private function presentRecord(TbBiayaPendidikan $item): array
+    private function participantActivityGroups(): Collection
+    {
+        return DB::table('tb_diklat as d')
+            ->select('d.diklat_id', 'd.diklat', 'd.penyelenggara', 'd.date_reg')
+            ->selectRaw('COUNT(*) as peserta_terdaftar')
+            ->selectRaw('COALESCE(SUM(COALESCE(d.biaya_per_peserta, d.biaya, 0)), 0) as realisasi_biaya')
+            ->groupBy('d.diklat_id', 'd.diklat', 'd.penyelenggara', 'd.date_reg')
+            ->get();
+    }
+
+    private function realizedActivityRows(Collection $participantGroups, Collection $masterById, Collection $masterByActivity): Collection
+    {
+        $rows = [];
+
+        foreach ($participantGroups as $group) {
+            $title = trim((string) ($group->diklat ?? ''));
+            $party = trim((string) ($group->penyelenggara ?? ''));
+            $date = $group->date_reg ? Carbon::parse($group->date_reg)->format('Y-m-d') : null;
+            $usesLegacyActivity = ! $group->diklat_id;
+            $master = $group->diklat_id
+                ? $masterById->get((int) $group->diklat_id)
+                : $masterByActivity->get($this->activityKey($title, $party, $date));
+            $key = $master
+                ? 'master:'.(int) $master->biaya_id
+                : 'legacy:'.$this->activityKey($title, $party, $date);
+
+            if (! isset($rows[$key])) {
+                $rows[$key] = [
+                    'master_id' => $master?->biaya_id,
+                    'biaya_id' => $master?->biaya_id,
+                    'kode_pengembangan' => $master?->kode_pengembangan,
+                    'kode_pihak' => $master?->kode_pihak,
+                    'kategori' => $master?->nama_kategori ?: 'Riwayat pelatihan',
+                    'jenis_pihak' => $master?->jenis_pihak ?: 'Data historis',
+                    'pengembangan_sdm' => $master?->pengembangan_sdm ?: ($title ?: '-'),
+                    'pihak_pelaksana' => $master?->pihak_pelaksana ?: ($party ?: '-'),
+                    'waktu_pelaksanaan' => $master?->waktu_pelaksanaan ?: '-',
+                    'tanggal_raw' => $master?->tgl_pengembangan_sdm?->format('Y-m-d') ?: $date,
+                    'jumlah_sdm' => (int) ($master?->jumlah_sdm ?? 0),
+                    'total_biaya' => (int) ($master?->total_biaya ?? 0),
+                    'peserta_terdaftar' => 0,
+                    'realisasi_biaya' => 0,
+                    'status' => 'Terealisasi',
+                    'status_key' => 'terealisasi',
+                    'is_legacy' => ! $master || $usesLegacyActivity,
+                    'legacy_title' => (! $master || $usesLegacyActivity) ? $title : null,
+                    'legacy_party' => (! $master || $usesLegacyActivity) ? $party : null,
+                    'legacy_date' => (! $master || $usesLegacyActivity) ? $date : null,
+                ];
+            }
+
+            if ($usesLegacyActivity) {
+                $rows[$key]['is_legacy'] = true;
+                $rows[$key]['legacy_title'] = $title;
+                $rows[$key]['legacy_party'] = $party;
+                $rows[$key]['legacy_date'] = $date;
+            }
+
+            $rows[$key]['peserta_terdaftar'] += (int) ($group->peserta_terdaftar ?? 0);
+            $rows[$key]['realisasi_biaya'] += (int) ($group->realisasi_biaya ?? 0);
+        }
+
+        return collect(array_values($rows));
+    }
+
+    private function filterRealizedRows(Collection $rows, string $year, string $quarter, string $category, string $party, string $search): Collection
+    {
+        return $rows->filter(function (array $item) use ($year, $quarter, $category, $party, $search): bool {
+            $date = (string) ($item['tanggal_raw'] ?? '');
+            if (preg_match('/^\d{4}$/', $year) === 1 && ! str_starts_with($date, $year)) {
+                return false;
+            }
+
+            if (in_array($quarter, ['1', '2', '3', '4'], true)) {
+                $month = (int) substr($date, 5, 2);
+                [$startMonth, $endMonth] = match ($quarter) {
+                    '1' => [1, 3],
+                    '2' => [4, 6],
+                    '3' => [7, 9],
+                    default => [10, 12],
+                };
+                if ($month < $startMonth || $month > $endMonth) {
+                    return false;
+                }
+            }
+
+            if ($category !== '' && (string) ($item['kode_pengembangan'] ?? '') !== $category) {
+                return false;
+            }
+            if ($party !== '' && (string) ($item['kode_pihak'] ?? '') !== $party) {
+                return false;
+            }
+            if ($search !== '') {
+                $haystack = mb_strtolower(implode(' ', [
+                    $item['pengembangan_sdm'] ?? '',
+                    $item['pihak_pelaksana'] ?? '',
+                    $item['kategori'] ?? '',
+                    $item['jenis_pihak'] ?? '',
+                ]));
+                if (! str_contains($haystack, mb_strtolower($search))) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    private function activityKey(string $title, string $party, ?string $date): string
+    {
+        $title = trim($title);
+        $date = trim((string) $date);
+
+        return $title === '' || $date === '' ? '' : implode("\0", [$title, trim($party), $date]);
+    }
+
+    private function paginateCollection(Collection $items, int $perPage, Request $request, string $pageName): LengthAwarePaginator
+    {
+        $page = max((int) $request->integer($pageName, 1), 1);
+        $paginator = new LengthAwarePaginator(
+            $items->forPage($page, $perPage)->values(),
+            $items->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'pageName' => $pageName,
+            ],
+        );
+
+        return $paginator->appends($request->except(['page', 'rencana_page', 'realisasi_page']));
+    }
+
+    private function presentActivityRecord(array $item): array
+    {
+        $date = $item['tanggal_raw'] ?? null;
+
+        return [
+            'biaya_id' => $item['biaya_id'] ?? null,
+            'kategori' => $item['kategori'] ?: '-',
+            'jenis_pihak' => $item['jenis_pihak'] ?: '-',
+            'pengembangan_sdm' => $item['pengembangan_sdm'] ?: '-',
+            'pihak_pelaksana' => $item['pihak_pelaksana'] ?: '-',
+            'waktu_pelaksanaan' => $item['waktu_pelaksanaan'] ?: '-',
+            'tanggal' => $date ? Carbon::parse($date)->format('d-m-Y') : '-',
+            'tanggal_raw' => $date,
+            'jumlah_sdm' => (int) ($item['jumlah_sdm'] ?? 0),
+            'total_biaya' => (int) ($item['total_biaya'] ?? 0),
+            'peserta_terdaftar' => (int) ($item['peserta_terdaftar'] ?? 0),
+            'realisasi_biaya' => (int) ($item['realisasi_biaya'] ?? 0),
+            'status' => $item['status'] ?? 'Terealisasi',
+            'status_key' => $item['status_key'] ?? 'terealisasi',
+            'is_legacy' => (bool) ($item['is_legacy'] ?? false),
+            'legacy_title' => $item['legacy_title'] ?? null,
+            'legacy_party' => $item['legacy_party'] ?? null,
+            'legacy_date' => $item['legacy_date'] ?? null,
+        ];
+    }
+
+    private function presentRecord(TbBiayaPendidikan $item, string $status = 'Rencana'): array
     {
         $date = $item->tgl_pengembangan_sdm;
 
@@ -719,6 +969,12 @@ class BiayaPendidikanController extends Controller
             'total_biaya' => (int) ($item->total_biaya ?? 0),
             'peserta_terdaftar' => (int) ($item->peserta_terdaftar ?? 0),
             'realisasi_biaya' => (int) ($item->realisasi_biaya ?? 0),
+            'status' => $status,
+            'status_key' => strtolower($status),
+            'is_legacy' => false,
+            'legacy_title' => null,
+            'legacy_party' => null,
+            'legacy_date' => null,
         ];
     }
 

@@ -297,6 +297,7 @@ return [
         'biaya-pendidikan.export' => 'training_costs.view',
         'biaya-pendidikan.template' => 'training_costs.view',
         'biaya-pendidikan.participants' => 'training_costs.view',
+        'biaya-pendidikan.participants-legacy' => 'training_costs.view',
         'biaya-pendidikan.create' => 'training_costs.manage',
         'biaya-pendidikan.store' => 'training_costs.manage',
         'biaya-pendidikan.edit' => 'training_costs.manage',

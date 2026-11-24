@@ -10,6 +10,7 @@ const defaults = {
     tmp_lhr: '',
     tgl_lhr: '',
     pendidikan: '',
+    id_pekerjaan: '',
     pekerjaan: '',
     status_hub: '',
     anak_ke: '',
@@ -26,9 +27,9 @@ const statuses = {
 
 const familyUrlTypes = { children: 'anak', spouses: 'suami-istri', parents: 'orang-tua' };
 
-export default function FamilyForm({ type, label, mode, record, employees, employeeId, canRequest }) {
+export default function FamilyForm({ type, label, mode, record, employees, employeeId, canRequest, jobCategories = [] }) {
     const initial = { ...defaults, ...(record || {}), id_peg: record?.id_peg || employeeId || '' };
-    ['nik', 'bpjs_anak', 'hp', 'bpjs_pasangan', 'pekerjaan'].forEach((field) => {
+    ['nik', 'bpjs_anak', 'hp', 'bpjs_pasangan', 'id_pekerjaan', 'pekerjaan'].forEach((field) => {
         if (initial[field] === '-') initial[field] = '';
     });
     const form = useForm(initial);
@@ -64,6 +65,7 @@ export default function FamilyForm({ type, label, mode, record, employees, emplo
                         {!isParentCreate && field('tmp_lhr', 'Tempat Lahir', { required: type === 'spouses', maxLength: 64 })}
                         {!isParentCreate && field('tgl_lhr', 'Tanggal Lahir', { type: 'date', required: type === 'spouses' })}
                         {!isParentCreate && field('pendidikan', 'Pendidikan', { maxLength: 26 })}
+                        {!isParentCreate && <SelectCombobox id="id_pekerjaan" label="Kategori Pekerjaan" value={form.data.id_pekerjaan} onChange={(value) => form.setData('id_pekerjaan', value)} options={jobCategories} emptyLabel="Pilih kategori pekerjaan" error={form.errors.id_pekerjaan} />}
                         {!isParentCreate && field('pekerjaan', 'Pekerjaan', { maxLength: 64 })}
                         <SelectCombobox id="status_hub" label="Status Hubungan" value={form.data.status_hub} onChange={(value) => form.setData('status_hub', value)} options={statuses[type]} emptyLabel="Pilih status" required={type === 'spouses' || isParentCreate} error={form.errors.status_hub} />
                         {type === 'children' && field('anak_ke', 'Anak ke-', { type: 'number', maxLength: 3 })}

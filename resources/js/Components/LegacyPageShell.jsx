@@ -114,11 +114,11 @@ function filterNavigation(items, permissions, role = '') {
 const sectionTabGroups = [
     {
         ariaLabel: 'Status data pegawai',
-        matches: ['/pegawai'],
+        matches: ['/pegawai', '/mutasi'],
         items: [
             { href: '/pegawai?tab=active', label: 'Aktif', activePaths: ['/pegawai'], activeWhen: (url) => (new URLSearchParams(String(url || '').split('?')[1] || '').get('tab') || 'active') === 'active', permission: 'employees.view' },
             { href: '/pegawai?tab=nonjob', label: 'Belum Ada Jabatan', activePaths: ['/pegawai'], activeWhen: (url) => new URLSearchParams(String(url || '').split('?')[1] || '').get('tab') === 'nonjob', permission: 'employees.view' },
-            { href: '/pegawai?tab=purna', label: 'Purna', activePaths: ['/pegawai'], activeWhen: (url) => new URLSearchParams(String(url || '').split('?')[1] || '').get('tab') === 'purna', permission: 'employees.view' },
+            { href: '/mutasi', label: 'Purna & Penonaktifan', activePaths: ['/mutasi'], permission: ['employees.view', 'mutations.view'] },
         ],
     },
     {
@@ -132,10 +132,9 @@ const sectionTabGroups = [
     },
     {
         ariaLabel: 'Mutasi kepegawaian',
-        matches: ['/pengangkatan', '/mutasi'],
+        matches: ['/pengangkatan'],
         items: [
             { href: '/pengangkatan', label: 'Pengangkatan', permission: 'appointments.view' },
-            { href: '/mutasi', label: 'Penonaktifan', permission: 'mutations.view' },
         ],
     },
     {
@@ -216,7 +215,11 @@ function sectionTabsForPath(url, permissions, role) {
 
     const visibleItems = group.items.filter((item) => {
         const roleAllowed = !item.roles || item.roles.includes(String(role || '').toLowerCase());
-        return roleAllowed && permissions.includes(item.permission);
+        const hasPermission = Array.isArray(item.permission)
+            ? item.permission.some((permission) => permissions.includes(permission))
+            : !item.permission || permissions.includes(item.permission);
+
+        return roleAllowed && hasPermission;
     });
 
     const employeeDetailPath = /^\/pegawai\/[^/]+$/.test(path) && !['/pegawai/import', '/pegawai/create'].includes(path);

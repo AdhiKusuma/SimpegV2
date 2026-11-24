@@ -531,3 +531,60 @@ html.dark body .simpeg-app-canvas .simpeg-export-menu :is(.simpeg-export-menu-it
     stroke: currentColor !important;
     opacity: 1 !important;
 }
+
+/* Mutation row actions use the shared dropdown primitive but are not export
+ * menus. Give the standalone action menu the same explicit contrast contract
+ * so dark mode cannot leave light text on the paper-white card surface. */
+html body .simpeg-app-canvas .simpeg-action-menu {
+    background: var(--simpeg-card) !important;
+    background-color: var(--simpeg-card) !important;
+    border-color: var(--simpeg-border) !important;
+    color: var(--simpeg-text) !important;
+}
+
+html body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item,
+html body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item :is(*, svg *) {
+    color: var(--simpeg-text) !important;
+    -webkit-text-fill-color: var(--simpeg-text) !important;
+    stroke: currentColor !important;
+}
+
+html body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active']) {
+    background: var(--simpeg-hover-surface) !important;
+    background-color: var(--simpeg-hover-surface) !important;
+    color: var(--simpeg-hover-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-hover-ink) !important;
+}
+
+html body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active']) :is(*, svg *) {
+    color: var(--simpeg-hover-ink) !important;
+    -webkit-text-fill-color: var(--simpeg-hover-ink) !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-action-menu {
+    background: #1B2A4A !important;
+    background-color: #1B2A4A !important;
+    border-color: #2A426C !important;
+    color: #F1F5F9 !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item,
+html.dark body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item :is(*, svg *) {
+    color: #F1F5F9 !important;
+    -webkit-text-fill-color: #F1F5F9 !important;
+    stroke: currentColor !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active']) {
+    background: #2A426C !important;
+    background-color: #2A426C !important;
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
+
+html.dark body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active']) :is(*, svg *) {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    stroke: currentColor !important;
+}

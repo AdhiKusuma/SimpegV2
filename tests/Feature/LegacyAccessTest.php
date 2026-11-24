@@ -292,6 +292,16 @@ class LegacyAccessTest extends TestCase
         $this->withSession($session)->get('/biaya-pendidikan/template')->assertOk()->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
+    public function test_admin_can_view_legacy_training_participants(): void
+    {
+        $response = $this->withSession([
+            'id_user' => 'admin-demo',
+            'hak_akses' => 'admin',
+        ])->get('/biaya-pendidikan/participants-legacy?title='.urlencode('Pelatihan Pengembangan Karir di Lingkungan Kerja PT BPR BKK Jateng (Perseroda)').'&party='.urlencode('Internal PT. BPR BKK Jateng').'&date=2026-03-30');
+
+        $response->assertOk()->assertJsonPath('summary.total_orang', 24);
+    }
+
     public function test_kepala_can_read_education_activity_list_but_cannot_manage_it(): void
     {
         $session = [
@@ -387,15 +397,21 @@ class LegacyAccessTest extends TestCase
 
     public function test_admin_can_open_purna_employee_tab_from_local_mysql(): void
     {
-        $response = $this->withSession([
+        $session = [
             'id_user' => 'admin-demo',
             'hak_akses' => 'admin',
-        ])->get('/pegawai?tab=purna');
+        ];
 
-        $response->assertOk()->assertInertia(fn ($page) => $page
-            ->component('Employees/Index')
-            ->where('filters.tab', 'purna')
-            ->has('employees.data'));
+        $response = $this->withSession($session)->get('/pegawai?tab=purna');
+
+        $response->assertRedirect('/mutasi?kategori=purna');
+
+        $this->withSession($session)->get('/mutasi?kategori=purna')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Mutation/Index')
+                ->where('filters.kategori', 'purna')
+                ->has('items.data'));
     }
 
     public function test_admin_can_open_education_and_training_menus_from_local_mysql(): void
@@ -878,14 +894,14 @@ class LegacyAccessTest extends TestCase
     {
         $id = 'TST-'.random_int(10000, 99999);
         $headers = [
-            'ID Pegawai (Wajib)', 'NIP', 'Nama Lengkap', 'Tempat Lahir', 'Tgl Lahir (DD-MM-YY)',
+            'ID Pegawai (Wajib)', 'NIK', 'Nama Lengkap', 'Tempat Lahir', 'Tgl Lahir (DD-MM-YY)',
             'Agama', 'Jenis Kelamin', 'Gol Darah', 'Status Nikah', 'Status Kepegawaian', 'Alamat',
-            'No Telp', 'Email', 'Nama File Foto', 'TMT Kerja (DD-MM-YY)', 'Tgl Pensiun (DD-MM-YY - Opsional)',
+            'No Telp', 'Email', 'TMT Kerja (DD-MM-YY)', 'Tgl Pensiun (DD-MM-YY - Opsional)',
             'No BPJS TK', 'No BPJS Kes',
         ];
         $xlsx = app(XlsxExportService::class)->make([$headers, [
             $id, '1990010120150110', 'Pegawai Import Test', 'Jakarta', '20-11-1990', 'Islam', 'Laki-laki',
-            'O', 'Menikah', 'Tetap', 'Jl. Test', '081234567890', 'import-test@example.test', '', '20-11-2015',
+            'O', 'Menikah', 'Tetap', 'Jl. Test', '081234567890', 'import-test@example.test', '20-11-2015',
             '20-11-2046', '12345678901', '00012345678',
         ]]);
 

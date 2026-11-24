@@ -38,6 +38,16 @@ class MutationController extends Controller
         'Pemberhentian Lainnya',
     ];
 
+    private const PURNA_TYPES = [
+        'Pensiun',
+        'Pensiun Dini',
+        'Meninggal Dunia',
+        'Pengunduran Diri',
+        'PTDH',
+    ];
+
+    private const EMPLOYMENT_STATUS_OPTIONS = ['Tetap', 'Calon Pegawai', 'Kontrak', 'Outsourcing'];
+
     private const IMPORT_FIELDS = ['id_peg', 'jns_mutasi', 'tgl_mutasi', 'no_mutasi', 'tmt'];
 
     private const IMPORT_COLUMNS = [
@@ -55,6 +65,9 @@ class MutationController extends Controller
         $position = $request->string('jabatan')->trim()->value();
         $requestedYear = $request->string('year')->trim()->value();
         $year = preg_match('/^\d{4}$/', $requestedYear) === 1 ? $requestedYear : '';
+        $category = $request->string('kategori')->trim()->lower()->value();
+        $category = in_array($category, ['purna', 'penonaktifan'], true) ? $category : '';
+        $statusKepeg = $request->string('status_kepeg')->trim()->value();
         $baseQuery = $this->baseMutationQuery($request);
         $yearsQuery = clone $baseQuery;
         $years = $yearsQuery
@@ -70,8 +83,8 @@ class MutationController extends Controller
             ? $this->mutationFilterOptions($request, $office, $division)
             : ['divisions' => [], 'positions' => []];
 
-        $items = $this->filteredMutationQuery($request, $year, $search, $office, $division, $position)
-            ->select('m.*', 'p.nama as nama_pegawai')
+        $items = $this->filteredMutationQuery($request, $year, $search, $office, $division, $position, $category, $statusKepeg)
+            ->select('m.*', 'p.nama as nama_pegawai', 'p.status_kepeg')
             ->orderByDesc('m.tgl_mutasi')
             ->orderByDesc('m.id_mutasi')
             ->paginate(min(max($request->integer('per_page', 10), 1), 50))
@@ -90,7 +103,10 @@ class MutationController extends Controller
                 'divisi' => $division,
                 'jabatan' => $position,
                 'year' => $year,
+                'kategori' => $category,
+                'status_kepeg' => $statusKepeg,
             ],
+            'employmentStatuses' => self::EMPLOYMENT_STATUS_OPTIONS,
             'canManage' => $this->canManage($request),
         ]);
     }
@@ -119,14 +135,17 @@ class MutationController extends Controller
         $position = $request->string('jabatan')->trim()->value();
         $requestedYear = $request->string('year')->trim()->value();
         $year = preg_match('/^\d{4}$/', $requestedYear) === 1 ? $requestedYear : '';
-        $records = $this->filteredMutationQuery($request, $year, $search, $office, $division, $position)
-            ->select('m.*', 'p.nama as nama_pegawai')
+        $category = $request->string('kategori')->trim()->lower()->value();
+        $category = in_array($category, ['purna', 'penonaktifan'], true) ? $category : '';
+        $statusKepeg = $request->string('status_kepeg')->trim()->value();
+        $records = $this->filteredMutationQuery($request, $year, $search, $office, $division, $position, $category, $statusKepeg)
+            ->select('m.*', 'p.nama as nama_pegawai', 'p.status_kepeg')
             ->orderByDesc('m.tgl_mutasi')
             ->orderByDesc('m.id_mutasi')
             ->get();
 
         $rows = [[
-            'Nama pegawai', 'ID pegawai', 'Jabatan terakhir', 'Jenis penonaktifan',
+            'Nama pegawai', 'ID pegawai', 'Jabatan terakhir', 'Kategori', 'Jenis penonaktifan',
             'Tanggal SK', 'Nomor SK', 'TMT', 'Dokumen SK',
         ]];
 
@@ -135,6 +154,7 @@ class MutationController extends Controller
                 $record->nama_pegawai ?: 'Tanpa Nama',
                 $record->id_peg,
                 $record->jabatan,
+                $this->mutationCategory($record->jns_mutasi),
                 $record->jns_mutasi,
                 $record->tgl_mutasi?->format('d-m-Y'),
                 $record->no_mutasi,
@@ -143,8 +163,8 @@ class MutationController extends Controller
             ];
         }
 
-        $content = $xlsxExport->make($rows, 'Penonaktifan', true);
-        $filename = 'data-penonaktifan-'.now()->format('Ymd_His').'.xlsx';
+        $content = $xlsxExport->make($rows, 'Purna & Penonaktifan', true);
+        $filename = 'data-purna-penonaktifan-'.now()->format('Ymd_His').'.xlsx';
 
         return response()->streamDownload(static function () use ($content): void {
             echo $content;
@@ -171,9 +191,26 @@ class MutationController extends Controller
             });
     }
 
-    private function filteredMutationQuery(Request $request, string $year, string $search, string $office = '', string $division = '', string $position = ''): Builder
+    private function filteredMutationQuery(Request $request, string $year, string $search, string $office = '', string $division = '', string $position = '', string $category = '', string $statusKepeg = ''): Builder
     {
+        $normalizedStatus = mb_strtoupper(trim($statusKepeg));
+        $acceptedStatuses = match ($normalizedStatus) {
+            'CALON PEGAWAI', 'CAPEG' => ['CALON PEGAWAI', 'CAPEG'],
+            'OUTSOURCE', 'OUTSOURCING' => ['OUTSOURCE', 'OUTSOURCING'],
+            default => [$normalizedStatus],
+        };
+
         return $this->baseMutationQuery($request)
+            ->when($category === 'purna', fn (Builder $builder) => $builder->whereIn('m.jns_mutasi', self::PURNA_TYPES))
+            ->when($category === 'penonaktifan', fn (Builder $builder) => $builder->where('m.jns_mutasi', 'Pemberhentian Lainnya'))
+            ->when($statusKepeg !== '', function (Builder $builder) use ($acceptedStatuses): void {
+                $builder->whereRaw(
+                    count($acceptedStatuses) === 1
+                        ? 'UPPER(TRIM(p.status_kepeg)) = ?'
+                        : 'UPPER(TRIM(p.status_kepeg)) IN (?, ?)',
+                    $acceptedStatuses,
+                );
+            })
             ->when($year !== '', fn (Builder $builder) => $builder->whereYear('p.tmt_kerja', $year))
             ->when($office !== '', function (Builder $builder) use ($office): void {
                 $builder->whereExists(function (QueryBuilder $scope) use ($office): void {
@@ -805,13 +842,20 @@ class MutationController extends Controller
             'id_peg' => $item->id_peg,
             'nama_pegawai' => $item->nama_pegawai ?: 'Tanpa Nama',
             'jabatan' => $item->jabatan,
+            'kategori' => $this->mutationCategory($item->jns_mutasi),
             'jns_mutasi' => $item->jns_mutasi,
+            'status_kepeg' => $item->status_kepeg,
             'tgl_mutasi' => $item->tgl_mutasi?->format('d-m-Y'),
             'no_mutasi' => $item->no_mutasi,
             'tmt' => $item->tmt?->format('d-m-Y'),
             'sk_mutasi' => $item->sk_mutasi,
             'document_url' => $hasDocument ? route('mutasi.document', $item->id_mutasi) : null,
         ];
+    }
+
+    private function mutationCategory(?string $type): string
+    {
+        return in_array($type, self::PURNA_TYPES, true) ? 'Purna' : 'Penonaktifan';
     }
 
     private function documentExists(string $filename): bool

@@ -1,5 +1,4 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import IconAction from '../../Components/IconAction';
 import PageJumpControls from '../../Components/PageJumpControls';
 import { useRef, useState } from 'react';
 import ExportDropdown from '../../Components/ExportDropdown';
@@ -7,9 +6,43 @@ import LegacyPageShell from '../../Components/LegacyPageShell';
 import MobileFilterGroup from '../../Components/MobileFilterGroup';
 import SearchableCombobox from '../../Components/SearchableCombobox';
 import SelectCombobox from '../../Components/SelectCombobox';
-import { Eye, EyeOff } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../Components/ui/dropdown-menu';
+import { Eye, FileText, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 
-export default function MutationIndex({ items, filters, offices, divisions, positions, years, canManage }) {
+function MutationActions({ item, canManage, onDelete }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div className="relative flex justify-end">
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger asChild>
+                <button type="button" className="simpeg-utility inline-flex h-9 w-9 items-center justify-center rounded-lg border transition hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20" aria-label={`Aksi untuk ${item.nama_pegawai}`} title="Aksi">
+                    <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="simpeg-action-menu absolute right-0 top-[calc(100%+0.5rem)] w-64">
+                <DropdownMenuItem asChild>
+                    <Link href={`/pegawai/${encodeURIComponent(item.id_peg)}`}><Eye aria-hidden="true" className="h-4 w-4" />Lihat detail pegawai</Link>
+                </DropdownMenuItem>
+                {item.document_url && <DropdownMenuItem asChild>
+                    <a href={item.document_url} target="_blank" rel="noreferrer"><FileText aria-hidden="true" className="h-4 w-4" />Lihat dokumen SK</a>
+                </DropdownMenuItem>}
+                {canManage && <>
+                    <DropdownMenuItem asChild>
+                        <Link href={`/pegawai/${encodeURIComponent(item.id_peg)}/edit`}><Pencil aria-hidden="true" className="h-4 w-4" />Edit data pegawai</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        <Link href={`/mutasi/${item.id_mutasi}/edit`}><Pencil aria-hidden="true" className="h-4 w-4" />Edit data mutasi</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDelete(item)} className="text-red-700 hover:bg-red-50 hover:text-red-700"><Trash2 aria-hidden="true" className="h-4 w-4" />Hapus data mutasi</DropdownMenuItem>
+                </>}
+            </DropdownMenuContent>
+        </DropdownMenu>
+        </div>
+    );
+}
+
+export default function MutationIndex({ items, filters, offices, divisions, positions, years, employmentStatuses, canManage }) {
     const { flash } = usePage().props;
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [officeValue, setOfficeValue] = useState(String(filters.kantor || ''));
@@ -26,6 +59,8 @@ export default function MutationIndex({ items, filters, offices, divisions, posi
     if (filters.divisi) exportParams.set('divisi', filters.divisi);
     if (filters.jabatan) exportParams.set('jabatan', filters.jabatan);
     if (filters.year) exportParams.set('year', filters.year);
+    if (filters.kategori) exportParams.set('kategori', filters.kategori);
+    if (filters.status_kepeg) exportParams.set('status_kepeg', filters.status_kepeg);
     const exportQuery = exportParams.toString();
     const exportHref = `/mutasi/export${exportQuery ? `?${exportQuery}` : ''}`;
 
@@ -113,10 +148,10 @@ export default function MutationIndex({ items, filters, offices, divisions, posi
     }
 
     return (
-        <LegacyPageShell title="Penonaktifan Pegawai">
-            <Head title="Penonaktifan Pegawai" />
+        <LegacyPageShell title="Purna & Penonaktifan Pegawai">
+            <Head title="Purna & Penonaktifan Pegawai" />
             <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-                <div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Mutasi Kepegawaian</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Penonaktifan pegawai</h1><p className="mt-2 text-slate-500">Data pensiun, meninggal dunia, pengunduran diri, PTDH, dan pemberhentian lainnya.</p></div>
+                <div><p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Mutasi Kepegawaian</p><h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Purna & penonaktifan pegawai</h1><p className="mt-2 text-slate-500">Daftar seluruh pegawai yang memiliki riwayat purna atau penonaktifan.</p></div>
                 <div className="flex flex-wrap items-center gap-3">
                     <ExportDropdown items={[{ href: exportHref, label: 'Export XLSX' }]} />
                     {canManage && <><Link href="/mutasi/import" className="inline-flex min-h-11 items-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-600/20">Import XLSX</Link><Link href="/mutasi/create" className="simpeg-action-primary rounded-xl px-4 py-2.5 text-sm font-bold shadow-sm transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">+ Tambah Data</Link></>}
@@ -128,21 +163,23 @@ export default function MutationIndex({ items, filters, offices, divisions, posi
 
             <section className="simpeg-filter-list-shell">
                 <form method="get" action="/mutasi" className="simpeg-filter-toolbar simpeg-filter-toolbar--mobile-panel mutation-index-filter-box">
-                    <MobileFilterGroup id="mutation-mobile-filters" fieldsClassName="mutation-index-filter-panel" activeCount={Number(Boolean(filters.search)) + Number(Boolean(officeValue)) + Number(Boolean(divisionValue)) + Number(Boolean(positionValue)) + Number(Boolean(filters.year))}>
+                    <MobileFilterGroup id="mutation-mobile-filters" fieldsClassName="mutation-index-filter-panel" activeCount={Number(Boolean(filters.search)) + Number(Boolean(officeValue)) + Number(Boolean(divisionValue)) + Number(Boolean(positionValue)) + Number(Boolean(filters.year)) + Number(Boolean(filters.kategori)) + Number(Boolean(filters.status_kepeg))}>
                         <div className="mutation-index-filter-content">
                             <div className="simpeg-mobile-filter-search mutation-index-filter-search"><label htmlFor="mutation-search" className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Cari nama / ID pegawai</label><input id="mutation-search" name="search" defaultValue={filters.search} placeholder="Cari nama atau ID pegawai" className="h-11 min-w-0 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none focus:border-red-600 focus:ring-4 focus:ring-red-600/10" /></div>
                             <div className="mutation-index-filter-grid">
+                                <SelectCombobox id="mutation-category" name="kategori" label="Kategori data" value={filters.kategori} options={[{ value: 'purna', label: 'Purna' }, { value: 'penonaktifan', label: 'Penonaktifan lainnya' }]} emptyLabel="Semua data" />
                                 <SearchableCombobox id="mutation-office" name="kantor" label="Kantor / Area" value={officeValue} onChange={changeOffice} options={offices || []} optionValue={(office) => office.kode_kantor_detail} optionLabel={(office) => office.nama_kantor || office.kode_kantor_detail} optionDescription={(office) => office.level || (/wilayah/i.test(office.nama_kantor || '') ? 'KANWIL' : '')} placeholder="Cari kantor atau area" maxOptions={(offices || []).length} />
                                 <SearchableCombobox id="mutation-division" name="divisi" label="Divisi / Unit Kerja" value={divisionValue} onChange={changeDivision} options={divisionOptions} optionDescription={(option) => option.description || ''} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : loadingOptions && divisionOptions.length === 0 ? 'Memuat unit kerja…' : 'Pilih unit/divisi'} disabled={!officeValue || (loadingOptions && divisionOptions.length === 0)} description={officeValue && divisionOptions.length === 0 && !loadingOptions ? 'Belum ada unit/divisi yang terdata untuk kantor ini.' : undefined} />
                                 <SearchableCombobox id="mutation-position" name="jabatan" label="Jabatan" value={positionValue} onChange={setPositionValue} options={positionOptions} optionDescription={(option) => option.description || ''} placeholder={!officeValue ? 'Pilih kantor terlebih dahulu' : !divisionValue ? 'Pilih unit dulu' : loadingOptions ? 'Memuat jabatan…' : 'Cari jabatan'} disabled={!officeValue || !divisionValue || loadingOptions} />
                                 <SelectCombobox id="mutation-start-year" name="year" label="Tahun mulai kerja" value={filters.year} options={years} emptyLabel="Semua tahun" />
+                                <SelectCombobox id="mutation-employment-status" name="status_kepeg" label="Status kepegawaian" value={filters.status_kepeg} options={(employmentStatuses || []).map((status) => ({ value: status, label: status }))} emptyLabel="Semua status" />
                                 <button type="submit" className="simpeg-primary simpeg-mobile-filter-apply mutation-index-filter-apply">Terapkan</button>
                             </div>
                         </div>
                     </MobileFilterGroup>
                     <button type="submit" className="simpeg-primary simpeg-desktop-filter-apply h-11 rounded-xl px-5 text-sm font-bold transition focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
                 </form>
-                <div className="overflow-x-auto"><table className="min-w-full text-left"><thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4 text-center">Pegawai</th><th className="px-5 py-4 text-center">Jabatan terakhir</th><th className="px-5 py-4 text-center">Jenis</th><th className="px-5 py-4 text-center">Tanggal SK</th><th className="px-5 py-4 text-center">No. SK</th><th className="px-5 py-4 text-center">TMT</th><th className="px-5 py-4 text-center">Aksi</th></tr></thead><tbody className="divide-y divide-slate-100">{items.data.length === 0 ? <tr><td colSpan={canManage ? 7 : 6} className="px-5 py-12 text-center text-sm text-slate-500">Data mutasi tidak ditemukan.</td></tr> : items.data.map((item) => <tr key={item.id_mutasi} className="align-top transition hover:bg-slate-50"><td className="px-5 py-4"><span className="block font-bold text-slate-800">{item.nama_pegawai}</span><span className="mt-1 font-mono text-xs text-slate-500">{item.id_peg || '-'}</span></td><td className="px-5 py-4 text-sm text-slate-600">{item.jabatan || '-'}</td><td className="px-5 py-4"><span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">{item.jns_mutasi}</span></td><td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{item.tgl_mutasi || '-'}</td><td className="px-5 py-4 text-sm font-semibold text-slate-700">{item.no_mutasi}</td><td className="whitespace-nowrap px-5 py-4 text-sm font-bold text-red-600">{item.tmt || '-'}</td><td className="whitespace-nowrap px-5 py-4 text-right"><div className="flex justify-end gap-2">{item.document_url ? <a href={item.document_url} target="_blank" rel="noreferrer" title="Lihat SK" aria-label="Lihat SK" className="simpeg-utility inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition hover:bg-blue-50 focus:outline-none focus:ring-4 focus:ring-blue-600/20 dark:hover:bg-blue-950/30"><Eye aria-hidden="true" className="h-4 w-4" /></a> : <span title="Dokumen SK tidak tersedia" aria-label="Dokumen SK tidak tersedia" className="simpeg-utility inline-flex h-9 w-9 shrink-0 cursor-not-allowed items-center justify-center rounded-lg border opacity-60"><EyeOff aria-hidden="true" className="h-4 w-4" /></span>}{canManage && <><IconAction href={`/mutasi/${item.id_mutasi}/edit`} label="Edit" /><IconAction variant="delete" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} label="Hapus" /></>}</div></td></tr>)}</tbody></table></div>
+                <div className="overflow-x-auto"><table className="min-w-full text-left"><thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4">Pegawai</th><th className="px-5 py-4">Jabatan terakhir</th><th className="px-5 py-4">Kategori</th><th className="px-5 py-4">Jenis mutasi</th><th className="px-5 py-4">Tanggal</th><th className="px-5 py-4">No. SK</th><th className="px-5 py-4 text-right">Aksi</th></tr></thead><tbody className="divide-y divide-slate-100">{items.data.length === 0 ? <tr><td colSpan="7" className="px-5 py-12 text-center text-sm text-slate-500">Data purna dan penonaktifan tidak ditemukan.</td></tr> : items.data.map((item) => <tr key={item.id_mutasi} className="align-top transition hover:bg-slate-50"><td className="px-5 py-4"><Link href={`/pegawai/${encodeURIComponent(item.id_peg)}`} className="block font-bold text-blue-700 hover:underline">{item.nama_pegawai}</Link><span className="mt-1 block font-mono text-xs text-slate-500">{item.id_peg || '-'}</span><span className="mt-1 block text-xs text-slate-500">{item.status_kepeg || '-'}</span></td><td className="px-5 py-4 text-sm text-slate-600">{item.jabatan || '-'}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${item.kategori === 'Purna' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>{item.kategori}</span></td><td className="px-5 py-4 text-sm font-semibold text-slate-700">{item.jns_mutasi}</td><td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600"><span className="block">SK: {item.tgl_mutasi || '-'}</span><span className="mt-1 block text-xs text-slate-500">TMT: {item.tmt || '-'}</span></td><td className="px-5 py-4 text-sm font-semibold text-slate-700">{item.no_mutasi || '-'}</td><td className="whitespace-nowrap px-5 py-4 text-right"><MutationActions item={item} canManage={canManage} onDelete={(target) => { setDeleteTarget(target); deleteForm.setData('reason', ''); }} /></td></tr>)}</tbody></table></div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {items.from || 0}–{items.to || 0} dari {items.total} data</span><div className="flex gap-2"><PageJumpControls paginator={items} /></div></div>
             </section>
 

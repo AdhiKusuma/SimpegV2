@@ -268,6 +268,7 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::get('/biaya-pendidikan/{id}/edit', [BiayaPendidikanController::class, 'edit'])->whereNumber('id')->name('biaya-pendidikan.edit');
     Route::put('/biaya-pendidikan/{id}', [BiayaPendidikanController::class, 'update'])->whereNumber('id')->name('biaya-pendidikan.update');
     Route::delete('/biaya-pendidikan/{id}', [BiayaPendidikanController::class, 'destroy'])->whereNumber('id')->name('biaya-pendidikan.destroy');
+    Route::get('/biaya-pendidikan/participants-legacy', [BiayaPendidikanController::class, 'participantsLegacy'])->name('biaya-pendidikan.participants-legacy');
     Route::get('/biaya-pendidikan/{id}/participants', [BiayaPendidikanController::class, 'participants'])->whereNumber('id')->name('biaya-pendidikan.participants');
 
     Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');

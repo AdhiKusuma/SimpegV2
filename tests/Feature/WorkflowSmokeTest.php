@@ -21,8 +21,38 @@ class WorkflowSmokeTest extends TestCase
         ]);
 
         $response->assertOk()->assertJsonStructure(['columns', 'rows', 'preview', 'total']);
-        $this->assertCount(18, $response->json('columns'));
+        $this->assertCount(17, $response->json('columns'));
+        $this->assertNotContains('Nama File Foto', $response->json('columns'));
         $this->assertSame('ID Pegawai (Wajib)', $response->json('columns.0'));
+        $this->assertSame('NIK', $response->json('columns.1'));
+    }
+
+    public function test_spouse_import_template_uses_job_category_dropdown_without_job_id_header(): void
+    {
+        $response = $this->withSession([
+            'id_user' => 'admin-demo',
+            'hak_akses' => 'admin',
+        ])->get('/keluarga/suami-istri/import/template');
+
+        $response->assertOk();
+        $content = $response->streamedContent();
+        $this->assertIsString($content);
+
+        $zip = new \ZipArchive;
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'simpeg-spouse-template-');
+        $this->assertIsString($temporaryPath);
+        file_put_contents($temporaryPath, $content);
+        $this->assertSame(true, $zip->open($temporaryPath));
+
+        $sheet = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+        $lookup = (string) $zip->getFromName('xl/worksheets/sheet3.xml');
+        $this->assertStringContainsString('Kategori Pekerjaan', $sheet);
+        $this->assertStringNotContainsString('ID Pekerjaan', $sheet);
+        $this->assertStringContainsString('sqref="G2:G1000"', $sheet);
+        $this->assertStringContainsString('Karyawan Swasta', $lookup);
+
+        $zip->close();
+        unlink($temporaryPath);
     }
 
     public function test_family_submission_history_and_approval_run_in_one_transaction(): void

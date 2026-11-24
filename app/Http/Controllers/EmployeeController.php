@@ -44,7 +44,7 @@ class EmployeeController extends Controller
 
     private const IMPORT_HEADERS = [
         'ID Pegawai (Wajib)',
-        'NIP',
+        'NIK',
         'Nama Lengkap',
         'Tempat Lahir',
         'Tgl Lahir (DD-MM-YY)',
@@ -56,7 +56,6 @@ class EmployeeController extends Controller
         'Alamat',
         'No Telp',
         'Email',
-        'Nama File Foto',
         'TMT Kerja (DD-MM-YY)',
         'Tgl Pensiun (DD-MM-YY - Opsional)',
         'No BPJS TK',
@@ -68,12 +67,20 @@ class EmployeeController extends Controller
         private readonly EmployeeAccessService $employeeAccess,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         $this->ensureStaffAccess($request);
 
         $role = strtolower((string) $request->session()->get('hak_akses'));
         $tab = $request->string('tab')->trim()->value() ?: 'active';
+
+        if ($tab === 'purna') {
+            $legacyQuery = $request->except('tab');
+            $legacyQuery['kategori'] = 'purna';
+
+            return to_route('mutasi.index', $legacyQuery);
+        }
+
         $search = $request->string('search')->trim()->value();
         $office = $request->string('kantor')->trim()->value();
         $requestedYear = $request->string('year')->trim()->value();
@@ -338,7 +345,7 @@ class EmployeeController extends Controller
         $content = $xlsxExport->makeTemplate(
             self::IMPORT_HEADERS,
             'Template Import Pegawai',
-            [['CONTOH-001', '1234567890123456', 'Contoh Nama Pegawai', 'Semarang', '20-11-1990', 'Islam', 'Laki-laki', 'O', 'Belum Menikah', 'Tetap', 'Jl. Contoh No. 1', '081234567890', 'contoh@example.com', 'contoh.jpg', '20-11-2025', '-', '123456789012', '123456789012']],
+            [['CONTOH-001', '1234567890123456', 'Contoh Nama Pegawai', 'Semarang', '20-11-1990', 'Islam', 'Laki-laki', 'O', 'Belum Menikah', 'Tetap', 'Jl. Contoh No. 1', '081234567890', 'contoh@example.com', '20-11-2025', '-', '123456789012', '123456789012']],
             [
                 'agama' => ['title' => 'Agama', 'values' => ['Islam', 'Protestan', 'Katolik', 'Hindu', 'Budha', 'KongHuCu']],
                 'jenis_kelamin' => ['title' => 'Jenis kelamin', 'values' => ['Laki-laki', 'Perempuan']],
@@ -980,7 +987,7 @@ class EmployeeController extends Controller
         $seenMatchKeys = [];
 
         foreach ($rawRows as $rowIndex => $row) {
-            $values = array_map(fn ($value): string => trim((string) $value), array_slice(array_pad($row, 18, ''), 0, 18));
+            $values = array_map(fn ($value): string => trim((string) $value), array_slice(array_pad($row, 17, ''), 0, 17));
             if (count(array_filter($values, fn (string $value): bool => $value !== '')) === 0) {
                 continue;
             }
@@ -1017,7 +1024,7 @@ class EmployeeController extends Controller
     private function importPayload(array $values): array
     {
         $birthDate = $this->parseImportDate($values[4] ?? '');
-        $retirementDate = $this->parseImportDate($values[15] ?? '') ?: ($birthDate ? Carbon::parse($birthDate)->addYears(56)->toDateString() : null);
+        $retirementDate = $this->parseImportDate($values[14] ?? '') ?: ($birthDate ? Carbon::parse($birthDate)->addYears(56)->toDateString() : null);
 
         return [
             'nik' => $this->importedDigits($values[1] ?? '', 16),
@@ -1032,11 +1039,10 @@ class EmployeeController extends Controller
             'alamat' => mb_substr($values[10] ?? '', 0, 255),
             'telp' => $this->importedDigits($values[11] ?? '', 13),
             'email' => mb_substr($values[12] ?? '', 0, 64),
-            'foto' => mb_substr($values[13] ?? '', 0, 255),
-            'tmt_kerja' => $this->parseImportDate($values[14] ?? ''),
+            'tmt_kerja' => $this->parseImportDate($values[13] ?? ''),
             'tgl_pensiun' => $retirementDate,
-            'bpjstk' => $this->importedDigits($values[16] ?? '', 12),
-            'bpjskes' => $this->importedDigits($values[17] ?? '', 12),
+            'bpjstk' => $this->importedDigits($values[15] ?? '', 12),
+            'bpjskes' => $this->importedDigits($values[16] ?? '', 12),
         ];
     }
 
@@ -1067,9 +1073,8 @@ class EmployeeController extends Controller
             10 => ['Alamat', 255, true],
             11 => ['No. telepon / WA', 13, true],
             12 => ['Email', 64, true],
-            13 => ['Nama file foto', 255, false],
-            16 => ['No. BPJS Ketenagakerjaan', 12, false],
-            17 => ['No. BPJS Kesehatan', 12, false],
+            15 => ['No. BPJS Ketenagakerjaan', 12, false],
+            16 => ['No. BPJS Kesehatan', 12, false],
         ] as $index => [$label, $maxLength, $required]) {
             $value = trim((string) ($values[$index] ?? ''));
             if ($value === '' || $value === '-') {
@@ -1084,18 +1089,18 @@ class EmployeeController extends Controller
                 $errors[] = "{$label} maksimal {$maxLength} karakter";
             }
 
-            if (in_array($index, [1, 11, 16, 17], true) && preg_match('/\A[0-9]+\z/', $value) !== 1) {
+            if (in_array($index, [1, 11, 15, 16], true) && preg_match('/\A[0-9]+\z/', $value) !== 1) {
                 $errors[] = "{$label} hanya boleh berisi angka";
             }
-            if (in_array($index, [1, 11, 16, 17], true) && mb_strlen($value) > $maxLength) {
+            if (in_array($index, [1, 11, 15, 16], true) && mb_strlen($value) > $maxLength) {
                 $errors[] = "{$label} maksimal {$maxLength} digit";
             }
         }
 
         foreach ([
             4 => ['Tgl lahir', true],
-            14 => ['TMT kerja', false],
-            15 => ['Tgl pensiun', false],
+            13 => ['TMT kerja', false],
+            14 => ['Tgl pensiun', false],
         ] as $index => [$label, $required]) {
             $value = trim((string) ($values[$index] ?? ''));
             if ($value === '' || $value === '-') {

@@ -676,6 +676,42 @@ html.dark body .simpeg-app-canvas .simpeg-shell-content > .simpeg-header {
     color: var(--navbar-ink) !important;
 }
 
+/* The merged Purna/Penonaktifan table uses a standalone action menu. Keep it
+ * on the same paper-white surface as the table in dark mode so inherited
+ * floating-menu ink rules cannot make its actions disappear. */
+    html body .simpeg-app-canvas .simpeg-action-menu,
+    html.dark body .simpeg-app-canvas .simpeg-action-menu {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        border-color: #D6E2F5 !important;
+        color: #0B1F4B !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item,
+    html body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item :is(*, svg *),
+    html.dark body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item,
+    html.dark body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item :is(*, svg *) {
+        color: #0B1F4B !important;
+        -webkit-text-fill-color: #0B1F4B !important;
+        stroke: currentColor !important;
+        opacity: 1 !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active']),
+    html.dark body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active']) {
+        background: #E8F0FD !important;
+        background-color: #E8F0FD !important;
+        color: #0B1F4B !important;
+        -webkit-text-fill-color: #0B1F4B !important;
+    }
+
+    html body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active']) :is(*, svg *),
+    html.dark body .simpeg-app-canvas .simpeg-action-menu .simpeg-menu-item:is(:hover, :focus, :focus-visible, [data-highlighted='true'], [data-state='active']) :is(*, svg *) {
+        color: #0B1F4B !important;
+        -webkit-text-fill-color: #0B1F4B !important;
+        stroke: currentColor !important;
+    }
+
 html.dark body .simpeg-app-canvas .simpeg-header :is(
     .simpeg-search-trigger,
     .simpeg-history-controls,

@@ -16,17 +16,85 @@ const quarterOptions = [
     ['4', 'Oktober sampai Desember'],
 ];
 
+const activityViewOptions = [
+    { value: 'rencana', label: 'Rencana' },
+    { value: 'terealisasi', label: 'Sudah terealisasi' },
+];
+
 function formatRupiah(value) {
     return `Rp ${currency.format(Number(value || 0))}`;
 }
 
-export default function BiayaPendidikanIndex({ items, years, categories = [], parties = [], filters, canManage }) {
+function ActivityTable({ title, description, view, items, canManage, onView, onDelete, onViewChange }) {
+    const data = items?.data || [];
+    const hasManageActions = canManage && data.some((item) => !item.is_legacy);
+    const columnWidths = hasManageActions
+        ? ['25%', '18%', '11%', '11%', '19%', '16%']
+        : ['31%', '20%', '12%', '12%', '17%', '8%'];
+
+    return (
+        <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                <div>
+                    <h2 className="text-lg font-extrabold text-slate-900">{title}</h2>
+                    <p className="mt-1 text-sm text-slate-500">{description}</p>
+                </div>
+                <div className="flex items-end gap-3">
+                    <SelectCombobox id="activity-view" label="Tampilkan" value={view} options={activityViewOptions} onChange={onViewChange} className="w-56" />
+                    <span className="mb-1 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{items?.total || 0} kegiatan</span>
+                </div>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="min-w-[1180px] w-full table-fixed text-left">
+                    <colgroup>
+                        {columnWidths.map((width, index) => <col key={index} style={{ width }} />)}
+                    </colgroup>
+                    <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
+                        <tr><th className="px-5 py-4">Detail kegiatan</th><th className="px-5 py-4">Pihak pelaksana</th><th className="px-5 py-4">Waktu</th><th className="px-5 py-4">Status</th><th className="px-5 py-4 text-right">Biaya dan SDM</th><th className="px-5 py-4 text-center">Aksi</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {data.length === 0 ? (
+                            <tr><td colSpan="6" className="px-5 py-12 text-center text-sm text-slate-500">Belum ada kegiatan pada bagian ini.</td></tr>
+                        ) : data.map((item, index) => (
+                            <tr key={`${item.biaya_id || item.legacy_date || 'activity'}-${item.pengembangan_sdm}-${index}`} className="align-top transition hover:bg-slate-50">
+                                <td className="px-5 py-4"><span className="block font-bold text-slate-800">{item.pengembangan_sdm}</span><span className="mt-1 block text-xs text-slate-500">{item.kategori}</span></td>
+                                <td className="px-5 py-4 text-sm text-slate-600"><span className="block">{item.pihak_pelaksana}</span><span className="mt-1 block text-xs text-slate-400">{item.jenis_pihak}</span></td>
+                                <td className="px-5 py-4 text-sm text-slate-600"><span className="block">{item.tanggal}</span><span className="mt-1 block text-xs text-slate-400">Durasi: {item.waktu_pelaksanaan}</span></td>
+                                <td className="px-5 py-4"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${item.status_key === 'terealisasi' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{item.status}</span></td>
+                                <td className="px-5 py-4 text-right text-sm text-slate-600">
+                                    {Number(item.total_biaya || 0) > 0 ? <span className="block font-bold text-emerald-700">Anggaran: {formatRupiah(item.total_biaya)}</span> : <span className="block font-bold text-emerald-700">Realisasi: {formatRupiah(item.realisasi_biaya)}</span>}
+                                    {Number(item.jumlah_sdm || 0) > 0 ? <span className="mt-1 block text-xs text-slate-400">Target: {item.jumlah_sdm} orang (terdaftar: {item.peserta_terdaftar || 0})</span> : <span className="mt-1 block text-xs text-slate-400">Peserta terealisasi: {item.peserta_terdaftar || 0} orang</span>}
+                                    {Number(item.total_biaya || 0) > 0 && Number(item.realisasi_biaya || 0) > 0 && <span className="mt-1 block text-xs text-slate-400">Realisasi: {formatRupiah(item.realisasi_biaya)}</span>}
+                                </td>
+                                <td className="whitespace-nowrap px-5 py-4 text-center">
+                                    <div className={`flex min-w-max justify-center gap-2 ${hasManageActions ? '' : 'w-full'}`}>
+                                        <IconAction variant="view" onClick={() => onView(item)} label="Lihat peserta" />
+                                        {canManage && !item.is_legacy && <><IconAction href={`/biaya-pendidikan/${item.biaya_id}/edit`} label="Edit" /><IconAction variant="delete" onClick={() => onDelete(item)} label="Hapus" /></>}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {items?.from || 0} sampai {items?.to || 0} dari {items?.total || 0} kegiatan</span><div className="flex flex-wrap gap-2"><PageJumpControls paginator={items} label={title} ariaLabel={`Paginasi ${title}`} /></div></div>
+        </section>
+    );
+}
+
+export default function BiayaPendidikanIndex({ items, plannedItems = items, realizedItems, years, categories = [], parties = [], filters, canManage }) {
     const { flash, errors } = usePage().props;
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [detail, setDetail] = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailError, setDetailError] = useState('');
+    const [activityView, setActivityView] = useState('rencana');
     const deleteForm = useForm({ reason: '' });
+    const selectedItems = activityView === 'terealisasi' ? realizedItems : plannedItems;
+    const selectedTitle = activityView === 'terealisasi' ? 'Sudah terealisasi' : 'Rencana';
+    const selectedDescription = activityView === 'terealisasi'
+        ? 'Kegiatan yang sudah memiliki data peserta pada riwayat diklat, termasuk data historis yang belum terhubung ke master.'
+        : 'Kegiatan yang sudah direncanakan tetapi belum memiliki peserta terealisasi.';
     const withFilters = (url) => {
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
@@ -57,7 +125,13 @@ export default function BiayaPendidikanIndex({ items, years, categories = [], pa
 
         try {
             const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
-            const response = await fetch(`/biaya-pendidikan/${record.biaya_id}/participants?${params.toString()}`, { headers: { Accept: 'application/json' } });
+            const endpoint = record.is_legacy ? '/biaya-pendidikan/participants-legacy' : `/biaya-pendidikan/${record.biaya_id}/participants`;
+            if (record.is_legacy) {
+                params.set('title', record.legacy_title || record.pengembangan_sdm || '');
+                params.set('party', record.legacy_party ?? '');
+                params.set('date', record.legacy_date || record.tanggal_raw || '');
+            }
+            const response = await fetch(`${endpoint}?${params.toString()}`, { headers: { Accept: 'application/json' } });
             if (!response.ok) throw new Error('Permintaan detail peserta gagal.');
             const payload = await response.json();
             setDetail({ record, ...payload });
@@ -110,33 +184,18 @@ export default function BiayaPendidikanIndex({ items, years, categories = [], pa
                     </MobileFilterGroup>
                     <button type="submit" className="simpeg-desktop-filter-apply h-11 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-600/20">Terapkan</button>
                 </form>
-
-                <div className="overflow-x-auto">
-                    <table className="min-w-[920px] w-full text-left">
-                        <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
-                            <tr><th className="px-5 py-4">Detail kegiatan</th><th className="px-5 py-4">Pihak pelaksana</th><th className="px-5 py-4">Waktu</th><th className="px-5 py-4 text-right">Biaya dan SDM</th><th className="px-5 py-4 text-right">Aksi</th></tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {items.data.length === 0 ? (
-                                <tr><td colSpan="5" className="px-5 py-12 text-center text-sm text-slate-500">Belum ada kegiatan yang sesuai filter. Ubah filter atau pilih Tambah kegiatan.</td></tr>
-                            ) : items.data.map((item) => (
-                                <tr key={item.biaya_id} className="align-top transition hover:bg-slate-50">
-                                    <td className="px-5 py-4"><span className="block font-bold text-slate-800">{item.pengembangan_sdm}</span><span className="mt-1 block text-xs text-slate-500">{item.kategori}</span></td>
-                                    <td className="px-5 py-4 text-sm text-slate-600"><span className="block">{item.pihak_pelaksana}</span><span className="mt-1 block text-xs text-slate-400">{item.jenis_pihak}</span></td>
-                                    <td className="px-5 py-4 text-sm text-slate-600"><span className="block">{item.tanggal}</span><span className="mt-1 block text-xs text-slate-400">Durasi: {item.waktu_pelaksanaan}</span></td>
-                                    <td className="px-5 py-4 text-right text-sm text-slate-600"><span className="block font-bold text-emerald-700">{formatRupiah(item.total_biaya)}</span><span className="mt-1 block text-xs text-slate-400">Target: {item.jumlah_sdm} orang (terdaftar: {item.peserta_terdaftar || 0})</span>{Number(item.realisasi_biaya || 0) >= Number(item.total_biaya || 0) && Number(item.total_biaya || 0) > 0 && <span className="mt-1 block text-xs font-bold text-red-600">Anggaran tercapai</span>}</td>
-                                    <td className="whitespace-nowrap px-5 py-4 text-right">
-                                        <IconAction variant="view" onClick={() => loadParticipants(item)} label="Lihat peserta" className="mr-2" />
-                                        {canManage && <><IconAction href={`/biaya-pendidikan/${item.biaya_id}/edit`} label="Edit" className="mr-2" /><IconAction variant="delete" onClick={() => { setDeleteTarget(item); deleteForm.setData('reason', ''); }} label="Hapus" /></>}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {items.from || 0} sampai {items.to || 0} dari {items.total} data</span><div className="flex flex-wrap gap-2"><PageJumpControls paginator={items} /></div></div>
             </section>
+
+            <ActivityTable
+                title={selectedTitle}
+                description={selectedDescription}
+                view={activityView}
+                items={selectedItems}
+                canManage={canManage}
+                onViewChange={setActivityView}
+                onView={loadParticipants}
+                onDelete={(item) => { setDeleteTarget(item); deleteForm.setData('reason', ''); }}
+            />
 
             {detail && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" role="presentation"><div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="participant-detail-title"><div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5"><div><h2 id="participant-detail-title" className="text-lg font-extrabold text-slate-900">Rincian peserta</h2><p className="mt-1 text-sm text-slate-500">{detail.record.pengembangan_sdm}</p></div><button type="button" onClick={() => setDetail(null)} className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm font-bold text-slate-600 hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/20" aria-label="Tutup rincian peserta">Tutup</button></div><div className="grid gap-4 border-b border-slate-100 bg-slate-50 p-5 sm:grid-cols-3"><div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">Penyelenggara</span><span className="mt-1 block text-sm font-semibold text-slate-800">{detail.record.pihak_pelaksana}</span></div><div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">Tanggal</span><span className="mt-1 block text-sm font-semibold text-slate-800">{detail.record.tanggal}</span></div><div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">Anggaran kegiatan</span><span className="mt-1 block text-sm font-semibold text-emerald-700">{formatRupiah(detail.record.total_biaya)}</span></div></div>{detailLoading ? <p className="p-8 text-center text-sm text-slate-500" role="status">Memuat rincian peserta...</p> : detailError ? <div className="p-8 text-center text-sm text-red-700" role="alert"><p>{detailError}</p><button type="button" onClick={() => loadParticipants(detail.record, detail.pagination.current_page, detail.pagination.per_page)} className="mt-3 rounded-lg border border-red-200 px-3 py-2 font-bold hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-600/20">Coba lagi</button></div> : <><div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4"><span className="text-sm text-slate-500">Total {detail.summary.total_orang} peserta</span><div className="flex items-center gap-2"><span className="text-sm font-semibold text-slate-600">Tampilkan</span><SelectCombobox id="participant-per-page" value={String(detail.pagination.per_page)} options={[10, 20, 30, 40, 50]} optionLabel={(option) => String(option)} optionValue={(option) => String(option)} onChange={(value) => loadParticipants(detail.record, 1, Number(value))} placeholder="10" className="w-24" /><span className="ml-2 text-sm text-slate-500">Halaman {detail.pagination.current_page} dari {detail.pagination.total_pages}</span></div></div><div className="overflow-x-auto"><table className="min-w-[640px] w-full text-left"><thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4">No</th><th className="px-5 py-4">Pegawai</th><th className="px-5 py-4">Jabatan aktif / unit kerja</th></tr></thead><tbody className="divide-y divide-slate-100">{detail.data.length === 0 ? <tr><td colSpan="3" className="px-5 py-10 text-center text-sm text-slate-500">Belum ada data peserta pada kegiatan ini.</td></tr> : detail.data.map((participant) => <tr key={`${participant.id_peg}-${participant.no}`}><td className="px-5 py-4 text-sm text-slate-500">{participant.no}</td><td className="px-5 py-4"><span className="block font-semibold text-slate-800">{participant.nama}</span><span className="mt-1 block font-mono text-xs text-slate-500">{participant.id_peg}</span></td><td className="px-5 py-4"><span className="block text-sm font-semibold text-slate-700">{participant.jabatan}</span><span className="mt-1 block text-xs text-slate-500">{participant.unit_kerja}</span></td></tr>)}</tbody></table></div><div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm text-slate-500"><span>Menampilkan {detail.data.length ? ((detail.pagination.current_page - 1) * detail.pagination.per_page) + 1 : 0}–{Math.min(detail.pagination.current_page * detail.pagination.per_page, detail.summary.total_orang)} dari {detail.summary.total_orang} peserta</span><div className="flex gap-2"><button type="button" disabled={detail.pagination.current_page <= 1} onClick={() => loadParticipants(detail.record, detail.pagination.current_page - 1, detail.pagination.per_page)} className="rounded-lg border border-slate-200 px-3 py-2 font-bold disabled:cursor-not-allowed disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Sebelumnya</button><button type="button" disabled={detail.pagination.current_page >= detail.pagination.total_pages} onClick={() => loadParticipants(detail.record, detail.pagination.current_page + 1, detail.pagination.per_page)} className="rounded-lg border border-slate-200 px-3 py-2 font-bold disabled:cursor-not-allowed disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-600/20">Berikutnya</button></div></div></>}</div></div>}
 

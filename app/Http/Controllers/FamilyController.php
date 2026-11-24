@@ -137,6 +137,7 @@ class FamilyController extends Controller
             'mode' => 'create',
             'record' => null,
             'employees' => $this->employeesForScope($request),
+            'jobCategories' => $this->jobCategories(),
             'employeeId' => $request->string('uid')->trim()->value() ?: (string) $request->session()->get('id_pegawai', ''),
             'canRequest' => $this->isRequest($request),
         ]);
@@ -155,6 +156,7 @@ class FamilyController extends Controller
             'mode' => 'edit',
             'record' => $this->presentFormRecord($record, $type),
             'employees' => $this->employeesForScope($request),
+            'jobCategories' => $this->jobCategories(),
             'employeeId' => $record->id_peg,
             'canRequest' => $this->isRequest($request),
         ]);
@@ -173,8 +175,8 @@ class FamilyController extends Controller
         }
 
         if ($type === 'spouses') {
-            // The legacy column is NOT NULL, but is no longer part of the user-facing form.
-            $data['id_pekerjaan'] = '';
+            // The legacy column is NOT NULL, so keep an empty value when no category is selected.
+            $data['id_pekerjaan'] = (string) ($data['id_pekerjaan'] ?? '');
         }
 
         if ($this->isRequest($request)) {
@@ -316,6 +318,18 @@ class FamilyController extends Controller
         ])->all();
     }
 
+    private function jobCategories(): array
+    {
+        return DB::table('tb_master_pekerjaan')
+            ->orderBy('id_pekerjaan')
+            ->get(['id_pekerjaan', 'desc_pekerjaan'])
+            ->map(fn ($job): array => [
+                'value' => (string) $job->id_pekerjaan,
+                'label' => (string) $job->desc_pekerjaan,
+            ])
+            ->all();
+    }
+
     private function presentItem(Model $item, string $type): array
     {
         $id = (string) $item->getKey();
@@ -329,6 +343,7 @@ class FamilyController extends Controller
             'nik' => $item->nik,
             'ttl' => trim(implode(', ', array_filter([$item->tmp_lhr, $date]))),
             'pendidikan' => $item->pendidikan,
+            'id_pekerjaan' => $item->id_pekerjaan,
             'pekerjaan' => $item->pekerjaan,
             'status_hub' => $item->status_hub,
             'anak_ke' => $type === 'children' ? $item->anak_ke : null,
@@ -340,10 +355,10 @@ class FamilyController extends Controller
     private function presentFormRecord(Model $record, string $type): array
     {
         $fields = $type === 'children'
-            ? ['id_anak', 'id_peg', 'nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'anak_ke', 'bpjs_anak']
+            ? ['id_anak', 'id_peg', 'nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub', 'anak_ke', 'bpjs_anak']
             : ($type === 'parents'
-                ? ['id_ortu', 'id_peg', 'nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub']
-                : ['id_si', 'id_peg', 'nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'hp', 'bpjs_pasangan']);
+                ? ['id_ortu', 'id_peg', 'nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub']
+                : ['id_si', 'id_peg', 'nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub', 'hp', 'bpjs_pasangan']);
 
         $data = [];
         foreach ($fields as $field) {
@@ -373,6 +388,7 @@ class FamilyController extends Controller
             'tmp_lhr' => ['nullable', 'string', 'max:64'],
             'tgl_lhr' => ['nullable', 'date'],
             'pendidikan' => ['nullable', 'string', 'max:26'],
+            'id_pekerjaan' => ['nullable', 'string', 'max:3', Rule::exists('tb_master_pekerjaan', 'id_pekerjaan')],
             'pekerjaan' => ['nullable', 'string', 'max:64', SimpegFieldRules::CONTAINS_LETTER],
             'status_hub' => ['nullable', 'string', 'max:16'],
         ];
@@ -531,10 +547,10 @@ class FamilyController extends Controller
     private function payloadFromRecord(Model $record, string $type): array
     {
         $fields = $type === 'children'
-            ? ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'anak_ke', 'bpjs_anak']
+            ? ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub', 'anak_ke', 'bpjs_anak']
             : ($type === 'parents'
-                ? ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub']
-                : ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'pekerjaan', 'status_hub', 'hp', 'bpjs_pasangan']);
+                ? ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub']
+                : ['nik', 'nama', 'tmp_lhr', 'tgl_lhr', 'pendidikan', 'id_pekerjaan', 'pekerjaan', 'status_hub', 'hp', 'bpjs_pasangan']);
 
         $payload = ['id_peg' => $record->id_peg];
         foreach ($fields as $field) {
