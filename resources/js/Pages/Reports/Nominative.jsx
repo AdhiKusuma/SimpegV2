@@ -56,7 +56,7 @@ export default function Nominative({ items, offices, positions, statuses, filter
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="min-w-full text-left">
+                    <table data-simpeg-export-target="nominative-table" className="min-w-full text-left">
                         <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
                             <tr><th className="px-5 py-4">No</th><th className="px-5 py-4">Pegawai</th><th className="px-5 py-4">Jabatan</th><th className="px-5 py-4">Unit kerja</th><th className="px-5 py-4">Status</th><th className="px-5 py-4">Pendidikan</th><th className="px-5 py-4">TMT</th></tr>
                         </thead>

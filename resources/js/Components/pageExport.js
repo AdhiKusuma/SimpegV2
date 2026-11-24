@@ -71,8 +71,49 @@ function collectStyles() {
     return css;
 }
 
+function copyComputedStyles(sourceRoot, targetRoot) {
+    const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
+    const targetElements = [targetRoot, ...targetRoot.querySelectorAll('*')];
+
+    sourceElements.forEach((sourceElement, index) => {
+        const targetElement = targetElements[index];
+
+        if (!targetElement) {
+            return;
+        }
+
+        const computedStyle = window.getComputedStyle(sourceElement);
+        const declarations = Array.from(computedStyle)
+            .map((property) => {
+                const value = computedStyle.getPropertyValue(property);
+
+                return value ? `${property}:${value};` : '';
+            })
+            .filter(Boolean)
+            .join('');
+
+        targetElement.setAttribute('style', declarations);
+    });
+}
+
+function isVisibleTable(table) {
+    const computedStyle = window.getComputedStyle(table);
+    const bounds = table.getBoundingClientRect();
+
+    return computedStyle.display !== 'none'
+        && computedStyle.visibility !== 'hidden'
+        && bounds.width > 0
+        && bounds.height > 0;
+}
+
 function getExportRoot() {
-    return document.querySelector('[data-simpeg-export-root]') || document.querySelector('main');
+    const explicitTarget = document.querySelector('[data-simpeg-export-target]');
+    const visibleTable = Array.from(document.querySelectorAll('table')).find(isVisibleTable);
+
+    return explicitTarget
+        || visibleTable
+        || document.querySelector('[data-simpeg-export-root]')
+        || document.querySelector('main');
 }
 
 function cloneExportRoot() {
@@ -84,11 +125,26 @@ function cloneExportRoot() {
 
     const clone = root.cloneNode(true);
     clone.removeAttribute('data-simpeg-export-root');
+    clone.removeAttribute('data-simpeg-export-target');
+    copyComputedStyles(root, clone);
 
     clone.querySelectorAll('.simpeg-export-dropdown, form.simpeg-filter-toolbar, .simpeg-filter-toolbar, [data-export-hide]').forEach((element) => element.remove());
     clone.querySelectorAll('button, input, select, textarea').forEach((element) => element.remove());
 
     return { clone, root };
+}
+
+function getExportDimensions(root) {
+    const computedStyle = window.getComputedStyle(root);
+    const computedWidth = Number.parseFloat(computedStyle.width) || 0;
+    const computedInlineSize = Number.parseFloat(computedStyle.inlineSize) || 0;
+    const computedHeight = Number.parseFloat(computedStyle.height) || 0;
+    const computedBlockSize = Number.parseFloat(computedStyle.blockSize) || 0;
+
+    return {
+        width: Math.max(Math.ceil(computedWidth), Math.ceil(computedInlineSize), root.scrollWidth, 640),
+        height: Math.max(Math.ceil(computedHeight), Math.ceil(computedBlockSize), root.scrollHeight, 480),
+    };
 }
 
 function downloadBlob(blob, filename) {
@@ -111,9 +167,7 @@ export function exportPageAsSvg() {
     }
 
     const { clone, root } = exportData;
-    const bounds = root.getBoundingClientRect();
-    const width = Math.max(Math.ceil(bounds.width), 640);
-    const height = Math.max(Math.ceil(root.scrollHeight), Math.ceil(bounds.height), 480);
+    const { width, height } = getExportDimensions(root);
     const serializedMarkup = new XMLSerializer().serializeToString(clone);
     const svg = buildSvgDocument({
         title: document.title,
