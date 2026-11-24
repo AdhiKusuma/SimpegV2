@@ -2670,3 +2670,23 @@ html.dark body .simpeg-app-canvas.simpeg-theme-dark.simpeg-route-dashboard .simp
     -webkit-text-fill-color: #0b1f4b !important;
     stroke: currentColor !important;
 }
+
+/* Keep the login gradient authoritative after the legacy theme contracts. */
+html body .simpeg-login-page[data-login-appearance='split'] {
+    background:
+        radial-gradient(circle at 12% 8%, rgb(125 179 255 / 0.34), transparent 28rem),
+        radial-gradient(circle at 88% 82%, rgb(255 184 28 / 0.14), transparent 24rem),
+        linear-gradient(135deg, #f5f8fe 0%, #e8f0fd 52%, #dceaff 100%) !important;
+}
+
+html.dark body .simpeg-login-page[data-login-appearance='split'] {
+    background:
+        radial-gradient(circle at 12% 8%, rgb(47 123 255 / 0.38), transparent 30rem),
+        radial-gradient(circle at 90% 88%, rgb(255 184 28 / 0.16), transparent 26rem),
+        linear-gradient(120deg, #0a1b3c 0%, #1d4f92 50%, #07122b 100%) !important;
+}
+
+html.dark body .simpeg-login-page[data-login-appearance='split'] .simpeg-login-topbar {
+    background: transparent !important;
+    box-shadow: none !important;
+}

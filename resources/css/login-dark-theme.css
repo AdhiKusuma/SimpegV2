@@ -1,3 +1,11 @@
+/* Give the login canvas a subtle brand gradient in both appearances. */
+body .simpeg-login-page[data-login-appearance='split'] {
+    background:
+        radial-gradient(circle at 12% 8%, rgb(125 179 255 / 0.24), transparent 28rem),
+        radial-gradient(circle at 88% 82%, rgb(255 184 28 / 0.10), transparent 24rem),
+        linear-gradient(135deg, #f5f8fe 0%, #e8f0fd 52%, #dceaff 100%) !important;
+}
+
 /* Keep the login dark mode on the same #1B2A4A/amber system as the sidebar. */
 html.dark body .simpeg-login-page {
     --simpeg-canvas: #1B2A4A !important;
@@ -19,7 +27,10 @@ html.dark body .simpeg-login-page {
     --simpeg-primary-border: rgb(255 184 28 / 0.48) !important;
     --simpeg-focus-ring: rgb(255 184 28 / 0.38) !important;
     --simpeg-link: #7DC1FF !important;
-    background: #1B2A4A !important;
+    background:
+        radial-gradient(circle at 12% 8%, rgb(47 123 255 / 0.24), transparent 28rem),
+        radial-gradient(circle at 88% 82%, rgb(255 184 28 / 0.10), transparent 24rem),
+        linear-gradient(135deg, #101f3f 0%, #1b3a68 52%, #0b1733 100%) !important;
     color: #F1F5F9 !important;
 }
 
