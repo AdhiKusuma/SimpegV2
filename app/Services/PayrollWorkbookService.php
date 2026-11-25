@@ -347,14 +347,27 @@ class PayrollWorkbookService
         $xpath = new DOMXPath($document);
         $xpath->registerNamespace('m', self::WORKSHEET_NAMESPACE);
 
-        foreach ($xpath->query('/m:worksheet/m:cols/m:col[@min="14" and @max="14"]') as $column) {
+        foreach ($xpath->query('/m:worksheet/m:cols/m:col') as $column) {
             if (! $column instanceof DOMElement) {
                 continue;
             }
 
-            // The supplied template gives Tunj. Jabatan only 8.36 characters,
-            // which is narrower than a normal formatted amount such as
-            // 1.545.000 and causes Excel to render it as "###".
+            $min = (int) $column->getAttribute('min');
+            $max = (int) $column->getAttribute('max');
+            if ($max < 10 || $min > 29) {
+                continue;
+            }
+
+            // The supplied template has a few narrow amount columns (for
+            // example Tunj. Jabatan and Honor Kontrak). A value such as
+            // 1.545.000 is valid, but Excel renders it as "###" when the
+            // column is too narrow. Widen only columns below the safe minimum
+            // so the original visual proportions remain intact elsewhere.
+            $width = (float) $column->getAttribute('width');
+            if ($width >= 12.5) {
+                continue;
+            }
+
             $column->setAttribute('width', '12.5');
             $column->setAttribute('customWidth', '1');
             $column->removeAttribute('bestFit');
