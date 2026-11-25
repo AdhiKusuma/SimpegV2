@@ -23,6 +23,21 @@ class XlsxExportService
     }
 
     /**
+     * Build a workbook containing multiple export sheets while keeping the
+     * existing single-sheet export contract intact.
+     *
+     * @param  array<int, array{name: string, rows: array<int, array<int, mixed>>, withBorders?: bool}>  $sheets
+     */
+    public function makeSheets(array $sheets): string
+    {
+        return $this->makeWorkbook(array_map(static fn (array $sheet): array => [
+            'name' => (string) ($sheet['name'] ?? 'Data'),
+            'rows' => (array) ($sheet['rows'] ?? []),
+            'withBorders' => (bool) ($sheet['withBorders'] ?? false),
+        ], $sheets));
+    }
+
+    /**
      * Build an import workbook without changing the first-sheet structure
      * consumed by the existing import parsers.
      *

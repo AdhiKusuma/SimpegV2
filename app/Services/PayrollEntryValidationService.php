@@ -27,6 +27,13 @@ class PayrollEntryValidationService
 
     private const MAX_AMOUNT_CENTS = 999999999999999999;
 
+    public function __construct(private readonly PayrollMasterValidationService $masterValidator) {}
+
+    public function masterDefaults(object $employee, ?object $office, int $year, int $month): array
+    {
+        return $this->masterValidator->defaults($employee, $office, $year, $month);
+    }
+
     private const PAYROLL_FIELD_LABELS = [
         'gaji_pokok' => 'Gaji pokok',
         'golongan_pegawai' => 'Nominal Golongan Pegawai',
@@ -64,6 +71,7 @@ class PayrollEntryValidationService
         $directory = $this->officeDirectory();
         $entries = [];
         $errors = [];
+        $warnings = [];
         $normalisedRows = [];
         $employeeIds = [];
         $seenEmployees = [];
@@ -192,10 +200,25 @@ class PayrollEntryValidationService
                 $calculated = ['amounts' => [], 'errors' => []];
             }
 
+            $rowWarnings = [];
+            if ($employee !== null && $rowErrors === [] && $employeeOfficeCode !== null) {
+                $rowWarnings = $this->masterValidator->warnings(
+                    $input,
+                    $employee,
+                    $directory['by_detail']->get($employeeOfficeCode),
+                    $year,
+                    $month,
+                );
+            }
+
             if ($rowErrors !== []) {
                 $errors[] = ['row' => $rowNumber, 'messages' => array_values(array_unique($rowErrors))];
 
                 continue;
+            }
+
+            if ($rowWarnings !== []) {
+                $warnings[] = ['row' => $rowNumber, 'messages' => array_values(array_unique($rowWarnings))];
             }
 
             $entries[] = [
@@ -215,6 +238,7 @@ class PayrollEntryValidationService
         return [
             'entries' => $entries,
             'errors' => $this->groupErrors($errors),
+            'warnings' => $this->groupErrors($warnings),
             'directory' => $directory,
         ];
     }
@@ -429,7 +453,7 @@ class PayrollEntryValidationService
                 continue;
             }
             $requestedIds = array_fill_keys(array_map(fn (string $id): string => 'id:'.$id, $ids), true);
-            foreach (DB::table('tb_pegawai')->whereIn('id_peg', $ids)->get(['id_peg', 'nama', 'status_aktif', 'status_kepeg']) as $record) {
+            foreach (DB::table('tb_pegawai')->whereIn('id_peg', $ids)->get(['id_peg', 'nama', 'status_aktif', 'status_kepeg', 'tmt_kerja']) as $record) {
                 $key = 'id:'.(string) $record->id_peg;
                 if (isset($requestedIds[$key])) {
                     $employeeRecords[$key] = (object) [
@@ -437,6 +461,7 @@ class PayrollEntryValidationService
                         'nama' => (string) $record->nama,
                         'status_aktif' => $record->status_aktif,
                         'status_kepeg' => (string) ($record->status_kepeg ?? ''),
+                        'tmt_kerja' => $record->tmt_kerja,
                         'active_unit_kerja' => null,
                         'active_jabatan' => null,
                     ];

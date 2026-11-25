@@ -84,6 +84,7 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
     Route::get('/payroll/import', [PayrollController::class, 'importForm'])->name('payroll.import');
     Route::get('/payroll/template', [PayrollController::class, 'downloadTemplate'])->name('payroll.template');
     Route::get('/payroll/export/rekap', [PayrollController::class, 'exportSummary'])->name('payroll.export.summary');
+    Route::get('/payroll/export/tukin', [PayrollController::class, 'exportTukin'])->name('payroll.export.tukin');
     Route::get('/payroll/export', [PayrollController::class, 'export'])->name('payroll.export');
     Route::get('/payroll/import/preview', [PayrollController::class, 'previewImportGet'])->name('payroll.import.preview.form');
     Route::post('/payroll/import/preview', [PayrollController::class, 'previewImport'])->name('payroll.import.preview');
@@ -121,6 +122,10 @@ Route::middleware('legacy.auth')->group(function () use ($familyTypePattern): vo
         ->whereNumber('payrollImport')
         ->where('employeeId', '[A-Za-z0-9-]+')
         ->name('files.download');
+    Route::get('/files/{payrollImport}/tukin/{employeeId}/download', [FilesController::class, 'downloadTukin'])
+        ->whereNumber('payrollImport')
+        ->where('employeeId', '[A-Za-z0-9-]+')
+        ->name('files.tukin.download');
 
     Route::get('/pegawai', [EmployeeController::class, 'index'])->name('employees.index');
     Route::get('/pegawai/export', [DataImportExportController::class, 'exportEmployees'])->name('employees.export');

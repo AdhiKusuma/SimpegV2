@@ -80,8 +80,10 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
     ];
     const exportParams = new URLSearchParams({ tahun: String(filters.tahun), bulan: String(filters.bulan) });
     const summaryExportParams = new URLSearchParams({ tahun: String(filters.tahun), bulan: String(filters.bulan) });
+    const tukinExportParams = new URLSearchParams({ tahun: String(filters.tahun), bulan: String(filters.bulan), kpi: '0.95' });
     if (filters.office) exportParams.set('office', filters.office);
     if (filters.office) summaryExportParams.set('office', filters.office);
+    if (filters.office) tukinExportParams.set('office', filters.office);
 
     function applyFilters(event) {
         event.preventDefault();
@@ -132,6 +134,7 @@ export default function Index({ filters, years = [], offices = [], summaryRows =
                             items={payrollImport ? [
                                 { href: `/payroll/export/rekap?${summaryExportParams.toString()}`, label: 'Export rekap kantor' },
                                 { href: `/payroll/export?${exportParams.toString()}`, label: 'Export rincian pegawai' },
+                                { href: `/payroll/export/tukin?${tukinExportParams.toString()}`, label: 'Export Slip Tukin (2 sheet)' },
                             ] : []}
                             disabled={!payrollImport}
                             label="Export"

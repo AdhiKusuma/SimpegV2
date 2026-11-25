@@ -618,17 +618,36 @@ function CombinedEmployeeTrendPlot({ labels = [], series = [], ariaLabel }) {
     const selectedSeriesValues = selectedSeries ? asList(selectedSeries.values) : [];
     const selectedValue = selectedPoint ? Number(selectedSeriesValues[selectedPoint.index]) || 0 : null;
     const selectedLabel = selectedPoint ? safeLabels[selectedPoint.index] || '-' : '';
+    const selectedMonthPoints = selectedPoint
+        ? safeSeries.map((item, seriesIndex) => {
+            const value = Number(asList(item.values)[selectedPoint.index]) || 0;
+
+            return {
+                item,
+                seriesIndex,
+                value,
+                y: yFor(value),
+            };
+        })
+        : [];
     const selectedPointGeometry = selectedPoint && selectedSeries
         ? { x: xFor(selectedPoint.index), y: yFor(selectedValue) }
         : null;
+    const nearbyMonthPoints = selectedPointGeometry
+        ? selectedMonthPoints.filter((point) => Math.abs(point.y - selectedPointGeometry.y) <= 12)
+        : [];
+    const tooltipPoints = nearbyMonthPoints.length > 1
+        ? nearbyMonthPoints
+        : selectedMonthPoints.filter((point) => point.seriesIndex === selectedPoint?.seriesIndex);
+    const tooltipHeight = tooltipPoints.length > 1 ? 52 : 38;
     const calloutWidth = 132;
-    const calloutHeight = 38;
+    const calloutHeight = tooltipHeight;
     const calloutX = selectedPointGeometry ? Math.max(4, Math.min(selectedPointGeometry.x - calloutWidth / 2, width - calloutWidth - 4)) : 0;
     const calloutY = selectedPointGeometry ? Math.max(4, selectedPointGeometry.y - calloutHeight - 12) : 0;
 
     return (
         <div>
-            <div className="simpeg-employee-trend-plot-wrap">
+            <div className="simpeg-employee-trend-plot-wrap relative">
             <svg viewBox={`0 0 ${width} ${height}`} className="simpeg-employee-trend-plot block w-full" preserveAspectRatio="none" role="img" aria-label={ariaLabel}>
                 <text x={padding.left} y="12" fill="var(--simpeg-muted)" className="text-[10px]">{axis === 'total' ? 'Jumlah pegawai' : 'Pegawai per bulan'}</text>
                 {[0, 0.5, 1].map((ratio) => {
@@ -660,39 +679,90 @@ function CombinedEmployeeTrendPlot({ labels = [], series = [], ariaLabel }) {
                             <path d={areaPath} fill={color} fillOpacity={fillOpacity} stroke="none" />
                             <path d={path} fill="none" stroke={color} strokeWidth="3" strokeDasharray={item.dash || undefined} strokeLinejoin="round" strokeLinecap="round" />
                             {points.map((point, index) => (
-                                <circle
-                                    key={`${item.key || seriesIndex}-${safeLabels[index] || index}`}
-                                    cx={point.x}
-                                    cy={point.y}
-                                    r={selectedPoint?.seriesIndex === seriesIndex && selectedPoint?.index === index ? '6.5' : '4.5'}
-                                    fill="var(--simpeg-card)"
-                                    stroke={color}
-                                    strokeWidth={selectedPoint?.seriesIndex === seriesIndex && selectedPoint?.index === index ? '4' : '2.5'}
-                                    className="simpeg-chart-point"
-                                    role="button"
-                                    tabIndex={0}
-                                    aria-label={`${item.label || item.key || 'Data'}, ${safeLabels[index] || '-'}: ${number(point.value)}`}
-                                    onClick={() => setSelectedPoint({ seriesIndex, index })}
-                                    onKeyDown={(event) => activatePointOnKeyDown(event, () => setSelectedPoint({ seriesIndex, index }))}
-                                >
-                                    <title>{`${item.label || item.key || 'Data'} · ${safeLabels[index] || '-'}: ${number(point.value)}`}</title>
-                                </circle>
+                                <g key={`${item.key || seriesIndex}-${safeLabels[index] || index}`}>
+                                    <circle
+                                        cx={point.x}
+                                        cy={point.y}
+                                        r="12"
+                                        fill="transparent"
+                                        stroke="none"
+                                        pointerEvents="all"
+                                        aria-hidden="true"
+                                        onClick={() => setSelectedPoint({ seriesIndex, index })}
+                                    />
+                                    <circle
+                                        cx={point.x}
+                                        cy={point.y}
+                                        r={selectedPoint?.seriesIndex === seriesIndex && selectedPoint?.index === index ? '6.5' : '4.5'}
+                                        fill="var(--simpeg-card)"
+                                        stroke={color}
+                                        strokeWidth={selectedPoint?.seriesIndex === seriesIndex && selectedPoint?.index === index ? '4' : '2.5'}
+                                        className="simpeg-chart-point"
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label={`${item.label || item.key || 'Data'}, ${safeLabels[index] || '-'}: ${number(point.value)}`}
+                                        onClick={() => setSelectedPoint({ seriesIndex, index })}
+                                        onKeyDown={(event) => activatePointOnKeyDown(event, () => setSelectedPoint({ seriesIndex, index }))}
+                                    >
+                                        <title>{`${item.label || item.key || 'Data'} · ${safeLabels[index] || '-'}: ${number(point.value)}`}</title>
+                                    </circle>
+                                </g>
                             ))}
                         </g>
                     );
                 })}
                 {safeLabels.map((label, index) => (
-                    <text key={label || index} x={xFor(index)} y={height - 12} textAnchor="middle" fill="var(--simpeg-text)" className="simpeg-chart-axis-label text-[10px]">{label}</text>
+                    <text
+                        key={label || index}
+                        x={xFor(index)}
+                        y={height - 12}
+                        textAnchor="middle"
+                        fill="var(--simpeg-text)"
+                        className="simpeg-chart-axis-label cursor-pointer text-[10px]"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Lihat ${safeSeries[0]?.label || 'data'} ${label || '-'}`}
+                        onClick={() => setSelectedPoint({ seriesIndex: 0, index })}
+                        onKeyDown={(event) => activatePointOnKeyDown(event, () => setSelectedPoint({ seriesIndex: 0, index }))}
+                    >{label}</text>
                 ))}
                 {selectedPointGeometry && selectedSeries && (
                     <g className="simpeg-chart-point-callout" pointerEvents="none">
                         <path d={`M ${selectedPointGeometry.x - 5} ${calloutY + calloutHeight} L ${selectedPointGeometry.x} ${calloutY + calloutHeight + 6} L ${selectedPointGeometry.x + 5} ${calloutY + calloutHeight} Z`} />
                         <rect x={calloutX} y={calloutY} width={calloutWidth} height={calloutHeight} rx="8" />
-                        <text x={calloutX + calloutWidth / 2} y={calloutY + 16} textAnchor="middle" className="simpeg-chart-point-callout-value">{number(selectedValue)} pegawai</text>
-                        <text x={calloutX + calloutWidth / 2} y={calloutY + 30} textAnchor="middle" className="simpeg-chart-point-callout-label">{selectedSeries.label || selectedSeries.key} · {selectedLabel}</text>
+                        {tooltipPoints.length > 1 ? (
+                            <>
+                                <text x={calloutX + calloutWidth / 2} y={calloutY + 16} textAnchor="middle" className="simpeg-chart-point-callout-value">{selectedLabel}</text>
+                                {tooltipPoints.map((point, index) => (
+                                    <text key={point.item.key || point.seriesIndex} x={calloutX + calloutWidth / 2} y={calloutY + 30 + (index * 12)} textAnchor="middle" className="simpeg-chart-point-callout-label">
+                                        {point.item.label || point.item.key}: {number(point.value)} pegawai
+                                    </text>
+                                ))}
+                            </>
+                        ) : (
+                            <>
+                                <text x={calloutX + calloutWidth / 2} y={calloutY + 16} textAnchor="middle" className="simpeg-chart-point-callout-value">{number(selectedValue)} pegawai</text>
+                                <text x={calloutX + calloutWidth / 2} y={calloutY + 30} textAnchor="middle" className="simpeg-chart-point-callout-label">{selectedSeries.label || selectedSeries.key} · {selectedLabel}</text>
+                            </>
+                        )}
                     </g>
                 )}
             </svg>
+            <div className="pointer-events-none absolute inset-0 z-[1]" aria-label="Titik data tren pegawai">
+                {safeSeries.map((item, seriesIndex) => asList(item.values).map((value, index) => (
+                    <button
+                        key={`hit-${item.key || seriesIndex}-${safeLabels[index] || index}`}
+                        type="button"
+                        className="pointer-events-auto absolute h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border-0 bg-transparent p-0 opacity-0 outline-none"
+                        style={{
+                            left: `${(xFor(index) / width) * 100}%`,
+                            top: `${(yFor(value) / height) * 100}%`,
+                        }}
+                        aria-label={`${item.label || item.key || 'Data'}, ${safeLabels[index] || '-'}: ${number(value)}`}
+                        onClick={() => setSelectedPoint({ seriesIndex, index })}
+                    />
+                )))}
+            </div>
             </div>
         </div>
     );

@@ -15,6 +15,8 @@ class PayrollWorkbookService
 
     private const TEMPLATE_PATH = 'resources/templates/payroll/Template_Payroll.xlsx';
 
+    private const TUKIN_TEMPLATE_PATH = 'resources/templates/payroll/Template_Slip_Gaji_Tukin.xlsx';
+
     private const COMPONENTS = [
         ['gaji_pokok', 'D'],
         ['tunj_suami_istri', 'E'],
@@ -139,6 +141,62 @@ class PayrollWorkbookService
         }
     }
 
+    /**
+     * Populate the supplied Tukin workbook without changing its visual
+     * structure. The workbook already contains both reference sheets.
+     *
+     * @param  array<int, array<string, mixed>>  $realEntries
+     * @param  array<int, array<string, mixed>>  $seventyFiveEntries
+     */
+    public function exportTukin(array $realEntries, array $seventyFiveEntries): string
+    {
+        $temporaryFile = $this->temporaryTemplateCopy(self::TUKIN_TEMPLATE_PATH);
+        $archive = new ZipArchive;
+
+        try {
+            if ($archive->open($temporaryFile) !== true) {
+                throw new RuntimeException('Workbook template Tukin tidak dapat dibuka untuk ekspor.');
+            }
+
+            $worksheets = [];
+            foreach (['tukin real', 'tukin 75%'] as $sheetName) {
+                $worksheetPath = $this->worksheetPath($archive, $sheetName);
+                $worksheetXml = $archive->getFromName($worksheetPath);
+                if ($worksheetXml === false) {
+                    throw new RuntimeException('Sheet '.$sheetName.' tidak ditemukan pada template Tukin.');
+                }
+                $worksheets[$sheetName] = [$worksheetPath, $worksheetXml];
+            }
+
+            $orphanedParts = $this->stripTukinExternalReferences($archive);
+            foreach ([
+                'tukin real' => $realEntries,
+                'tukin 75%' => $seventyFiveEntries,
+            ] as $sheetName => $entries) {
+                [$worksheetPath, $worksheetXml] = $worksheets[$sheetName];
+                $document = $this->loadXml($worksheetXml);
+                $this->populateTukinSheet($document, $entries, $sheetName === 'tukin 75%');
+                $updatedXml = $document->saveXML();
+                if ($updatedXml === false || ! $archive->addFromString($worksheetPath, $updatedXml, ZipArchive::FL_OVERWRITE)) {
+                    throw new RuntimeException('Sheet '.$sheetName.' tidak dapat diperbarui.');
+                }
+            }
+
+            if (! $archive->close()) {
+                throw new RuntimeException('Workbook hasil ekspor Tukin tidak dapat disimpan.');
+            }
+
+            $this->removeTukinOrphanedParts($temporaryFile, $orphanedParts);
+
+            return $temporaryFile;
+        } catch (Throwable $exception) {
+            $archive->close();
+            @unlink($temporaryFile);
+
+            throw $exception;
+        }
+    }
+
     private function temporaryTemplateCopy(string $templatePath): string
     {
         $source = base_path($templatePath);
@@ -224,6 +282,238 @@ class PayrollWorkbookService
         $lastRow = max(199, count($entries) + 17);
         $this->setDimension($document, 'A1:T'.$lastRow);
         $this->sortRows($sheetData, $xpath);
+    }
+
+    private function populateTukinSheet(DOMDocument $document, array $entries, bool $seventyFive): void
+    {
+        $xpath = new DOMXPath($document);
+        $xpath->registerNamespace('m', self::WORKSHEET_NAMESPACE);
+        $sheetData = $xpath->query('/m:worksheet/m:sheetData')->item(0);
+        if (! $sheetData instanceof DOMElement) {
+            throw new RuntimeException('Struktur sheet Tukin tidak valid.');
+        }
+
+        $rows = [];
+        foreach ($xpath->query('./m:row', $sheetData) as $row) {
+            if ($row instanceof DOMElement) {
+                $rows[(int) $row->getAttribute('r')] = $row;
+            }
+        }
+        $dataStyle = $rows[7] ?? null;
+        $kpiStyle = $rows[9] ?? null;
+        $footerStyle = $rows[11] ?? null;
+        if (! $dataStyle instanceof DOMElement || ! $kpiStyle instanceof DOMElement || ! $footerStyle instanceof DOMElement) {
+            throw new RuntimeException('Baris gaya sheet Tukin tidak lengkap.');
+        }
+
+        foreach ($rows as $rowNumber => $row) {
+            if ($rowNumber >= 7) {
+                $sheetData->removeChild($row);
+            }
+        }
+
+        $kpiRow = 7 + count($entries) + 1;
+        foreach (array_values($entries) as $index => $entry) {
+            $rowNumber = $index + 7;
+            $row = $this->cloneStyledRow($dataStyle, $rowNumber, $sheetData, $xpath);
+            $this->populateTukinRow($row, $rowNumber, $entry, $seventyFive, $kpiRow, $xpath, $sheetData);
+        }
+
+        $kpi = $this->cloneStyledRow($kpiStyle, $kpiRow, $sheetData, $xpath);
+        $this->setText($this->cell($kpi, 'B'.$kpiRow, $xpath, $sheetData), 'KPI Konsolidasi/cabang :');
+        $this->setNumber($this->cell($kpi, 'C'.$kpiRow, $xpath, $sheetData), (string) ($entries[0]['kpi'] ?? PayrollTukinExportService::DEFAULT_KPI));
+
+        $footerRow = $kpiRow + 2;
+        $footer = $this->cloneStyledRow($footerStyle, $footerRow, $sheetData, $xpath);
+        $this->setText(
+            $this->cell($footer, 'B'.$footerRow, $xpath, $sheetData),
+            $seventyFive ? 'Slip Gaji untuk Pengajuan Kredit Pegawai' : 'Take Home Pay / bulan',
+        );
+        if ($seventyFive) {
+            foreach ($xpath->query('/m:worksheet/m:mergeCells/m:mergeCell[@ref="B11:D11"]') as $merge) {
+                if ($merge instanceof DOMElement) {
+                    $merge->setAttribute('ref', 'B'.$footerRow.':D'.$footerRow);
+                }
+            }
+        }
+
+        $this->widenTukinAmountColumns($document);
+        $this->setDimension($document, 'A1:AC'.$footerRow);
+        $this->sortRows($sheetData, $xpath);
+    }
+
+    private function widenTukinAmountColumns(DOMDocument $document): void
+    {
+        $xpath = new DOMXPath($document);
+        $xpath->registerNamespace('m', self::WORKSHEET_NAMESPACE);
+
+        foreach ($xpath->query('/m:worksheet/m:cols/m:col[@min="14" and @max="14"]') as $column) {
+            if (! $column instanceof DOMElement) {
+                continue;
+            }
+
+            // The supplied template gives Tunj. Jabatan only 8.36 characters,
+            // which is narrower than a normal formatted amount such as
+            // 1.545.000 and causes Excel to render it as "###".
+            $column->setAttribute('width', '12.5');
+            $column->setAttribute('customWidth', '1');
+            $column->removeAttribute('bestFit');
+        }
+    }
+
+    private function populateTukinRow(DOMElement $row, int $rowNumber, array $entry, bool $seventyFive, int $kpiRow, DOMXPath $xpath, DOMElement $sheetData): void
+    {
+        foreach ([
+            'A' => $entry['employee_id'] ?? '',
+            'B' => $entry['employee_name'] ?? '',
+            'C' => $entry['position_name'] ?? '',
+            'D' => $entry['unit_name'] ?? '',
+            'E' => $entry['employment_status'] ?? '',
+            'F' => $entry['grade'] ?? '',
+        ] as $column => $value) {
+            $this->setText($this->cell($row, $column.$rowNumber, $xpath, $sheetData), (string) $value);
+        }
+
+        foreach ([
+            'G' => $entry['service_years'] ?? 0,
+            'H' => $entry['spouse_count'] ?? 0,
+            'I' => $entry['child_count'] ?? 0,
+            'J' => $entry['gaji_pokok'] ?? 0,
+            'N' => $entry['tunj_jabatan'] ?? 0,
+            'O' => $entry['tunj_ops'] ?? 0,
+            'P' => $entry['tunj_kinerja_100'] ?? 0,
+            'S' => $entry['tunj_masa_kerja'] ?? 0,
+            'T' => $entry['tunj_fungsional'] ?? 0,
+            'U' => $entry['honor_kontrak'] ?? 0,
+            'W' => $entry['potongan_angsuran'] ?? 0,
+            'X' => $entry['potongan_absen'] ?? 0,
+            'Y' => $entry['potongan_bpjs'] ?? 0,
+            'Z' => $entry['pengembalian_tunjangan'] ?? 0,
+            'AA' => $entry['pengalihan_keris'] ?? 0,
+            'AB' => $entry['uang_makan_kontrak'] ?? 0,
+        ] as $column => $value) {
+            $this->setNumber($this->cell($row, $column.$rowNumber, $xpath, $sheetData), (string) $value);
+        }
+
+        $this->setFormulaNumber($this->cell($row, 'K'.$rowNumber, $xpath, $sheetData), '$H'.$rowNumber.'*10%*$J'.$rowNumber, (string) ($entry['tunj_suami_istri'] ?? 0));
+        $this->setFormulaNumber($this->cell($row, 'L'.$rowNumber, $xpath, $sheetData), '$I'.$rowNumber.'*5%*$J'.$rowNumber, (string) ($entry['tunj_anak'] ?? 0));
+        $this->setFormulaNumber($this->cell($row, 'M'.$rowNumber, $xpath, $sheetData), 'SUM(J'.$rowNumber.':L'.$rowNumber.')', (string) ($entry['jumlah_gaji_dasar'] ?? 0));
+        $this->setFormulaNumber($this->cell($row, 'Q'.$rowNumber, $xpath, $sheetData), '75%*P'.$rowNumber, (string) ($entry['tunj_kinerja_75'] ?? 0));
+        $this->setFormulaNumber($this->cell($row, 'R'.$rowNumber, $xpath, $sheetData), '$Q'.$rowNumber.'+(($C'.$kpiRow.')*($P'.$rowNumber.'-$Q'.$rowNumber.'))', (string) ($entry['tunj_kinerja_real'] ?? 0));
+        $this->setFormulaNumber(
+            $this->cell($row, 'V'.$rowNumber, $xpath, $sheetData),
+            $seventyFive ? 'SUM(M'.$rowNumber.':O'.$rowNumber.')+Q'.$rowNumber.'+SUM(S'.$rowNumber.':U'.$rowNumber.')' : 'SUM(M'.$rowNumber.':O'.$rowNumber.')+SUM(R'.$rowNumber.':U'.$rowNumber.')',
+            (string) ($entry['jumlah_pendapatan'] ?? 0),
+        );
+        $this->setFormulaNumber($this->cell($row, 'AC'.$rowNumber, $xpath, $sheetData), 'V'.$rowNumber.'-SUM($W'.$rowNumber.':$AA'.$rowNumber.')+$AB'.$rowNumber, (string) ($entry['gaji_diterima'] ?? 0));
+    }
+
+    /**
+     * The reference workbook contains an old external link and calc chain.
+     * Neither is used by the export, so remove them from the generated copy
+     * to avoid Excel prompting for a local Windows file path.
+     */
+    /**
+     * @return array<int, string>
+     */
+    private function stripTukinExternalReferences(ZipArchive $archive): array
+    {
+        $workbookXml = $archive->getFromName('xl/workbook.xml');
+        $relationshipsXml = $archive->getFromName('xl/_rels/workbook.xml.rels');
+        $contentTypesXml = $archive->getFromName('[Content_Types].xml');
+        if ($workbookXml === false || $relationshipsXml === false || $contentTypesXml === false) {
+            throw new RuntimeException('Metadata workbook Tukin tidak lengkap.');
+        }
+
+        $workbook = $this->loadXml($workbookXml);
+        $workbookXPath = new DOMXPath($workbook);
+        $workbookXPath->registerNamespace('m', self::WORKSHEET_NAMESPACE);
+        foreach ($workbookXPath->query('/m:workbook/m:externalReferences | /m:workbook/m:definedNames/m:definedName[@name="GAJI"] | /m:workbook/*[local-name()="AlternateContent"]') as $node) {
+            $node->parentNode?->removeChild($node);
+        }
+
+        $relationships = $this->loadXml($relationshipsXml);
+        $relationshipXPath = new DOMXPath($relationships);
+        $relationshipXPath->registerNamespace('p', self::PACKAGE_RELATIONSHIP_NAMESPACE);
+        $removedParts = [];
+        foreach ($relationshipXPath->query('/p:Relationships/p:Relationship') as $relationship) {
+            if (! $relationship instanceof DOMElement) {
+                continue;
+            }
+
+            $type = $relationship->getAttribute('Type');
+            if (! str_ends_with($type, '/externalLink') && ! str_ends_with($type, '/calcChain')) {
+                continue;
+            }
+
+            $target = $this->packagePath('xl', $relationship->getAttribute('Target'));
+            $removedParts[] = $target;
+            $relationship->parentNode?->removeChild($relationship);
+        }
+
+        $contentTypes = $this->loadXml($contentTypesXml);
+        $contentTypesXPath = new DOMXPath($contentTypes);
+        $contentTypesXPath->registerNamespace('ct', 'http://schemas.openxmlformats.org/package/2006/content-types');
+        foreach ($contentTypesXPath->query('/ct:Types/ct:Override') as $override) {
+            if (! $override instanceof DOMElement) {
+                continue;
+            }
+
+            $partName = ltrim($override->getAttribute('PartName'), '/');
+            if (in_array($partName, $removedParts, true)) {
+                $override->parentNode?->removeChild($override);
+            }
+        }
+
+        // Do not delete ZIP entries while the archive is still being edited.
+        // ZipArchive can invalidate compressed entries after deleteName(),
+        // which would make the next worksheet unreadable. The caller removes
+        // these now-orphaned parts after the first close/reopen cycle.
+
+        $updatedWorkbook = $workbook->saveXML();
+        $updatedRelationships = $relationships->saveXML();
+        $updatedContentTypes = $contentTypes->saveXML();
+        if ($updatedWorkbook === false || $updatedRelationships === false || $updatedContentTypes === false
+            || ! $archive->addFromString('xl/workbook.xml', $updatedWorkbook, ZipArchive::FL_OVERWRITE)
+            || ! $archive->addFromString('xl/_rels/workbook.xml.rels', $updatedRelationships, ZipArchive::FL_OVERWRITE)
+            || ! $archive->addFromString('[Content_Types].xml', $updatedContentTypes, ZipArchive::FL_OVERWRITE)) {
+            throw new RuntimeException('Referensi eksternal workbook Tukin tidak dapat dibersihkan.');
+        }
+
+        return array_values(array_unique($removedParts));
+    }
+
+    /**
+     * Remove the unused external-link and calc-chain parts after the workbook
+     * metadata has been saved and the archive can safely be reopened.
+     *
+     * @param  array<int, string>  $parts
+     */
+    private function removeTukinOrphanedParts(string $path, array $parts): void
+    {
+        if ($parts === []) {
+            return;
+        }
+
+        $archive = new ZipArchive;
+        if ($archive->open($path) !== true) {
+            throw new RuntimeException('Part lama workbook Tukin tidak dapat dibuka untuk dibersihkan.');
+        }
+
+        try {
+            foreach ($parts as $part) {
+                $archive->deleteName($part);
+                $archive->deleteName(dirname($part).'/_rels/'.basename($part).'.rels');
+            }
+
+            if (! $archive->close()) {
+                throw new RuntimeException('Part lama workbook Tukin tidak dapat dihapus.');
+            }
+        } catch (Throwable $exception) {
+            $archive->close();
+
+            throw $exception;
+        }
     }
 
     private function populateImportSheet(DOMDocument $document, array $entries): void
@@ -723,6 +1013,14 @@ class PayrollWorkbookService
         $cell->setAttribute('t', 'str');
         $cell->appendChild($cell->ownerDocument->createElementNS(self::WORKSHEET_NAMESPACE, 'f', $formula));
         $cell->appendChild($cell->ownerDocument->createElementNS(self::WORKSHEET_NAMESPACE, 'v', $cachedValue));
+    }
+
+    private function setFormulaNumber(DOMElement $cell, string $formula, string $cachedValue): void
+    {
+        $this->clearCell($cell);
+        $cell->setAttribute('t', 'n');
+        $cell->appendChild($cell->ownerDocument->createElementNS(self::WORKSHEET_NAMESPACE, 'f', $formula));
+        $cell->appendChild($cell->ownerDocument->createElementNS(self::WORKSHEET_NAMESPACE, 'v', $this->number($cachedValue)));
     }
 
     private function setNumber(DOMElement $cell, string $value): void

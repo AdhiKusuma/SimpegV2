@@ -6,6 +6,8 @@ use App\Models\Legacy\TbJabatan;
 use App\Models\Legacy\TbKantor;
 use App\Services\PayslipPdfService;
 use App\Services\RbacService;
+use App\Services\PayrollTukinExportService;
+use App\Services\TukinPayslipPdfService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -108,6 +110,7 @@ class FilesController extends Controller
         return Inertia::render('Files/Show', [
             'slip' => $this->presentSlip($slip),
             'templateAvailable' => $this->templateAvailable(),
+            'tukinTemplateAvailable' => $this->tukinTemplateAvailable(),
             'isAdministrative' => $rbac->can($request, 'payroll.view'),
         ]);
     }
@@ -207,6 +210,7 @@ class FilesController extends Controller
         return Inertia::render('Files/Show', [
             'slip' => $this->presentSlip($slip),
             'templateAvailable' => $this->templateAvailable(),
+            'tukinTemplateAvailable' => $this->tukinTemplateAvailable(),
             'isAdministrative' => false,
             'backHref' => route('profile.payslip'),
             'backLabel' => 'Kembali ke Slip Gaji Saya',
@@ -220,6 +224,25 @@ class FilesController extends Controller
         abort_unless($this->templateAvailable(), 409, 'Referensi template PDF slip gaji belum tersedia. Sediakan kembali template tersebut sebelum export slip.');
 
         return $pdf->download($this->presentSlip($slip));
+    }
+
+    public function downloadTukin(
+        Request $request,
+        int $payrollImport,
+        string $employeeId,
+        RbacService $rbac,
+        PayrollTukinExportService $tukin,
+        TukinPayslipPdfService $pdf,
+    ): mixed {
+        $validated = $request->validate([
+            'mode' => ['nullable', 'in:real,75'],
+            'kpi' => ['nullable', 'numeric', 'between:0,1'],
+        ]);
+        $slip = $this->resolveSlip($request, $payrollImport, $employeeId, $rbac);
+        $mode = $tukin->normaliseMode((string) ($validated['mode'] ?? 'real'));
+        $kpi = (float) ($validated['kpi'] ?? PayrollTukinExportService::DEFAULT_KPI);
+
+        return $pdf->download($tukin->projectExistingSlip($slip, $mode, $kpi), $mode);
     }
 
     private function resolveSlip(Request $request, int $payrollImport, string $employeeId, RbacService $rbac): object
@@ -370,6 +393,11 @@ class FilesController extends Controller
     private function templateAvailable(): bool
     {
         return is_file(resource_path('views/files/payslip.blade.php'));
+    }
+
+    private function tukinTemplateAvailable(): bool
+    {
+        return is_file(resource_path('views/files/tukin-payslip.blade.php'));
     }
 
     private function officeScope(Request $request): array

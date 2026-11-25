@@ -107,7 +107,7 @@ export default function CreateMaster({ employees = [], scopeLabel, willRequireAp
         const selected = employees.find((item) => item.id_peg === employeeId);
         form.setData({
             ...form.data,
-            ...Object.fromEntries(salaryFields.map(([field]) => [field, '0'])),
+            ...Object.fromEntries(salaryFields.map(([field]) => [field, selected?.master_defaults?.[field] ?? '0'])),
             employee_id: employeeId,
             office_code: selected?.office_code || '',
             bank_office_code: selected?.bank_office_code || selected?.no_rekening?.replace(/\D/g, '').slice(0, 3) || '',
@@ -256,7 +256,8 @@ export default function CreateMaster({ employees = [], scopeLabel, willRequireAp
                 </section>
 
                 <section className="simpeg-card overflow-hidden rounded-2xl border shadow-sm">
-                    <div className="border-b p-4 sm:p-6"><SectionHeading icon={Banknote} title="Komponen gaji dan potongan" description="Nominal golongan pegawai ditambahkan ke gaji pokok; jika kosong dihitung Rp0. Jumlah gaji, potongan, dan gaji bersih dihitung otomatis." /></div>
+                    <div className="border-b p-4 sm:p-6"><SectionHeading icon={Banknote} title="Komponen gaji dan potongan" description="Untuk pegawai Tetap dan Calon Pegawai, komponen yang tersedia di master terisi otomatis dan tetap dapat diedit. Nominal golongan pegawai ditambahkan ke gaji pokok; jumlah gaji, potongan, dan gaji bersih dihitung otomatis." /></div>
+                    {employee && Object.keys(employee.master_defaults ?? {}).length > 0 && <div className="mx-4 mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 sm:mx-6"><strong>Referensi master aktif.</strong> Tunjangan jabatan, operasional, kinerja, dan masa kerja telah diisi dari master sesuai status, jabatan, kantor, serta TMT pegawai. Semua nominal tetap dapat diedit sebelum disimpan.</div>}
                     <div className="space-y-6 p-4 sm:p-6">
                         <section aria-labelledby="master-earnings-title">
                             <div className="mb-4 flex flex-col gap-2 border-b pb-3 sm:flex-row sm:items-start sm:justify-between">

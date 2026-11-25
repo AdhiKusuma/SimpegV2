@@ -16,13 +16,21 @@ function AmountTable({ title, rows }) {
     return <section className="simpeg-card overflow-hidden rounded-2xl border shadow-sm"><div className="border-b px-4 py-4 sm:px-5"><h2 className="simpeg-text font-semibold">{title}</h2></div><div className="divide-y">{rows.map((row) => <div key={row.field} className="flex items-center justify-between gap-4 px-4 py-3 text-sm sm:px-5"><span className="simpeg-muted">{row.label}</span><span className="simpeg-text text-right tabular-nums">{formatRupiah(row.amount)}</span></div>)}</div></section>;
 }
 
-export default function FilesShow({ slip, templateAvailable = false, backHref = '/files', backLabel = 'Kembali ke FILES', sectionLabel = 'FILES · SLIP GAJI' }) {
+export default function FilesShow({ slip, templateAvailable = false, tukinTemplateAvailable = false, backHref = '/files', backLabel = 'Kembali ke FILES', sectionLabel = 'FILES · SLIP GAJI' }) {
+    const exportItems = [
+        ...(templateAvailable ? [{ href: `/files/${slip.payroll_import_id}/slip/${encodeURIComponent(slip.employee_id)}/download`, label: 'Export PDF payroll' }] : []),
+        ...(tukinTemplateAvailable ? [
+            { href: `/files/${slip.payroll_import_id}/tukin/${encodeURIComponent(slip.employee_id)}/download?mode=real&kpi=0.95`, label: 'Slip Tukin Real/KPI' },
+            { href: `/files/${slip.payroll_import_id}/tukin/${encodeURIComponent(slip.employee_id)}/download?mode=75&kpi=0.95`, label: 'Slip Tukin 75%' },
+        ] : []),
+    ];
+
     return (
         <LegacyPageShell title={`Slip Gaji ${slip.period}`}>
             <Head title={`Slip Gaji ${slip.period}`} />
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                 <div><Link href={backHref} className="simpeg-muted mb-3 inline-flex items-center gap-2 text-sm font-semibold"><ArrowLeft className="h-4 w-4" />{backLabel}</Link><p className="simpeg-muted mb-2 text-sm font-semibold uppercase tracking-[0.18em]">{sectionLabel}</p><h1 className="simpeg-text text-3xl font-extrabold tracking-tight">Periode {slip.period}</h1><p className="simpeg-muted mt-2">{slip.employee_name} · {slip.employee_id}</p></div>
-                <ExportDropdown items={[{ href: `/files/${slip.payroll_import_id}/slip/${encodeURIComponent(slip.employee_id)}/download`, label: 'Export PDF' }]} disabled={!templateAvailable} label={templateAvailable ? 'Export' : 'PDF belum tersedia'} />
+                <ExportDropdown items={exportItems} disabled={exportItems.length === 0} label={exportItems.length ? 'Export' : 'PDF belum tersedia'} />
             </div>
 
             {!templateAvailable && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">Data payroll sudah tersedia untuk preview. Referensi template PDF slip gaji perlu disediakan kembali agar preview final dan export mengikuti tata letak yang disetujui.</div>}

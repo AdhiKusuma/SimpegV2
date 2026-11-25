@@ -11,6 +11,7 @@ use App\Models\PayrollSalaryMaster;
 use App\Services\NotificationService;
 use App\Services\PayrollEntryValidationService;
 use App\Services\PayrollPublicationService;
+use App\Services\PayrollTukinExportService;
 use App\Services\PayrollWorkbookService;
 use App\Services\RbacService;
 use App\Services\XlsxExportService;
@@ -355,6 +356,46 @@ class PayrollController extends Controller
         ])->deleteFileAfterSend(true);
     }
 
+    public function exportTukin(Request $request, RbacService $rbac, PayrollTukinExportService $tukin, PayrollWorkbookService $workbooks): BinaryFileResponse
+    {
+        abort_unless($rbac->can($request, 'payroll.view'), 403);
+        $validated = $request->validate([
+            'tahun' => ['required', 'integer', 'between:2000,2100'],
+            'bulan' => ['required', 'integer', 'between:1,12'],
+            'office' => ['nullable', 'string', 'max:20'],
+            'mode' => ['nullable', 'in:real,75'],
+            'kpi' => ['nullable', 'numeric', 'between:0,1'],
+        ]);
+
+        $scope = $this->officeScope($request);
+        $officeCode = trim((string) ($validated['office'] ?? ''));
+        abort_if($scope['restricted'] && $officeCode !== '' && ! in_array($officeCode, $scope['codes'], true), 403);
+
+        $payrollImport = PayrollImport::query()
+            ->where('is_current', true)
+            ->where('tahun', $validated['tahun'])
+            ->where('bulan', $validated['bulan'])
+            ->when($scope['restricted'], fn ($query) => $query->whereHas(
+                'officeSummaries',
+                fn ($summaries) => $summaries->whereIn('office_code', $scope['codes']),
+            ))
+            ->orderByDesc('id')
+            ->firstOrFail();
+
+        $kpi = (float) ($validated['kpi'] ?? PayrollTukinExportService::DEFAULT_KPI);
+        $rowsByMode = $tukin->rowsForImportBothModes($payrollImport, $scope, $officeCode, $kpi);
+        abort_if($rowsByMode['real'] === [], 404, 'Tidak ada data payroll untuk ekspor Tukin pada cakupan tersebut.');
+
+        $path = $workbooks->exportTukin($rowsByMode['real'], $rowsByMode['75']);
+        $filename = sprintf('Slip_Tukin_%04d_%02d%s.xlsx', $validated['tahun'], $validated['bulan'], $officeCode !== '' ? '_'.$officeCode : '');
+
+        return response()->download($path, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+        ])->deleteFileAfterSend(true);
+    }
+
     public function exportSummary(Request $request, RbacService $rbac, XlsxExportService $xlsxExport): StreamedResponse
     {
         abort_unless($rbac->can($request, 'payroll.view'), 403);
@@ -472,6 +513,8 @@ class PayrollController extends Controller
             'office_count' => count($parsed['summaries']),
             'errors' => array_slice($parsed['errors'], 0, 20),
             'error_count' => count($parsed['errors']),
+            'warnings' => array_slice($parsed['warnings'] ?? [], 0, 20),
+            'warning_count' => count($parsed['warnings'] ?? []),
             'replaces_current' => PayrollImport::query()
                 ->where('is_current', true)
                 ->where('tahun', $validated['tahun'])
@@ -886,6 +929,7 @@ class PayrollController extends Controller
             'entries' => $validation['entries'],
             'summaries' => $summaries,
             'errors' => $errors,
+            'warnings' => $validation['warnings'] ?? [],
         ];
     }
 

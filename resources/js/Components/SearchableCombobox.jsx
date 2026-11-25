@@ -27,6 +27,7 @@ export default function SearchableCombobox({
     const [isOpen, setIsOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const anchorRef = useRef(null);
+    const menuRef = useRef(null);
     const [menuPosition, setMenuPosition] = useState(null);
     const isControlled = onChange !== undefined;
     const selectedValue = String(isControlled ? value ?? '' : internalValue);
@@ -49,27 +50,37 @@ export default function SearchableCombobox({
             const viewportPadding = 12;
             const menuGap = 8;
             const menuMaxHeight = Math.min(256, Math.max(128, window.innerHeight - (viewportPadding * 2)));
-            const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
-            const spaceAbove = rect.top - viewportPadding;
+            const stickyHeader = document.querySelector('.simpeg-header');
+            const stickyHeaderRect = stickyHeader?.getBoundingClientRect();
+            const protectedTop = stickyHeaderRect && stickyHeaderRect.top <= viewportPadding
+                ? Math.max(viewportPadding, stickyHeaderRect.bottom + 4)
+                : viewportPadding;
+            const spaceBelow = window.innerHeight - Math.max(rect.bottom, protectedTop) - viewportPadding;
+            const spaceAbove = Math.max(0, rect.top - protectedTop);
             const estimatedMenuHeight = Math.min(menuMaxHeight, Math.max(96, (filteredOptions.length * 48) + 8));
             const showAbove = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow;
             const availableHeight = Math.max(64, Math.min(estimatedMenuHeight, showAbove ? spaceAbove : spaceBelow));
             const top = showAbove
-                ? Math.max(viewportPadding, rect.top - menuGap - availableHeight)
-                : Math.min(window.innerHeight - viewportPadding - availableHeight, rect.bottom + menuGap);
+                ? Math.max(protectedTop, rect.top - menuGap - availableHeight)
+                : Math.max(protectedTop, Math.min(window.innerHeight - viewportPadding - availableHeight, Math.max(rect.bottom + menuGap, protectedTop)));
             const width = Math.min(rect.width, window.innerWidth - (viewportPadding * 2));
             const left = Math.min(Math.max(viewportPadding, rect.left), window.innerWidth - viewportPadding - width);
 
             setMenuPosition({ position: 'fixed', top, left, width, maxHeight: availableHeight, zIndex: 1000 });
         }
 
+        function closeOnPageScroll(event) {
+            if (menuRef.current?.contains(event.target)) return;
+            setIsOpen(false);
+        }
+
         updateMenuPosition();
         window.addEventListener('resize', updateMenuPosition);
-        window.addEventListener('scroll', updateMenuPosition, true);
+        window.addEventListener('scroll', closeOnPageScroll, true);
 
         return () => {
             window.removeEventListener('resize', updateMenuPosition);
-            window.removeEventListener('scroll', updateMenuPosition, true);
+            window.removeEventListener('scroll', closeOnPageScroll, true);
         };
     }, [isOpen, filteredOptions.length]);
 
@@ -179,7 +190,7 @@ export default function SearchableCombobox({
                     <ChevronDown aria-hidden="true" className={`simpeg-subtle h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>}
                 {isOpen && menuPosition && createPortal(
-                    <div id={`${id}-options`} role="listbox" style={menuPosition} className="simpeg-combobox-menu max-h-64 overflow-y-auto rounded-xl border p-1 shadow-xl" onMouseDown={(event) => event.preventDefault()}>
+                    <div ref={menuRef} id={`${id}-options`} role="listbox" style={menuPosition} className="simpeg-combobox-menu max-h-64 overflow-y-auto rounded-xl border p-1 shadow-xl" onMouseDown={(event) => event.preventDefault()}>
                         {filteredOptions.length > 0 ? filteredOptions.map((option, index) => {
                             const optionId = String(optionValue(option));
                             const optionName = String(optionLabel(option));

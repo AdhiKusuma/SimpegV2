@@ -151,6 +151,11 @@ class PayrollMasterController extends Controller
                 $job = $activeJobs[$employeeId] ?? null;
                 $payroll = $latestPayrollByEmployee->get($employeeId);
                 $accountNumber = (string) ($payroll?->no_rekening ?? '');
+                $employeeForMaster = (object) [
+                    'status_kepeg' => (string) ($employee->status_kepeg ?? ''),
+                    'active_jabatan' => (string) ($job?->jabatan ?? ''),
+                    'tmt_kerja' => $employee->tmt_kerja,
+                ];
 
                 return [
                     'id_peg' => $employeeId,
@@ -158,6 +163,7 @@ class PayrollMasterController extends Controller
                     'nik' => (string) ($employee->nik ?? ''),
                     'employment_status' => (string) ($employee->status_kepeg ?? ''),
                     'payroll_field_rules' => $entryValidator->fieldRulesForStatus((string) ($employee->status_kepeg ?? '')),
+                    'master_defaults' => $entryValidator->masterDefaults($employeeForMaster, $office, (int) now()->year, (int) now()->month),
                     'office_code' => $officeCode,
                     'office_name' => (string) ($office?->nama_kantor ?? 'Kantor tidak terdaftar'),
                     'position' => trim((string) ($job?->jabatan ?? '')),
