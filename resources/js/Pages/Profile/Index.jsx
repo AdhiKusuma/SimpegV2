@@ -44,6 +44,71 @@ function dateInputValue(value) {
     return parts.length === 3 && parts[0].length === 2 ? `${parts[2]}-${parts[1]}-${parts[0]}` : value;
 }
 
+function parseDisplayDate(value) {
+    const raw = String(value || '').trim();
+    const displayMatch = raw.match(/^(\d{2})[-/](\d{2})[-/](\d{4})/);
+    const databaseMatch = raw.match(/^(\d{4})[-/](\d{2})[-/](\d{2})/);
+    const match = displayMatch
+        ? { year: Number(displayMatch[3]), month: Number(displayMatch[2]), day: Number(displayMatch[1]) }
+        : databaseMatch
+            ? { year: Number(databaseMatch[1]), month: Number(databaseMatch[2]), day: Number(databaseMatch[3]) }
+            : null;
+
+    if (!match) return null;
+
+    const date = new Date(match.year, match.month - 1, match.day);
+    return date.getFullYear() === match.year
+        && date.getMonth() === match.month - 1
+        && date.getDate() === match.day
+        ? date
+        : null;
+}
+
+function isActivePosition(item) {
+    return String(item?.status_jab || '').trim().toLowerCase() === 'aktif';
+}
+
+function positionDuration(item) {
+    const start = parseDisplayDate(item?.tmt_jabatan);
+    const end = isActivePosition(item) ? new Date() : parseDisplayDate(item?.sampai_tgl);
+
+    if (!start) return 'TMT mulai belum ada';
+    if (!end) return isActivePosition(item) ? '-' : 'Tanggal selesai belum ada';
+    if (end < start) return '-';
+
+    let years = end.getFullYear() - start.getFullYear();
+    let months = end.getMonth() - start.getMonth();
+    let days = end.getDate() - start.getDate();
+
+    if (days < 0) {
+        months -= 1;
+        days += new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+    }
+
+    if (months < 0) {
+        years -= 1;
+        months += 12;
+    }
+
+    const parts = [];
+    if (years) parts.push(`${years} tahun`);
+    if (months) parts.push(`${months} bulan`);
+    if (days || parts.length === 0) parts.push(`${days} hari`);
+
+    return parts.join(' ');
+}
+
+function positionSortValue(value) {
+    const date = parseDisplayDate(value);
+    return date ? date.getTime() : 0;
+}
+
+function orderedPositionHistory(history) {
+    return (history?.position || [])
+        .map((item) => ({ ...item, lama_menjabat: positionDuration(item) }))
+        .sort((left, right) => Number(isActivePosition(right)) - Number(isActivePosition(left)) || positionSortValue(right.tmt_jabatan) - positionSortValue(left.tmt_jabatan));
+}
+
 function DataTable({ title, items = [], columns, empty = 'Belum ada data.', action = null, rowAction = null }) {
     const hasRowActions = Boolean(rowAction);
 
@@ -179,6 +244,7 @@ function FamilyTab({ family, familyRequests = [], canRequestFamily, canManageFam
 
 function HistoryTab({ history }) {
     const latestEducation = history.education?.slice(0, 1) || [];
+    const positions = orderedPositionHistory(history);
 
     return (
         <div className="space-y-4">
@@ -186,9 +252,66 @@ function HistoryTab({ history }) {
             <DataTable title="Diklat" items={history.training} columns={[["Diklat", 'diklat'], ['Penyelenggara', 'penyelenggara'], ['Tempat', 'tempat'], ['Tahun', 'tahun']]} />
             <DataTable title="Sertifikasi" items={history.certification} columns={[["Sertifikasi", 'sertifikasi'], ['Penyelenggara', 'penyelenggara'], ['Tanggal', 'tgl_sertifikat'], ['Berlaku sampai', 'tgl_expired']]} />
             <DataTable title="Pelanggaran" items={history.discipline} columns={[["Pelanggaran", 'hukuman'], ['Tanggal SK', 'tgl_sk'], ['Nomor SK', 'no_sk'], ['Keterangan', 'keterangan']]} />
-            <DataTable title="Jabatan" items={history.position} columns={[["Jabatan", 'jabatan'], ['Unit kerja', 'unit_kerja'], ['Mulai', 'tmt_jabatan'], ['Selesai', 'sampai_tgl'], ['Status', 'status_jab']]} />
+            <DataTable title="Jabatan" items={positions} columns={[["Jabatan", 'jabatan'], ['Unit kerja', 'unit_kerja'], ['Mulai', 'tmt_jabatan'], ['Selesai', 'sampai_tgl'], ['Lama menjabat', 'lama_menjabat'], ['Status', 'status_jab']]} />
             <DataTable title="Pendidikan terakhir" items={latestEducation} columns={[["Jenjang", 'jenjang'], ['Sekolah', 'nama_sekolah'], ['Jurusan', 'jurusan'], ['Tanggal ijazah', 'tgl_ijazah'], ['Tahun lulus', 'th_lulus']]} />
         </div>
+    );
+}
+
+function PositionTenureSummary({ history }) {
+    const positions = orderedPositionHistory(history);
+    const [selectedPositionId, setSelectedPositionId] = useState(() => String(positions[0]?.id_jab || ''));
+    const selectedPosition = positions.find((item) => String(item.id_jab) === selectedPositionId) || positions[0] || null;
+
+    return (
+        <section className="mb-5 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/90 via-white to-slate-50 p-5 shadow-sm sm:p-6" aria-labelledby="position-tenure-summary-title">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <p className="simpeg-profile-section-kicker">Ringkasan kepegawaian</p>
+                    <h2 id="position-tenure-summary-title" className="simpeg-text mt-1 text-xl font-medium">Masa jabatan pegawai</h2>
+                    <p className="simpeg-muted mt-2 max-w-2xl text-sm leading-6">Durasi jabatan aktif berjalan sampai hari ini. Pilih riwayat untuk melihat masa jabatan sebelumnya.</p>
+                </div>
+                <div className="w-full lg:max-w-sm">
+                    <SearchableCombobox
+                        id="position-tenure-history"
+                        label="Pilih riwayat jabatan"
+                        value={selectedPosition?.id_jab || ''}
+                        options={positions}
+                        optionValue={(item) => item.id_jab}
+                        optionLabel={(item) => `${item.jabatan || 'Jabatan belum diisi'} · ${item.status_jab || '-'}`}
+                        optionDescription={(item) => `${item.unit_kerja || '-'} · Mulai ${item.tmt_jabatan || '-'}${isActivePosition(item) ? ' · Masih berjalan' : item.sampai_tgl ? ` · Selesai ${item.sampai_tgl}` : ''}`}
+                        placeholder={positions.length ? 'Pilih riwayat jabatan' : 'Belum ada riwayat jabatan'}
+                        emptyMessage="Riwayat jabatan tidak ditemukan."
+                        searchable={false}
+                        onChange={setSelectedPositionId}
+                        disabled={positions.length === 0}
+                    />
+                </div>
+            </div>
+
+            {!selectedPosition ? <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-white/70 px-4 py-5 text-sm text-slate-500">Belum ada data riwayat jabatan yang dapat dihitung.</div> : <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-xl border border-white/80 bg-white/80 p-4 shadow-sm sm:col-span-2 xl:col-span-1">
+                    <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">Jabatan terpilih</span>
+                    <strong className="mt-2 block text-base text-slate-900">{valueOrDash(selectedPosition.jabatan)}</strong>
+                    <span className="mt-1 block text-sm text-slate-500">{valueOrDash(selectedPosition.unit_kerja)}</span>
+                </div>
+                <div className="rounded-xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                    <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">Lama menjabat</span>
+                    <strong className="mt-2 block text-xl text-blue-700">{selectedPosition.lama_menjabat}</strong>
+                    <span className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${isActivePosition(selectedPosition) ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{selectedPosition.status_jab || '-'}</span>
+                </div>
+                <div className="rounded-xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                    <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">Mulai menjabat</span>
+                    <strong className="mt-2 block text-base text-slate-900">{valueOrDash(selectedPosition.tmt_jabatan)}</strong>
+                    <span className="mt-1 block text-sm text-slate-500">TMT jabatan</span>
+                </div>
+                <div className="rounded-xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                    <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{isActivePosition(selectedPosition) ? 'Status masa jabatan' : 'Selesai'}</span>
+                    <strong className="mt-2 block text-base text-slate-900">{isActivePosition(selectedPosition) ? 'Masih berjalan' : valueOrDash(selectedPosition.sampai_tgl)}</strong>
+                    <span className="mt-1 block text-sm text-slate-500">{isActivePosition(selectedPosition) ? 'Mengikuti tanggal hari ini' : 'Tanggal selesai jabatan'}</span>
+                </div>
+            </div>}
+        </section>
     );
 }
 
@@ -271,6 +394,8 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                     <button type="button" onClick={() => window.print()} className="simpeg-config-secondary-action simpeg-profile-print-button"><Printer aria-hidden="true" />Cetak CV</button>
                 </div>
 
+                <PositionTenureSummary history={history} />
+
                 <div className="simpeg-profile-workspace">
                     <aside className="simpeg-profile-navigation" aria-label="Navigasi profil">
                         <div>
@@ -343,6 +468,7 @@ export default function Profile({ employee, family, familyRequests = [], canRequ
                                 <div className="simpeg-profile-cv-meta">
                                     <span><b>Unit:</b> {valueOrDash(item.unit_kerja)}</span>
                                     <span><b>TMT:</b> {valueOrDash(item.tmt_jabatan)}</span>
+                                    <span><b>Lama:</b> {positionDuration(item)}</span>
                                 </div>
                             </div>
                         )) : <p className="simpeg-profile-cv-empty">Belum ada riwayat jabatan.</p>}
