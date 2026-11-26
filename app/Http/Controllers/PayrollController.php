@@ -617,9 +617,13 @@ class PayrollController extends Controller
         if ($publicationSchedule['error'] !== null) {
             throw ValidationException::withMessages(['preview_token' => $publicationSchedule['error']]);
         }
-        if ($parsed['errors'] !== [] || $parsed['entries'] === []) {
+        $hasUnresolvedRepairs = collect($parsed['warnings'] ?? [])
+            ->contains(fn (array $warning): bool => ($warning['fixes'] ?? []) !== []);
+        if ($parsed['errors'] !== [] || $hasUnresolvedRepairs || $parsed['entries'] === []) {
             throw ValidationException::withMessages([
-                'preview_token' => 'Validasi file berubah sejak preview. Unggah ulang dan periksa baris yang bermasalah.',
+                'preview_token' => $hasUnresolvedRepairs
+                    ? 'Masih ada peringatan yang dapat diperbaiki. Jalankan Perbaiki semua lalu periksa ulang sebelum menyimpan.'
+                    : 'Validasi file berubah sejak preview. Unggah ulang dan periksa baris yang bermasalah.',
             ]);
         }
         $preview['publication_mode'] = 'scheduled';

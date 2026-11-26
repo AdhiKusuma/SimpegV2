@@ -537,7 +537,9 @@ class JabatanController extends Controller
 
         return Inertia::render('Jabatan/Form', [
             'mode' => 'create',
-            'formMode' => $currentJob ? 'history' : 'active',
+            // A new assignment is an active assignment by default. The form
+            // exposes an explicit history mode for backfilling older records.
+            'formMode' => 'active',
             'employee' => $employee ? ['id_peg' => $employee->id_peg, 'nik' => $employee->nik, 'nama' => $employee->nama] : null,
             'currentJob' => $currentJob ? $this->presentJob($currentJob) : null,
             'employees' => $this->availableEmployees(),
@@ -570,7 +572,7 @@ class JabatanController extends Controller
                     ->where('status_jab', 'Aktif')
                     ->update([
                         'status_jab' => 'Non',
-                        'sampai_tgl' => $validated['tmt_mulai'],
+                        'sampai_tgl' => \Carbon\Carbon::parse($validated['tmt_mulai'])->subDay()->toDateString(),
                         'updated_at' => now(),
                         'updated_by' => $this->operator($request),
                     ]);

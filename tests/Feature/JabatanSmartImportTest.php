@@ -105,6 +105,43 @@ class JabatanSmartImportTest extends TestCase
         $this->assertSame(4, DB::table('tb_jabatan')->count());
     }
 
+    public function test_manual_new_assignment_becomes_active_and_closes_previous_job_the_day_before(): void
+    {
+        $response = $this->withSession($this->adminSession())
+            ->post('/jabatan', [
+                'id_peg' => 'TEST-0001',
+                'form_mode' => 'active',
+                'kode_jabatan' => '10',
+                'unit_kerja' => '000000',
+                'no_sk' => 'SK/UJI/004',
+                'tgl_sk' => '2026-10-01',
+                'tmt_mulai' => '2026-10-01',
+            ]);
+
+        $response->assertRedirect('/jabatan');
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('tb_jabatan', [
+            'id_peg' => 'TEST-0001',
+            'kode_jabatan' => 10,
+            'status_jab' => 'Aktif',
+        ]);
+        $newJob = DB::table('tb_jabatan')
+            ->where('id_peg', 'TEST-0001')
+            ->where('kode_jabatan', 10)
+            ->first();
+        $this->assertNotNull($newJob);
+        $this->assertSame('2026-10-01', substr((string) $newJob->tmt_jabatan, 0, 10));
+
+        $previousJob = DB::table('tb_jabatan')
+            ->where('id_peg', 'TEST-0001')
+            ->where('jabatan', 'Jabatan Sebelumnya TEST-0001')
+            ->first();
+
+        $this->assertNotNull($previousJob);
+        $this->assertSame('Non', $previousJob->status_jab);
+        $this->assertSame('2026-09-30', substr((string) $previousJob->sampai_tgl, 0, 10));
+    }
+
     public function test_preview_rejects_unknown_employee_and_does_not_issue_import_token(): void
     {
         Storage::fake('local');
