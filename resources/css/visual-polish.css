@@ -342,11 +342,6 @@ html:not(.dark) .simpeg-app-canvas .simpeg-sidebar[data-sidebar-color="light"] :
     -webkit-backdrop-filter: blur(16px) saturate(0.92) !important;
 }
 
-.simpeg-app-canvas.simpeg-search-active > .simpeg-shell-frame {
-    filter: blur(6px) !important;
-    will-change: filter;
-}
-
 html.dark .simpeg-search-overlay {
     background: rgb(0 0 0 / 0.48) !important;
 }

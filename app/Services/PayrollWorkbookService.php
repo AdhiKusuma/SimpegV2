@@ -293,6 +293,11 @@ class PayrollWorkbookService
             throw new RuntimeException('Struktur sheet Tukin tidak valid.');
         }
 
+        // Both Tukin views expose the two BPJS components separately. Add
+        // that presentation-only column before cloning the styled rows; the
+        // payroll source and calculation remain unchanged.
+        $this->prepareTukinSplitBpjsLayout($document);
+
         $rows = [];
         foreach ($xpath->query('./m:row', $sheetData) as $row) {
             if ($row instanceof DOMElement) {
@@ -338,8 +343,152 @@ class PayrollWorkbookService
         }
 
         $this->widenTukinAmountColumns($document);
-        $this->setDimension($document, 'A1:AC'.$footerRow);
+        $this->setDimension($document, 'A1:AD'.$footerRow);
         $this->sortRows($sheetData, $xpath);
+    }
+
+    private function prepareTukinSplitBpjsLayout(DOMDocument $document): void
+    {
+        $xpath = new DOMXPath($document);
+        $xpath->registerNamespace('m', self::WORKSHEET_NAMESPACE);
+        $sheetData = $xpath->query('/m:worksheet/m:sheetData')->item(0);
+        if (! $sheetData instanceof DOMElement) {
+            throw new RuntimeException('Struktur sheet Tukin tidak valid.');
+        }
+
+        $shiftedColumns = [
+            'Z' => 'AA',
+            'AA' => 'AB',
+            'AB' => 'AC',
+            'AC' => 'AD',
+        ];
+
+        foreach ($xpath->query('./m:row', $sheetData) as $row) {
+            if (! $row instanceof DOMElement) {
+                continue;
+            }
+
+            $rowNumber = (int) $row->getAttribute('r');
+            $cells = iterator_to_array($xpath->query('./m:c', $row));
+            foreach ($cells as $cell) {
+                if (! $cell instanceof DOMElement) {
+                    continue;
+                }
+
+                $column = (string) preg_replace('/\d+/', '', $cell->getAttribute('r'));
+                if (isset($shiftedColumns[$column])) {
+                    $cell->setAttribute('r', $shiftedColumns[$column].$rowNumber);
+                }
+            }
+
+            $healthCell = null;
+            $employmentCell = null;
+            foreach ($xpath->query('./m:c', $row) as $cell) {
+                if (! $cell instanceof DOMElement) {
+                    continue;
+                }
+
+                if ($cell->getAttribute('r') === 'Y'.$rowNumber) {
+                    $healthCell = $cell;
+                }
+                if ($cell->getAttribute('r') === 'Z'.$rowNumber) {
+                    $employmentCell = $cell;
+                }
+            }
+
+            if ($healthCell instanceof DOMElement && ! $employmentCell instanceof DOMElement) {
+                $employmentCell = $healthCell->cloneNode(true);
+                if (! $employmentCell instanceof DOMElement) {
+                    throw new RuntimeException('Kolom BPJS sheet Tukin tidak dapat disalin.');
+                }
+                $employmentCell->setAttribute('r', 'Z'.$rowNumber);
+
+                $insertBefore = null;
+                foreach ($xpath->query('./m:c', $row) as $existing) {
+                    if ($existing instanceof DOMElement && $this->columnIndex((string) preg_replace('/\d+/', '', $existing->getAttribute('r'))) > 26) {
+                        $insertBefore = $existing;
+                        break;
+                    }
+                }
+                $row->insertBefore($employmentCell, $insertBefore);
+            }
+
+            if ($rowNumber === 6) {
+                $row->setAttribute('ht', '50');
+                $this->setText($this->cell($row, 'Y6', $xpath, $sheetData), 'Potongan BPJS Kesehatan');
+                $this->setText($this->cell($row, 'Z6', $xpath, $sheetData), 'Potongan BPJS Ketenagakerjaan');
+            }
+            if ($row->hasAttribute('spans')) {
+                $row->setAttribute('spans', '1:30');
+            }
+        }
+
+        foreach ($xpath->query('/m:worksheet/m:mergeCells/m:mergeCell') as $merge) {
+            if (! $merge instanceof DOMElement) {
+                continue;
+            }
+
+            $merge->setAttribute('ref', match ($merge->getAttribute('ref')) {
+                'Y2:AB2' => 'Y2:AC2',
+                'Y3:AB3' => 'Y3:AC3',
+                default => $merge->getAttribute('ref'),
+            });
+        }
+
+        $this->shiftTukinSplitBpjsColumnDefinitions($document);
+    }
+
+    private function shiftTukinSplitBpjsColumnDefinitions(DOMDocument $document): void
+    {
+        $xpath = new DOMXPath($document);
+        $xpath->registerNamespace('m', self::WORKSHEET_NAMESPACE);
+        $columns = $xpath->query('/m:worksheet/m:cols/m:col');
+        if ($columns->length === 0) {
+            return;
+        }
+
+        $specifications = [];
+        foreach ($columns as $column) {
+            if (! $column instanceof DOMElement) {
+                continue;
+            }
+
+            $min = (int) $column->getAttribute('min');
+            $max = (int) $column->getAttribute('max');
+            for ($index = $min; $index <= $max; $index++) {
+                $target = $index >= 26 ? $index + 1 : $index;
+                $attributes = [];
+                foreach ($column->attributes as $attribute) {
+                    if ($attribute->name !== 'min' && $attribute->name !== 'max') {
+                        $attributes[$attribute->name] = $attribute->value;
+                    }
+                }
+                $specifications[$target] = $attributes;
+            }
+        }
+
+        // The inserted Z column should inherit the original BPJS width and
+        // formatting; the amount-width pass below will widen it when needed.
+        $specifications[26] = $specifications[25] ?? [];
+        ksort($specifications);
+
+        $cols = $columns->item(0)->parentNode;
+        if (! $cols instanceof DOMElement) {
+            return;
+        }
+        while ($cols->firstChild !== null) {
+            $cols->removeChild($cols->firstChild);
+        }
+
+        foreach ($specifications as $index => $attributes) {
+            $column = $document->createElementNS(self::WORKSHEET_NAMESPACE, 'col');
+            $column->setAttribute('min', (string) $index);
+            $column->setAttribute('max', (string) $index);
+            foreach ($attributes as $name => $value) {
+                $column->setAttribute($name, $value);
+            }
+            $cols->appendChild($column);
+        }
     }
 
     private function widenTukinAmountColumns(DOMDocument $document): void
@@ -354,7 +503,7 @@ class PayrollWorkbookService
 
             $min = (int) $column->getAttribute('min');
             $max = (int) $column->getAttribute('max');
-            if ($max < 10 || $min > 29) {
+            if ($max < 10 || $min > 30) {
                 continue;
             }
 
@@ -387,7 +536,7 @@ class PayrollWorkbookService
             $this->setText($this->cell($row, $column.$rowNumber, $xpath, $sheetData), (string) $value);
         }
 
-        foreach ([
+        $numericValues = [
             'G' => $entry['service_years'] ?? 0,
             'H' => $entry['spouse_count'] ?? 0,
             'I' => $entry['child_count'] ?? 0,
@@ -400,11 +549,15 @@ class PayrollWorkbookService
             'U' => $entry['honor_kontrak'] ?? 0,
             'W' => $entry['potongan_angsuran'] ?? 0,
             'X' => $entry['potongan_absen'] ?? 0,
-            'Y' => $entry['potongan_bpjs'] ?? 0,
-            'Z' => $entry['pengembalian_tunjangan'] ?? 0,
-            'AA' => $entry['pengalihan_keris'] ?? 0,
-            'AB' => $entry['uang_makan_kontrak'] ?? 0,
-        ] as $column => $value) {
+        ];
+        $numericValues += [
+            'Y' => $entry['potongan_bpjs_kesehatan'] ?? 0,
+            'Z' => $entry['potongan_bpjs_tenaga_kerja'] ?? 0,
+            'AA' => $entry['pengembalian_tunjangan'] ?? 0,
+            'AB' => $entry['pengalihan_keris'] ?? 0,
+            'AC' => $entry['uang_makan_kontrak'] ?? 0,
+        ];
+        foreach ($numericValues as $column => $value) {
             $this->setNumber($this->cell($row, $column.$rowNumber, $xpath, $sheetData), (string) $value);
         }
 
@@ -418,7 +571,11 @@ class PayrollWorkbookService
             $seventyFive ? 'SUM(M'.$rowNumber.':O'.$rowNumber.')+Q'.$rowNumber.'+SUM(S'.$rowNumber.':U'.$rowNumber.')' : 'SUM(M'.$rowNumber.':O'.$rowNumber.')+SUM(R'.$rowNumber.':U'.$rowNumber.')',
             (string) ($entry['jumlah_pendapatan'] ?? 0),
         );
-        $this->setFormulaNumber($this->cell($row, 'AC'.$rowNumber, $xpath, $sheetData), 'V'.$rowNumber.'-SUM($W'.$rowNumber.':$AA'.$rowNumber.')+$AB'.$rowNumber, (string) ($entry['gaji_diterima'] ?? 0));
+        $this->setFormulaNumber(
+            $this->cell($row, 'AD'.$rowNumber, $xpath, $sheetData),
+            'V'.$rowNumber.'-SUM($W'.$rowNumber.':$AB'.$rowNumber.')+$AC'.$rowNumber,
+            (string) ($entry['gaji_diterima'] ?? 0),
+        );
     }
 
     /**

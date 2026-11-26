@@ -2,6 +2,8 @@
 
 namespace App\Models\Legacy;
 
+use App\Models\EmployeePayrollAssignment;
+use App\Models\EmployeePayrollGrade;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -40,6 +42,16 @@ class TbPegawai extends Model
     public function pangkat(): HasMany
     {
         return $this->hasMany(TbPangkat::class, 'id_peg', 'id_peg');
+    }
+
+    public function payrollGrades(): HasMany
+    {
+        return $this->hasMany(EmployeePayrollGrade::class, 'employee_id', 'id_peg');
+    }
+
+    public function payrollAssignments(): HasMany
+    {
+        return $this->hasMany(EmployeePayrollAssignment::class, 'employee_id', 'id_peg');
     }
 
     public function pendidikan(): HasMany

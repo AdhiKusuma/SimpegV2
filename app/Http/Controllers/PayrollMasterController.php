@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -96,12 +97,20 @@ class PayrollMasterController extends Controller
         $activeOffices = [];
         $activeJobs = [];
 
-        foreach (DB::table('tb_jabatan as j')
+        $jobsQuery = DB::table('tb_jabatan as j')
             ->leftJoin('tb_kantor as office', 'j.unit_kerja', '=', 'office.kode_kantor_detail')
             ->where('j.status_jab', 'Aktif')
             ->orderByDesc('j.tmt_jabatan')
             ->orderByDesc('j.id_jab')
-            ->get(['j.id_peg', 'j.unit_kerja', 'j.jabatan', 'office.nama_kantor as division_name']) as $job) {
+            ->select(['j.id_peg', 'j.unit_kerja', 'j.jabatan', 'office.nama_kantor as division_name']);
+        if (Schema::hasColumn('tb_master_jabatan', 'level')) {
+            $jobsQuery
+                ->leftJoin('tb_master_jabatan as master', function ($join): void {
+                    $join->whereRaw('CAST(j.kode_jabatan AS UNSIGNED) = master.kode_jabatan');
+                })
+                ->addSelect('master.level as jabatan_level');
+        }
+        foreach ($jobsQuery->get() as $job) {
             $employeeId = (string) $job->id_peg;
             if (isset($activeOffices[$employeeId])) {
                 continue;
@@ -129,6 +138,19 @@ class PayrollMasterController extends Controller
                 ->whereIn('id_peg', $employeeIds)->groupBy('id_peg')->pluck('total', 'id_peg');
         $spouseCounts = $countFamily('tb_suamiistri');
         $childCounts = $countFamily('tb_anak');
+        $payrollGradeByEmployee = [];
+        if (Schema::hasTable('employee_payroll_assignments') && Schema::hasTable('payroll_grade_masters')) {
+            foreach (DB::table('employee_payroll_assignments as assignment')
+                ->join('payroll_grade_masters as grade', 'grade.id', '=', 'assignment.payroll_grade_master_id')
+                ->whereIn('assignment.employee_id', $employeeIds)
+                ->whereNull('assignment.effective_to')
+                ->orderByDesc('assignment.effective_from')
+                ->orderByDesc('assignment.id')
+                ->get(['assignment.employee_id', 'grade.code as grade_code']) as $grade) {
+                $employeeId = (string) $grade->employee_id;
+                $payrollGradeByEmployee[$employeeId] ??= $grade;
+            }
+        }
         $latestPayrollImport = $employeeIds === []
             ? collect()
             : DB::table('payroll_entries')->select('employee_id', DB::raw('MAX(payroll_import_id) as latest_import_id'))
@@ -144,16 +166,18 @@ class PayrollMasterController extends Controller
             ])->keyBy(fn (object $entry): string => (string) $entry->employee_id);
 
         $employees = $employeeRecords
-            ->map(function (object $employee) use ($activeOffices, $activeJobs, $directory, $spouseCounts, $childCounts, $latestPayrollByEmployee, $entryValidator): array {
+            ->map(function (object $employee) use ($activeOffices, $activeJobs, $directory, $spouseCounts, $childCounts, $payrollGradeByEmployee, $latestPayrollByEmployee, $entryValidator): array {
                 $employeeId = (string) $employee->id_peg;
                 $officeCode = $activeOffices[(string) $employee->id_peg];
                 $office = $directory['by_detail']->get($officeCode);
                 $job = $activeJobs[$employeeId] ?? null;
+                $payrollGrade = $payrollGradeByEmployee[$employeeId] ?? null;
                 $payroll = $latestPayrollByEmployee->get($employeeId);
                 $accountNumber = (string) ($payroll?->no_rekening ?? '');
                 $employeeForMaster = (object) [
                     'status_kepeg' => (string) ($employee->status_kepeg ?? ''),
                     'active_jabatan' => (string) ($job?->jabatan ?? ''),
+                    'active_jabatan_level' => (string) ($job?->jabatan_level ?? ''),
                     'tmt_kerja' => $employee->tmt_kerja,
                 ];
 
@@ -168,6 +192,7 @@ class PayrollMasterController extends Controller
                     'office_name' => (string) ($office?->nama_kantor ?? 'Kantor tidak terdaftar'),
                     'position' => trim((string) ($job?->jabatan ?? '')),
                     'work_unit' => trim((string) ($job?->division_name ?? '')),
+                    'payroll_grade_code' => (string) ($payrollGrade?->grade_code ?? ''),
                     'start_date' => $employee->tmt_kerja ? date('Y-m-d', strtotime((string) $employee->tmt_kerja)) : '',
                     'spouse_count' => (int) ($spouseCounts->get($employeeId) ?? 0),
                     'child_count' => (int) ($childCounts->get($employeeId) ?? 0),

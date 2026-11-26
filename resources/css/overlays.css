@@ -103,10 +103,6 @@
     -webkit-backdrop-filter: blur(16px) saturate(0.92);
 }
 
-.simpeg-app-canvas.simpeg-search-active > .simpeg-shell-frame {
-    filter: blur(6px);
-}
-
 html.dark .simpeg-search-overlay {
     background: rgb(0 0 0 / 0.48);
 }

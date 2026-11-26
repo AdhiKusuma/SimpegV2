@@ -1013,6 +1013,23 @@ html.dark body .simpeg-search-overlay .simpeg-search-close {
     -webkit-text-fill-color: #F8FAFF !important;
 }
 
+/* Prevent the browser's native search-field surface from turning white when
+ * the field loses focus inside the dark command dialog. */
+.simpeg-search-overlay #global-employee-search,
+.simpeg-search-overlay #global-employee-search:focus,
+.simpeg-search-overlay #global-employee-search:focus-visible {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: var(--simpeg-floating-ink, #F8FAFF) !important;
+    -webkit-text-fill-color: var(--simpeg-floating-ink, #F8FAFF) !important;
+    caret-color: var(--simpeg-floating-ink, #F8FAFF) !important;
+    color-scheme: dark;
+}
+
 html.dark body .simpeg-search-overlay .simpeg-search-close kbd {
     border-color: rgb(255 255 255 / 0.2) !important;
     background: rgb(255 255 255 / 0.1) !important;
@@ -2689,4 +2706,14 @@ html.dark body .simpeg-login-page[data-login-appearance='split'] {
 html.dark body .simpeg-login-page[data-login-appearance='split'] .simpeg-login-topbar {
     background: transparent !important;
     box-shadow: none !important;
+}
+
+/* Global employee search: keep every typed character readable on the dark
+ * floating dialog. The generic `.simpeg-text` utility can otherwise win for
+ * the first completed word when the user types a space. */
+html.dark body .simpeg-app-canvas .simpeg-search-dialog-input > #global-employee-search,
+html body .simpeg-app-canvas:has(.simpeg-sidebar[data-sidebar-color="ink"]) .simpeg-search-dialog-input > #global-employee-search {
+    color: #F8FAFF !important;
+    -webkit-text-fill-color: #F8FAFF !important;
+    caret-color: #F8FAFF !important;
 }

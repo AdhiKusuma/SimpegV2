@@ -479,17 +479,20 @@ class PayrollController extends Controller
             'tahun' => ['required', 'integer', 'between:2000,2100'],
             'bulan' => ['required', 'integer', 'between:1,12'],
             'file_xlsx' => ['required', 'file', 'mimes:xlsx', 'max:20480'],
+            'corrections' => ['nullable', 'json'],
         ]);
         $publicationMode = 'scheduled';
 
         $file = $request->file('file_xlsx');
-        $parsed = $this->parseWorkbook($file->getRealPath(), $request, $entryValidator);
+        $corrections = $this->normalisePreviewCorrections($request->input('corrections'));
+        $parsed = $this->parseWorkbook($file->getRealPath(), $request, $entryValidator, null, null, $corrections);
         $publicationSchedule = $this->publicationScheduleFromEntries($parsed['entries']);
         if ($publicationSchedule['error'] !== null) {
             $parsed['errors'][] = ['row' => null, 'messages' => [$publicationSchedule['error']]];
         }
         $scheduledAt = $publicationSchedule['scheduled_at'];
-        $sourceSha256 = (string) hash_file('sha256', $file->getRealPath());
+        $fileSha256 = (string) hash_file('sha256', $file->getRealPath());
+        $sourceSha256 = $this->previewSourceSha256($fileSha256, $corrections);
         $duplicateCurrent = PayrollImport::query()
             ->where('tahun', $validated['tahun'])
             ->where('bulan', $validated['bulan'])
@@ -513,8 +516,22 @@ class PayrollController extends Controller
             'office_count' => count($parsed['summaries']),
             'errors' => array_slice($parsed['errors'], 0, 20),
             'error_count' => count($parsed['errors']),
+            'error_fixes' => collect($parsed['errors'] ?? [])
+                ->flatMap(fn (array $error): array => collect($error['fixes'] ?? [])->map(fn (array $fix): array => [
+                    'row' => $error['row'] ?? null,
+                    'fix' => $fix,
+                ])->all())
+                ->values()
+                ->all(),
             'warnings' => array_slice($parsed['warnings'] ?? [], 0, 20),
             'warning_count' => count($parsed['warnings'] ?? []),
+            'warning_fixes' => collect($parsed['warnings'] ?? [])
+                ->flatMap(fn (array $warning): array => collect($warning['fixes'] ?? [])->map(fn (array $fix): array => [
+                    'row' => $warning['row'] ?? null,
+                    'fix' => $fix,
+                ])->all())
+                ->values()
+                ->all(),
             'replaces_current' => PayrollImport::query()
                 ->where('is_current', true)
                 ->where('tahun', $validated['tahun'])
@@ -534,7 +551,10 @@ class PayrollController extends Controller
             $token = (string) Str::uuid();
             $previews = $request->session()->get('payroll_previews', []);
             $previews[$token] = [
-                'sha256' => $sourceSha256,
+                'sha256' => $fileSha256,
+                'file_sha256' => $fileSha256,
+                'source_sha256' => $sourceSha256,
+                'corrections' => $corrections,
                 'filename' => basename($file->getClientOriginalName()),
                 'year' => (int) $validated['tahun'],
                 'month' => (int) $validated['bulan'],
@@ -583,7 +603,7 @@ class PayrollController extends Controller
 
         $file = $request->file('file_xlsx');
         $fullPath = $file->getRealPath();
-        abort_unless(hash_file('sha256', $fullPath) === ($preview['sha256'] ?? ''), 422, 'File preview berubah. Silakan unggah ulang file payroll.');
+        abort_unless(hash_file('sha256', $fullPath) === ($preview['file_sha256'] ?? $preview['sha256'] ?? ''), 422, 'File preview berubah. Silakan unggah ulang file payroll.');
 
         $parsed = $this->parseWorkbook(
             $fullPath,
@@ -591,6 +611,7 @@ class PayrollController extends Controller
             $entryValidator,
             (int) $preview['year'],
             (int) $preview['month'],
+            $this->normalisePreviewCorrections($preview['corrections'] ?? []),
         );
         $publicationSchedule = $this->publicationScheduleFromEntries($parsed['entries']);
         if ($publicationSchedule['error'] !== null) {
@@ -604,17 +625,18 @@ class PayrollController extends Controller
         $preview['publication_mode'] = 'scheduled';
         $preview['scheduled_at'] = $publicationSchedule['scheduled_at']?->toDateTimeString();
 
+        $sourceSha256 = (string) ($preview['source_sha256'] ?? $preview['sha256'] ?? '');
         $duplicateCurrent = PayrollImport::query()
             ->where('tahun', $preview['year'])
             ->where('bulan', $preview['month'])
             ->where('is_current', true)
-            ->where('source_sha256', $preview['sha256'])
+            ->where('source_sha256', $sourceSha256)
             ->exists();
         $duplicatePending = Schema::hasTable('payroll_change_requests') && PayrollChangeRequest::query()
             ->where('change_type', 'import')
             ->where('tahun', $preview['year'])
             ->where('bulan', $preview['month'])
-            ->where('source_sha256', $preview['sha256'])
+            ->where('source_sha256', $sourceSha256)
             ->where('status', 'pending')
             ->exists();
         if ($duplicateCurrent || $duplicatePending) {
@@ -633,14 +655,14 @@ class PayrollController extends Controller
         $requiresApproval = $this->willRequireApproval($request, $rbac);
 
         if ($requiresApproval) {
-            $changeRequest = DB::transaction(function () use ($parsed, $preview, $userId): PayrollChangeRequest {
+            $changeRequest = DB::transaction(function () use ($parsed, $preview, $userId, $sourceSha256): PayrollChangeRequest {
                 $officeCodes = array_values(array_map('strval', array_keys($parsed['summaries'])));
                 $changeRequest = PayrollChangeRequest::query()->create([
                     'change_type' => 'import',
                     'tahun' => $preview['year'],
                     'bulan' => $preview['month'],
                     'source_filename' => $preview['filename'],
-                    'source_sha256' => $preview['sha256'],
+                    'source_sha256' => $sourceSha256,
                     'requested_by' => $userId,
                     'office_codes' => $officeCodes,
                     'summary_data' => [
@@ -692,7 +714,7 @@ class PayrollController extends Controller
         }
 
         $now = now();
-        $payrollImport = DB::transaction(function () use ($parsed, $preview, $now, $userId): PayrollImport {
+        $payrollImport = DB::transaction(function () use ($parsed, $preview, $now, $userId, $sourceSha256): PayrollImport {
             PayrollImport::query()
                 ->where('tahun', $preview['year'])
                 ->where('bulan', $preview['month'])
@@ -704,7 +726,7 @@ class PayrollController extends Controller
                 'tahun' => $preview['year'],
                 'bulan' => $preview['month'],
                 'source_filename' => $preview['filename'],
-                'source_sha256' => $preview['sha256'],
+                'source_sha256' => $sourceSha256,
                 'source_row_count' => count($parsed['entries']),
                 'source_summary_count' => count($parsed['summaries']),
                 'is_current' => true,
@@ -844,6 +866,7 @@ class PayrollController extends Controller
         PayrollEntryValidationService $entryValidator,
         ?int $year = null,
         ?int $month = null,
+        array $corrections = [],
     ): array {
         $xlsx = SimpleXLSX::parse($path);
         if ($xlsx === false) {
@@ -897,6 +920,9 @@ class PayrollController extends Controller
             foreach ($header['fields'] as $field => $columnIndex) {
                 $normalized[$field] = $row[$columnIndex] ?? '';
             }
+            foreach ($corrections[(string) $normalized['row_number']] ?? [] as $field => $value) {
+                $normalized[$field] = $value;
+            }
             $normalizedRows[] = $normalized;
         }
 
@@ -942,6 +968,46 @@ class PayrollController extends Controller
             'jumlah_gaji', 'jumlah_potongan', 'gaji_bersih',
             'rekening_tabungan', 'no_hp_keris', 'tgl_gajian',
         ];
+    }
+
+    private function normalisePreviewCorrections(mixed $value): array
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : [];
+        }
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $allowedFields = array_fill_keys(PayrollEntryValidationService::EDITABLE_CORRECTION_FIELDS, true);
+        $corrections = [];
+        foreach ($value as $row => $fields) {
+            if (! is_array($fields) || ! preg_match('/\A\d+\z/', (string) $row) || (int) $row < 1) {
+                continue;
+            }
+            foreach ($fields as $field => $fieldValue) {
+                if (! isset($allowedFields[$field]) || ! is_scalar($fieldValue)) {
+                    continue;
+                }
+                $text = trim((string) $fieldValue);
+                if ($text === '' || mb_strlen($text) > 64) {
+                    continue;
+                }
+                $corrections[(string) $row][$field] = $text;
+            }
+        }
+
+        return $corrections;
+    }
+
+    private function previewSourceSha256(string $fileSha256, array $corrections): string
+    {
+        if ($corrections === []) {
+            return $fileSha256;
+        }
+
+        return hash('sha256', $fileSha256.'|'.json_encode($corrections, JSON_THROW_ON_ERROR));
     }
 
     private function findPayrollHeader(array $rows): ?array

@@ -1,6 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { AlertCircle, AlertTriangle, ArrowLeft, CalendarClock, Database, Download, FileSpreadsheet, LockKeyhole, Save, UploadCloud } from 'lucide-react';
-import { useEffect } from 'react';
+import { AlertCircle, AlertTriangle, ArrowLeft, CalendarClock, Database, Download, FileSpreadsheet, LockKeyhole, Pencil, Save, UploadCloud, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import LegacyPageShell from '../../Components/LegacyPageShell';
 import SelectCombobox from '../../Components/SelectCombobox';
 
@@ -13,12 +13,61 @@ function Step({ number, label, active }) {
 export default function Import({ preview, filters, willRequireApproval = false, flash = {} }) {
     const upload = useForm({ tahun: filters.tahun, bulan: filters.bulan, file_xlsx: null });
     const confirm = useForm({ preview_token: preview?.token || '' });
+    const [corrections, setCorrections] = useState({});
+    const [repairTarget, setRepairTarget] = useState(null);
+    const [repairValue, setRepairValue] = useState('');
 
     useEffect(() => confirm.setData('preview_token', preview?.token || ''), [preview?.token]);
 
-    function submitPreview(event) {
-        event.preventDefault();
+    function submitPreview(event, nextCorrections = corrections) {
+        event?.preventDefault();
+        upload.transform((data) => ({ ...data, corrections: JSON.stringify(nextCorrections) }));
         upload.post('/payroll/import/preview', { forceFormData: true, preserveState: true, preserveScroll: true });
+    }
+
+    function openRepair(warning, fix) {
+        setRepairTarget({ row: warning.row, fix });
+        setRepairValue(fix.suggested_value || fix.current_value || '');
+    }
+
+    function repairAll() {
+        if (repairableFixes.length === 0) return;
+
+        const nextCorrections = { ...corrections };
+        repairableFixes.forEach(({ row, fix }) => {
+            if (!row || !fix?.field || !fix?.suggested_value) return;
+            const rowKey = String(row);
+            nextCorrections[rowKey] = {
+                ...(nextCorrections[rowKey] || {}),
+                [fix.field]: fix.suggested_value,
+            };
+        });
+
+        setCorrections(nextCorrections);
+        submitPreview(null, nextCorrections);
+    }
+
+    function saveRepair(event) {
+        event.preventDefault();
+        if (!repairTarget || !repairValue.trim()) return;
+
+        const rowKey = String(repairTarget.row);
+        const nextCorrections = {
+            ...corrections,
+            [rowKey]: {
+                ...(corrections[rowKey] || {}),
+                [repairTarget.fix.field]: repairValue.trim(),
+            },
+        };
+
+        setCorrections(nextCorrections);
+        setRepairTarget(null);
+        submitPreview(null, nextCorrections);
+    }
+
+    function handleFileChange(event) {
+        setCorrections({});
+        upload.setData('file_xlsx', event.target.files?.[0] || null);
     }
 
     function submitImport(event) {
@@ -36,6 +85,13 @@ export default function Import({ preview, filters, willRequireApproval = false, 
     const hasErrors = Boolean(preview?.error_count);
     const hasWarnings = Boolean(preview?.warning_count);
     const hasDuplicate = Boolean(preview?.duplicate_current || preview?.duplicate_pending);
+    const repairableErrorFixes = preview?.error_fixes?.length > 0
+        ? preview.error_fixes
+        : (preview?.errors || []).flatMap((error) => (error.fixes || []).map((fix) => ({ row: error.row, fix })));
+    const repairableWarningFixes = preview?.warning_fixes?.length > 0
+        ? preview.warning_fixes
+        : (preview?.warnings || []).flatMap((warning) => (warning.fixes || []).map((fix) => ({ row: warning.row, fix })));
+    const repairableFixes = [...repairableErrorFixes, ...repairableWarningFixes];
 
     return (
         <LegacyPageShell title="Import data payroll">
@@ -106,7 +162,7 @@ export default function Import({ preview, filters, willRequireApproval = false, 
                                 <label htmlFor="payroll-file" className={`simpeg-import-dropzone ${upload.data.file_xlsx ? 'simpeg-import-dropzone--selected' : ''}`}>
                                     <span className="simpeg-import-dropzone-icon"><UploadCloud className="h-6 w-6" aria-hidden="true" /></span>
                                     <span className="min-w-0"><span className="simpeg-import-file-name simpeg-text block text-sm font-bold">{upload.data.file_xlsx?.name || 'Pilih file payroll XLSX dari perangkat'}</span><span className="simpeg-muted mt-1 block text-xs">{upload.data.file_xlsx ? `${(upload.data.file_xlsx.size / 1024 / 1024).toFixed(2)} MB · Siap diperiksa` : 'Format .xlsx · Maksimal 20 MB'}</span></span>
-                                    <input id="payroll-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required onChange={(event) => upload.setData('file_xlsx', event.target.files?.[0] || null)} className="sr-only" />
+                                    <input id="payroll-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required onChange={handleFileChange} className="sr-only" />
                                 </label>
                                 {upload.errors.file_xlsx && <p role="alert" className="text-xs text-red-600">{upload.errors.file_xlsx}</p>}
                                 <button type="submit" disabled={upload.processing} className="simpeg-action-primary inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"><UploadCloud className="h-4 w-4" aria-hidden="true" />{upload.processing ? 'Memeriksa file…' : 'Periksa dan tampilkan preview'}</button>
@@ -121,17 +177,19 @@ export default function Import({ preview, filters, willRequireApproval = false, 
                             <div className="flex items-center gap-2"><span className="simpeg-import-card-icon h-9 w-9 rounded-lg"><Database className="h-4 w-4" aria-hidden="true" /></span><div><p className="simpeg-import-step-label">Langkah 3</p><h2 className="simpeg-text mt-1 text-lg font-bold">Preview validasi</h2></div></div>
                             <div className="simpeg-import-summary"><span className="simpeg-import-summary-item">{Number(preview.row_count || 0).toLocaleString('id-ID')} baris pegawai</span><span className="simpeg-import-summary-item">{Number(preview.office_count || 0).toLocaleString('id-ID')} kantor terdeteksi</span><span className={`simpeg-import-summary-item ${hasErrors ? 'border-red-200 bg-red-50 text-red-700' : hasWarnings ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>{hasErrors ? `${preview.error_count} masalah` : hasWarnings ? `${preview.warning_count} peringatan` : 'Semua baris sesuai'}</span></div>
                         </div>
-                        {!hasErrors && !hasDuplicate && <form onSubmit={submitImport}><input type="hidden" value={confirm.data.preview_token} readOnly />{confirm.errors.preview_token && <p role="alert" className="mb-2 text-xs text-red-600">{confirm.errors.preview_token}</p>}{confirm.errors.file_xlsx && <p role="alert" className="mb-2 text-xs text-red-600">{confirm.errors.file_xlsx}</p>}<button type="submit" disabled={confirm.processing || !preview.token || !upload.data.file_xlsx} className="simpeg-action-primary inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" aria-hidden="true" />{confirm.processing ? (willRequireApproval ? 'Mengajukan…' : 'Menyimpan…') : (willRequireApproval ? 'Ajukan untuk approval' : 'Simpan data payroll')}</button></form>}
+                        <div className="flex flex-wrap items-start justify-end gap-2">{repairableFixes.length > 0 && <button type="button" onClick={repairAll} disabled={upload.processing} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-bold text-amber-900 transition hover:border-amber-500 hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-500/20 disabled:cursor-not-allowed disabled:opacity-60"><Pencil className="h-4 w-4" aria-hidden="true" />{upload.processing ? 'Memeriksa ulang…' : `Perbaiki semua (${repairableFixes.length})`}</button>}{!hasErrors && !hasDuplicate && <form onSubmit={submitImport}><input type="hidden" value={confirm.data.preview_token} readOnly />{confirm.errors.preview_token && <p role="alert" className="mb-2 text-xs text-red-600">{confirm.errors.preview_token}</p>}{confirm.errors.file_xlsx && <p role="alert" className="mb-2 text-xs text-red-600">{confirm.errors.file_xlsx}</p>}<button type="submit" disabled={confirm.processing || !preview.token || !upload.data.file_xlsx} className="simpeg-action-primary inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"><Save className="h-4 w-4" aria-hidden="true" />{confirm.processing ? (willRequireApproval ? 'Mengajukan…' : 'Menyimpan…') : (willRequireApproval ? 'Ajukan untuk approval' : 'Simpan data payroll')}</button></form>}</div>
                     </div>
                     <div className="space-y-4 p-4 sm:p-5">
                         {preview.replaces_current && <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />Periode ini sudah memiliki data aktif. Setelah disimpan, batch sebelumnya menjadi riwayat dan tidak dihapus.</div>}
-                        {hasErrors && <div className="rounded-xl border border-red-200 bg-red-50 p-4"><p className="mb-3 font-semibold text-red-700">Ditemukan {preview.error_count} masalah. Periksa dan perbaiki file sebelum mengimpor.</p><ul className="max-h-72 space-y-2 overflow-y-auto text-sm text-red-800">{(preview.errors || []).map((error, index) => <li key={`${error.row ?? 'header'}-${index}`}><span className="font-semibold">{error.row ? `Baris ${error.row}: ` : ''}</span>{error.messages.join('; ')}</li>)}</ul></div>}
-                        {hasWarnings && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><p className="mb-3 flex items-start gap-2 font-semibold text-amber-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />Ditemukan {preview.warning_count} peringatan referensi master. Peringatan tidak mengubah nilai dan tidak menghalangi penyimpanan.</p><ul className="max-h-72 space-y-2 overflow-y-auto text-sm text-amber-900">{(preview.warnings || []).map((warning, index) => <li key={`${warning.row ?? 'header'}-${index}`}><span className="font-semibold">{warning.row ? `Baris ${warning.row}: ` : ''}</span>{warning.messages.join('; ')}</li>)}</ul></div>}
+                        {hasErrors && <div className="rounded-xl border border-red-200 bg-red-50 p-4"><p className="mb-3 font-semibold text-red-700">Ditemukan {preview.error_count} masalah. Periksa dan perbaiki file sebelum mengimpor.</p><ul className="max-h-72 space-y-3 overflow-y-auto text-sm text-red-800">{(preview.errors || []).map((error, index) => <li key={`${error.row ?? 'header'}-${index}`} className="rounded-lg border border-red-200/80 bg-white/40 p-3"><div><span className="font-semibold">{error.row ? `Baris ${error.row}: ` : ''}</span>{error.messages.join('; ')}</div>{error.fixes?.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{error.fixes.map((fix) => <button key={`${error.row}-${fix.field}`} type="button" onClick={() => openRepair(error, fix)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-bold text-red-800 transition hover:border-red-500 hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-500/20"><Pencil className="h-3.5 w-3.5" aria-hidden="true" />Perbaiki {fix.label}</button>)}</div>}</li>)}</ul></div>}
+                        {hasWarnings && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><div className="mb-3"><p className="flex items-start gap-2 font-semibold text-amber-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />Ditemukan {preview.warning_count} peringatan referensi master. Periksa nilai yang tidak sesuai sebelum menyimpan.</p></div><ul className="max-h-72 space-y-3 overflow-y-auto text-sm text-amber-900">{(preview.warnings || []).map((warning, index) => <li key={`${warning.row ?? 'header'}-${index}`} className="rounded-lg border border-amber-200/80 bg-white/40 p-3"><div><span className="font-semibold">{warning.row ? `Baris ${warning.row}: ` : ''}</span>{warning.messages.join('; ')}</div>{warning.fixes?.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{warning.fixes.map((fix) => <button key={`${warning.row}-${fix.field}`} type="button" onClick={() => openRepair(warning, fix)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 transition hover:border-amber-500 hover:bg-amber-50 focus:outline-none focus:ring-4 focus:ring-amber-500/20"><Pencil className="h-3.5 w-3.5" aria-hidden="true" />Perbaiki {fix.label}</button>)}</div>}</li>)}</ul></div>}
                         {!hasErrors && hasDuplicate ? <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">{preview.duplicate_current ? 'File ini sama dengan data payroll aktif untuk periode tersebut. Data baru tidak dibuat.' : 'File ini sama dengan pengajuan payroll yang masih menunggu persetujuan. Pengajuan baru tidak dibuat.'}</div> : !hasErrors && !hasDuplicate && !hasWarnings ? <div className="simpeg-card-soft flex items-start gap-2 rounded-xl border p-4 text-sm"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />Pratinjau hanya menampilkan jumlah baris. Nilai gaji dan rekening tetap terlindungi dan diproses setelah konfirmasi.</div> : null}
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="simpeg-card-soft rounded-xl border p-4"><p className="simpeg-muted text-xs">Periode</p><p className="simpeg-text mt-1 font-semibold">{months[Number(preview.bulan) - 1]} {preview.tahun}</p></div><div className="simpeg-card-soft rounded-xl border p-4"><p className="simpeg-muted text-xs">Pengiriman slip</p><p className="simpeg-text mt-1 font-semibold">{preview.publication_mode === 'scheduled' ? `Terjadwal${preview.scheduled_at ? ` · ${preview.scheduled_at.replace('T', ' ')}` : ''}` : 'Setelah payroll aktif'}</p></div><div className="simpeg-card-soft rounded-xl border p-4"><p className="simpeg-muted text-xs">Status approval</p><p className="simpeg-text mt-1 font-semibold">{willRequireApproval ? 'Menunggu approval' : 'Dapat langsung disimpan'}</p></div></div>
                     </div>
                 </section>}
             </div>
+
+            {repairTarget && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setRepairTarget(null); }}><section className="simpeg-import-card w-full max-w-lg p-5 shadow-2xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="payroll-repair-title"><div className="flex items-start justify-between gap-4"><div><p className="simpeg-import-step-label">Perbaikan baris {repairTarget.row}</p><h2 id="payroll-repair-title" className="simpeg-text mt-1 text-xl font-bold">Perbaiki {repairTarget.fix.label}</h2><p className="simpeg-muted mt-2 text-sm leading-5">Nilai koreksi otomatis sudah diisi. Anda dapat menyesuaikannya sebelum file diperiksa ulang.</p></div><button type="button" onClick={() => setRepairTarget(null)} className="simpeg-utility inline-flex h-10 w-10 items-center justify-center rounded-lg border" aria-label="Tutup dialog perbaikan"><X className="h-4 w-4" aria-hidden="true" /></button></div><form onSubmit={saveRepair} className="mt-6 space-y-4"><div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><span className="font-semibold">Nilai pada file:</span> {repairTarget.fix.current_value || 'Kosong'}<span className="mx-2 text-amber-500">→</span><span className="font-semibold">Nilai koreksi:</span> {repairTarget.fix.suggested_value}</div><div><label htmlFor="payroll-repair-value" className="simpeg-muted mb-2 block text-xs font-bold uppercase tracking-wide">Nilai yang digunakan</label><input id="payroll-repair-value" type="text" inputMode="decimal" value={repairValue} onChange={(event) => setRepairValue(event.target.value)} autoFocus required className="simpeg-input h-11 w-full rounded-xl border px-3 text-sm outline-none focus:ring-4 focus:ring-[var(--simpeg-focus-ring)]" placeholder="Contoh: 550000" /></div><div className="flex justify-end gap-3"><button type="button" onClick={() => setRepairTarget(null)} className="simpeg-utility inline-flex min-h-11 items-center rounded-xl border px-4 py-2 text-sm font-bold">Batal</button><button type="submit" disabled={upload.processing} className="simpeg-action-primary inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"><Pencil className="h-4 w-4" aria-hidden="true" />{upload.processing ? 'Memeriksa ulang…' : 'Perbaiki dan periksa ulang'}</button></div></form></section></div>}
         </LegacyPageShell>
     );
 }

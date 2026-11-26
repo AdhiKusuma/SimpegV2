@@ -553,6 +553,22 @@ export default function LegacyPageShell({ title, children }) {
         return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
     }, [notificationsOpen]);
 
+    useEffect(() => {
+        if (!searchOpen) {
+            return undefined;
+        }
+
+        function closeSearchOnOutsideClick(event) {
+            if (!event.target.closest('.simpeg-search-dialog')) {
+                setSearchOpen(false);
+            }
+        }
+
+        document.addEventListener('pointerdown', closeSearchOnOutsideClick);
+
+        return () => document.removeEventListener('pointerdown', closeSearchOnOutsideClick);
+    }, [searchOpen]);
+
     function toggleNotifications() {
         const nextOpen = !notificationsOpen;
         setProfileOpen(false);
@@ -769,14 +785,14 @@ export default function LegacyPageShell({ title, children }) {
                     </div>
                 </div>
             </div>
-            {canSearchEmployees && searchOpen && <div className="simpeg-search-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) setSearchOpen(false); }}>
+            {canSearchEmployees && searchOpen && <div className="simpeg-search-overlay" onClick={(event) => { if (event.target === event.currentTarget) setSearchOpen(false); }}>
                 <div className="simpeg-search-dialog" role="dialog" aria-modal="true" aria-labelledby="global-search-title">
                     <p id="global-search-title" className="sr-only">Cari nama atau ID pegawai</p>
                     <form onSubmit={submitGlobalSearch}>
                         <div className="simpeg-search-dialog-input">
                             <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
                             <label className="sr-only" htmlFor="global-employee-search">Cari nama atau ID pegawai</label>
-                            <Input unstyled autoFocus id="global-employee-search" type="search" value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Cari nama atau ID pegawai" aria-label="Cari nama atau ID pegawai" className="simpeg-text min-w-0 flex-1 bg-transparent px-2 text-base outline-none placeholder:text-[var(--simpeg-subtle)]" />
+                            <Input unstyled autoFocus spellCheck={false} autoComplete="off" id="global-employee-search" type="search" value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Cari nama atau ID pegawai" aria-label="Cari nama atau ID pegawai" className="simpeg-text min-w-0 flex-1 bg-transparent px-2 text-base outline-none placeholder:text-[var(--simpeg-subtle)]" />
                             <button type="button" className="simpeg-search-close" onClick={() => setSearchOpen(false)} aria-label="Tutup pencarian"><kbd>Esc</kbd></button>
                         </div>
                     </form>

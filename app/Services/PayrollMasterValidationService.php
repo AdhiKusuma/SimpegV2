@@ -62,18 +62,37 @@ class PayrollMasterValidationService
 
     public function warnings(array $input, object $employee, ?object $office, int $year, int $month): array
     {
+        return array_map(
+            fn (array $warning): string => $warning['message'],
+            $this->warningDetails($input, $employee, $office, $year, $month),
+        );
+    }
+
+    public function warningDetails(array $input, object $employee, ?object $office, int $year, int $month): array
+    {
         if (! in_array($this->normalise((string) ($employee->status_kepeg ?? '')), ['TETAP', 'CALON PEGAWAI', 'CAPEG'], true)) {
             return [];
         }
 
-        $position = $this->positionGroup((string) ($employee->active_jabatan ?? ''));
+        $position = $this->positionGroup(
+            (string) ($employee->active_jabatan ?? ''),
+            (string) ($employee->active_jabatan_level ?? ''),
+        );
         if ($position === null) {
-            return ['Jabatan aktif belum memiliki padanan pada master Kepdir 090/VI/2021; nominal tetap mengikuti file import.'];
+            return [[
+                'field' => null,
+                'editable' => false,
+                'message' => 'Jabatan aktif belum memiliki padanan pada master Kepdir 090/VI/2021; nominal tetap mengikuti file import.',
+            ]];
         }
 
         $officeGroup = $this->officeGroup($office);
         if ($officeGroup === null) {
-            return ['Kantor aktif belum memiliki kelas cabang pada master Kepdir 090/VI/2021; nominal tetap mengikuti file import.'];
+            return [[
+                'field' => null,
+                'editable' => false,
+                'message' => 'Kantor aktif belum memiliki kelas cabang pada master Kepdir 090/VI/2021; nominal tetap mengikuti file import.',
+            ]];
         }
 
         $warnings = [];
@@ -81,7 +100,10 @@ class PayrollMasterValidationService
         foreach (['tunj_jabatan', 'tunj_ops', 'tunj_kinerja'] as $field) {
             $expected = $this->expectedAllowance($position, $officeGroup, $field);
             if ($expected !== null) {
-                $warnings = [...$warnings, ...$this->compareAmount($input, $field, $expected, $field === 'tunj_jabatan' ? $positionLabel : $positionLabel.' di '.$officeGroup)];
+                $warning = $this->compareAmountDetail($input, $field, $expected, $field === 'tunj_jabatan' ? $positionLabel : $positionLabel.' di '.$officeGroup);
+                if ($warning !== null) {
+                    $warnings[] = $warning;
+                }
             }
         }
 
@@ -92,9 +114,16 @@ class PayrollMasterValidationService
                 $started = new DateTimeImmutable($startDate);
                 $years = $started > $asOf ? 0 : $started->diff($asOf)->y;
                 $expected = 500000 + (min(40, $years) >> 1) * 25000;
-                $warnings = [...$warnings, ...$this->compareAmount($input, 'tunj_masa_kerja', $expected, 'masa kerja '.$years.' tahun per '.$asOf->format('d-m-Y'))];
+                $warning = $this->compareAmountDetail($input, 'tunj_masa_kerja', $expected, 'masa kerja '.$years.' tahun per '.$asOf->format('d-m-Y'));
+                if ($warning !== null) {
+                    $warnings[] = $warning;
+                }
             } catch (\Throwable) {
-                $warnings[] = 'TMT kerja pegawai tidak dapat dibaca untuk memeriksa tunjangan masa kerja.';
+                $warnings[] = [
+                    'field' => null,
+                    'editable' => false,
+                    'message' => 'TMT kerja pegawai tidak dapat dibaca untuk memeriksa tunjangan masa kerja.',
+                ];
             }
         }
 
@@ -111,7 +140,10 @@ class PayrollMasterValidationService
             return [];
         }
 
-        $position = $this->positionGroup((string) ($employee->active_jabatan ?? ''));
+        $position = $this->positionGroup(
+            (string) ($employee->active_jabatan ?? ''),
+            (string) ($employee->active_jabatan_level ?? ''),
+        );
         $officeGroup = $this->officeGroup($office);
         if ($position === null || $officeGroup === null) {
             return [];
@@ -140,9 +172,24 @@ class PayrollMasterValidationService
         return $defaults;
     }
 
-    private function positionGroup(string $job): ?string
+    private function positionGroup(string $job, string $level = ''): ?string
     {
+        $fromMaster = match ($this->normalise($level)) {
+            'KEPALA DIVISI' => 'division',
+            'KEPALA BIDANG' => 'field_head',
+            'KEPALA CABANG' => 'branch',
+            'KEPALA SUB BIDANG' => 'subfield_head',
+            'KEPALA KANTOR KAS' => 'cash_office_head',
+            'STAF' => 'staff',
+            'NON STAF' => 'non_staff',
+            default => null,
+        };
+        if ($fromMaster !== null) {
+            return $fromMaster;
+        }
+
         $job = $this->normalise($job);
+
         return match (true) {
             str_contains($job, 'KEPALA DIVISI'), str_contains($job, 'KEPALA SATUAN KERJA') => 'division',
             str_contains($job, 'KEPALA CABANG KOORDINATOR') => 'branch_coordinator',
@@ -152,6 +199,7 @@ class PayrollMasterValidationService
             str_contains($job, 'KEPALA SUB BIDANG') => 'subfield_head',
             str_contains($job, 'KEPALA BIDANG') => 'field_head',
             str_contains($job, 'KEPALA CABANG') => 'branch',
+            str_contains($job, 'ANGGOTA SKAI') => 'staff',
             str_contains($job, 'NON STAF'), str_contains($job, 'NON STAFF') => 'non_staff',
             str_contains($job, 'STAF'), str_contains($job, 'STAFF') => 'staff',
             default => null,
@@ -187,24 +235,38 @@ class PayrollMasterValidationService
         return self::POSITION_ALLOWANCES[$position][$field] ?? self::CLASS_ALLOWANCES[$position][$field][$officeGroup] ?? null;
     }
 
-    private function compareAmount(array $input, string $field, int $expected, string $context): array
+    private function compareAmountDetail(array $input, string $field, int $expected, string $context): ?array
     {
         $labels = ['tunj_jabatan' => 'Tunjangan jabatan', 'tunj_ops' => 'Tunjangan operasional', 'tunj_kinerja' => 'Tunjangan kinerja', 'tunj_masa_kerja' => 'Tunjangan masa kerja'];
         $raw = trim((string) ($input[$field] ?? ''));
         if ($raw === '') {
-            return [sprintf('Referensi master: %s untuk %s seharusnya Rp %s, tetapi kolom pada file masih kosong.', $labels[$field] ?? $field, $context, number_format($expected, 0, ',', '.'))];
+            return [
+                'field' => $field,
+                'label' => $labels[$field] ?? $field,
+                'current_value' => '',
+                'suggested_value' => $this->formatAmount($expected),
+                'editable' => true,
+                'message' => sprintf('Referensi master: %s untuk %s seharusnya Rp %s, tetapi kolom pada file masih kosong.', $labels[$field] ?? $field, $context, number_format($expected, 0, ',', '.')),
+            ];
         }
         if (str_starts_with($raw, '=')) {
-            return [];
+            return null;
         }
         $actual = $this->parseAmountCents($raw);
         if ($actual === null || $actual === $expected * 100) {
-            return [];
+            return null;
         }
 
         $actualText = number_format(intdiv($actual, 100), 0, ',', '.').($actual % 100 !== 0 ? ','.str_pad((string) ($actual % 100), 2, '0', STR_PAD_LEFT) : '');
 
-        return [sprintf('Referensi master: %s untuk %s seharusnya Rp %s, sedangkan file berisi Rp %s.', $labels[$field] ?? $field, $context, number_format($expected, 0, ',', '.'), $actualText)];
+        return [
+            'field' => $field,
+            'label' => $labels[$field] ?? $field,
+            'current_value' => $raw,
+            'suggested_value' => $this->formatAmount($expected),
+            'editable' => true,
+            'message' => sprintf('Referensi master: %s untuk %s seharusnya Rp %s, sedangkan file berisi Rp %s.', $labels[$field] ?? $field, $context, number_format($expected, 0, ',', '.'), $actualText),
+        ];
     }
 
     private function formatAmount(int $amount): string

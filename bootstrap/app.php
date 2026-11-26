@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\AuditLogMiddleware;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireLegacySession;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -47,6 +47,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             ->everyMinute()
             ->withoutOverlapping(10);
     })
+    ->withCommands([__DIR__.'/../app/Console/Commands'])
     ->create();
 
 return $app;

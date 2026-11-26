@@ -187,6 +187,7 @@ export default function CreateMaster({ employees = [], scopeLabel, willRequireAp
                             <ReadOnlyItem label="Jabatan" value={employee.position} />
                             <ReadOnlyItem label="Unit kerja" value={employee.work_unit} />
                             <ReadOnlyItem label="Status" value={employee.employment_status} />
+                            <ReadOnlyItem label="Golongan payroll" value={employee.payroll_grade_code} />
                             <ReadOnlyItem label="Masa kerja" value={tenureLabel(employee.start_date, form.data.tgl_gajian)} />
                             <ReadOnlyItem label="Suami/istri" value={`${employee.spouse_count} data`} />
                             <ReadOnlyItem label="Anak" value={`${employee.child_count} data`} />

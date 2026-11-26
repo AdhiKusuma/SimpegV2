@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Legacy\TbKantor;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 class PayrollEntryValidationService
@@ -16,6 +17,15 @@ class PayrollEntryValidationService
 
     public const DEDUCTION_FIELDS = [
         'bpjs_kesehatan', 'bpjs_tenaga_kerja', 'absensi', 'angsuran_kredit', 'keris',
+    ];
+
+    public const EDITABLE_REFERENCE_FIELDS = [
+        'tunj_jabatan', 'tunj_ops', 'tunj_kinerja', 'tunj_masa_kerja',
+    ];
+
+    public const EDITABLE_CORRECTION_FIELDS = [
+        ...self::EDITABLE_REFERENCE_FIELDS,
+        'office_code', 'jumlah_gaji', 'jumlah_potongan', 'gaji_bersih', 'total',
     ];
 
     public const AMOUNT_FIELDS = [
@@ -150,6 +160,7 @@ class PayrollEntryValidationService
         foreach ($normalisedRows as $rowNumber => $row) {
             $input = $row['input'];
             $rowErrors = $row['errors'];
+            $rowFixes = [];
             $employee = $employees['id:'.$row['employee_id']] ?? null;
             $employeeOfficeCode = null;
 
@@ -168,12 +179,21 @@ class PayrollEntryValidationService
                     if (($scope['restricted'] ?? false) && ! in_array($employeeOfficeCode, $scope['codes'] ?? [], true)) {
                         $rowErrors[] = 'Kantor aktif pegawai berada di luar wilayah akses akun';
                     }
-                } elseif ($row['office_code'] !== null && ! $this->payrollOfficeMatchesEmployee($row['office_code'], $employeeOfficeCode, $directory)) {
+                } elseif ($row['office_code'] === null || ! $this->payrollOfficeMatchesEmployee($row['office_code'], $employeeOfficeCode, $directory)) {
                     $office = $directory['by_detail']->get($employeeOfficeCode);
                     $officeLabel = $office?->nama_kantor
                         ? $employeeOfficeCode.' - '.$office->nama_kantor
                         : $employeeOfficeCode;
-                    $rowErrors[] = 'Kode Kantor tidak sesuai dengan kantor aktif pegawai ('.$officeLabel.')';
+                    if ($row['office_code'] !== null) {
+                        $rowErrors[] = 'Kode Kantor tidak sesuai dengan kantor aktif pegawai ('.$officeLabel.')';
+                    }
+                    $rowFixes[] = [
+                        'field' => 'office_code',
+                        'label' => 'Kode Kantor',
+                        'current_value' => (string) ($input['office_code'] ?? ''),
+                        'suggested_value' => $employeeOfficeCode,
+                        'editable' => true,
+                    ];
                 }
 
                 if ($row['customer_name'] !== null && ! $this->payrollNamesMatch((string) $employee->nama, $row['customer_name'])) {
@@ -196,13 +216,14 @@ class PayrollEntryValidationService
             if ($employee !== null) {
                 $calculated = $this->calculateAmounts($input, (string) $employee->status_kepeg);
                 $rowErrors = [...$rowErrors, ...$calculated['errors']];
+                $rowFixes = [...$rowFixes, ...$this->calculatedFixes($input, $calculated['amounts'])];
             } else {
                 $calculated = ['amounts' => [], 'errors' => []];
             }
 
             $rowWarnings = [];
             if ($employee !== null && $rowErrors === [] && $employeeOfficeCode !== null) {
-                $rowWarnings = $this->masterValidator->warnings(
+                $rowWarnings = $this->masterValidator->warningDetails(
                     $input,
                     $employee,
                     $directory['by_detail']->get($employeeOfficeCode),
@@ -212,13 +233,24 @@ class PayrollEntryValidationService
             }
 
             if ($rowErrors !== []) {
-                $errors[] = ['row' => $rowNumber, 'messages' => array_values(array_unique($rowErrors))];
+                $errors[] = [
+                    'row' => $rowNumber,
+                    'messages' => array_values(array_unique($rowErrors)),
+                    'fixes' => array_values(array_filter(
+                        $rowFixes,
+                        fn (array $fix): bool => ($fix['editable'] ?? false) && in_array($fix['field'] ?? null, self::EDITABLE_CORRECTION_FIELDS, true),
+                    )),
+                ];
 
                 continue;
             }
 
             if ($rowWarnings !== []) {
-                $warnings[] = ['row' => $rowNumber, 'messages' => array_values(array_unique($rowWarnings))];
+                $warnings[] = [
+                    'row' => $rowNumber,
+                    'messages' => array_values(array_unique(array_map(fn (array $warning): string => $warning['message'], $rowWarnings))),
+                    'fixes' => array_values(array_filter($rowWarnings, fn (array $warning): bool => ($warning['editable'] ?? false) && in_array($warning['field'] ?? null, self::EDITABLE_CORRECTION_FIELDS, true))),
+                ];
             }
 
             $entries[] = [
@@ -340,6 +372,41 @@ class PayrollEntryValidationService
         $amounts['total'] = $amounts['gaji_bersih'];
 
         return ['amounts' => $amounts, 'errors' => array_values(array_unique($errors))];
+    }
+
+    private function calculatedFixes(array $input, array $amounts): array
+    {
+        $labels = [
+            'jumlah_gaji' => 'Nilai jumlah gaji',
+            'jumlah_potongan' => 'Nilai jumlah potongan',
+            'gaji_bersih' => 'Nilai gaji bersih',
+            'total' => 'Nilai Total',
+        ];
+        $fixes = [];
+
+        foreach ($labels as $field => $label) {
+            $provided = trim((string) ($input[$field] ?? ''));
+            $suggested = (string) ($amounts[$field] ?? '');
+            if ($provided === '' || $suggested === '' || str_starts_with($provided, '=')) {
+                continue;
+            }
+
+            $providedCents = $this->parseAmountCents($provided);
+            $suggestedCents = $this->parseAmountCents($suggested);
+            if ($suggestedCents === null || $providedCents === $suggestedCents) {
+                continue;
+            }
+
+            $fixes[] = [
+                'field' => $field,
+                'label' => $label,
+                'current_value' => $provided,
+                'suggested_value' => $suggested,
+                'editable' => true,
+            ];
+        }
+
+        return $fixes;
     }
 
     public function fieldRulesForStatus(string $employmentStatus): array
@@ -464,17 +531,29 @@ class PayrollEntryValidationService
                         'tmt_kerja' => $record->tmt_kerja,
                         'active_unit_kerja' => null,
                         'active_jabatan' => null,
+                        'active_jabatan_level' => null,
                     ];
                 }
             }
 
             $resolved = [];
-            foreach (DB::table('tb_jabatan')->where('status_jab', 'Aktif')->whereIn('id_peg', $ids)
-                ->orderByDesc('tmt_jabatan')->orderByDesc('id_jab')->get(['id_peg', 'unit_kerja', 'jabatan']) as $job) {
+            $jobsQuery = DB::table('tb_jabatan as j')
+                ->where('j.status_jab', 'Aktif')->whereIn('j.id_peg', $ids)
+                ->orderByDesc('tmt_jabatan')->orderByDesc('id_jab')
+                ->select(['j.id_peg', 'j.unit_kerja', 'j.jabatan']);
+            if (Schema::hasColumn('tb_master_jabatan', 'level')) {
+                $jobsQuery
+                    ->leftJoin('tb_master_jabatan as master', function ($join): void {
+                        $join->whereRaw('CAST(j.kode_jabatan AS UNSIGNED) = master.kode_jabatan');
+                    })
+                    ->addSelect('master.level as jabatan_level');
+            }
+            foreach ($jobsQuery->get() as $job) {
                 $key = 'id:'.(string) $job->id_peg;
                 if (isset($requestedIds[$key], $employeeRecords[$key]) && ! isset($resolved[$key])) {
                     $employeeRecords[$key]->active_unit_kerja = $job->unit_kerja;
                     $employeeRecords[$key]->active_jabatan = (string) $job->jabatan;
+                    $employeeRecords[$key]->active_jabatan_level = (string) ($job->jabatan_level ?? '');
                     $resolved[$key] = true;
                 }
             }
@@ -718,6 +797,9 @@ class PayrollEntryValidationService
             $row = $error['row'];
             $byRow[$row] ??= ['row' => $row, 'messages' => []];
             $byRow[$row]['messages'] = array_values(array_unique([...$byRow[$row]['messages'], ...$error['messages']]));
+            if (isset($error['fixes']) && is_array($error['fixes'])) {
+                $byRow[$row]['fixes'] = [...($byRow[$row]['fixes'] ?? []), ...$error['fixes']];
+            }
         }
         ksort($byRow);
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\PayrollImport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Read-only projection for the Tukin export.
@@ -68,6 +69,13 @@ class PayrollTukinExportService
 
     private function sourceQuery(PayrollImport $import, array $scope, string $officeCode)
     {
+        $hasPayrollGradeReference = Schema::hasTable('employee_payroll_assignments')
+            && Schema::hasTable('payroll_grade_masters')
+            && Schema::hasTable('payroll_unit_masters');
+        $hasMasaKerjaColumn = $hasPayrollGradeReference
+            && Schema::hasColumn('employee_payroll_assignments', 'masa_kerja');
+        $hasUnitKerjaColumn = $hasPayrollGradeReference
+            && Schema::hasColumn('payroll_unit_masters', 'name');
         $latestPosition = DB::table('tb_jabatan')
             ->where('status_jab', 'Aktif')
             ->select('id_peg', DB::raw('MAX(id_jab) as latest_id'))
@@ -81,6 +89,12 @@ class PayrollTukinExportService
         $childCounts = DB::table('tb_anak')
             ->select('id_peg', DB::raw('COUNT(*) as child_count'))
             ->groupBy('id_peg');
+        $currentPayrollAssignment = $hasPayrollGradeReference
+            ? DB::table('employee_payroll_assignments')
+                ->whereNull('effective_to')
+                ->select('employee_id', DB::raw('MAX(id) as latest_id'))
+                ->groupBy('employee_id')
+            : null;
 
         $query = DB::table('payroll_entries as e')
             ->join('payroll_imports as i', 'i.id', '=', 'e.payroll_import_id')
@@ -100,11 +114,23 @@ class PayrollTukinExportService
                 $join->on('children.id_peg', '=', 'e.employee_id');
             })
             ->leftJoin('tb_kantor as office', 'office.kode_kantor_detail', '=', 'e.office_code')
-            ->leftJoin('tb_kantor as unit', 'unit.kode_kantor_detail', '=', 'j.unit_kerja')
+            ->leftJoin('tb_kantor as unit', 'unit.kode_kantor_detail', '=', 'j.unit_kerja');
+
+        if ($hasPayrollGradeReference && $currentPayrollAssignment !== null) {
+            $query
+                ->leftJoinSub($currentPayrollAssignment, 'current_payroll_assignment', function ($join): void {
+                    $join->on('current_payroll_assignment.employee_id', '=', 'e.employee_id');
+                })
+                ->leftJoin('employee_payroll_assignments as epa', 'epa.id', '=', 'current_payroll_assignment.latest_id')
+                ->leftJoin('payroll_grade_masters as pgm', 'pgm.id', '=', 'epa.payroll_grade_master_id')
+                ->leftJoin('payroll_unit_masters as pum', 'pum.id', '=', 'epa.payroll_unit_master_id');
+        }
+
+        $query
             ->where('e.payroll_import_id', $import->id)
             ->when($scope['restricted'] ?? false, fn ($builder) => $builder->whereIn('e.office_code', $scope['codes'] ?? []))
             ->when($officeCode !== '', fn ($builder) => $builder->where('e.office_code', $officeCode))
-            ->select($this->sourceColumns())
+            ->select($this->sourceColumns($hasPayrollGradeReference, $hasMasaKerjaColumn, $hasUnitKerjaColumn))
             ->orderBy('e.office_code')
             ->orderBy('p.nama')
             ->orderBy('e.employee_id');
@@ -121,6 +147,35 @@ class PayrollTukinExportService
         $spouseCount = (int) DB::table('tb_suamiistri')->where('id_peg', $employeeId)->count();
         $childCount = (int) DB::table('tb_anak')->where('id_peg', $employeeId)->count();
 
+        if (Schema::hasTable('employee_payroll_assignments')
+            && Schema::hasTable('payroll_grade_masters')
+            && Schema::hasTable('payroll_unit_masters')) {
+            $slip->payroll_grade_reference_available = 1;
+            $assignment = DB::table('employee_payroll_assignments as assignment')
+                ->join('payroll_grade_masters as grade', 'grade.id', '=', 'assignment.payroll_grade_master_id')
+                ->leftJoin('payroll_unit_masters as unit', 'unit.id', '=', 'assignment.payroll_unit_master_id')
+                ->where('assignment.employee_id', $employeeId)
+                ->whereNull('assignment.effective_to')
+                ->orderByDesc('assignment.effective_from')
+                ->orderByDesc('assignment.id')
+                ->first([
+                    'grade.code as payroll_grade_code',
+                    Schema::hasColumn('employee_payroll_assignments', 'masa_kerja')
+                        ? 'assignment.masa_kerja as payroll_masa_kerja'
+                        : DB::raw('NULL as payroll_masa_kerja'),
+                    Schema::hasColumn('payroll_unit_masters', 'name')
+                        ? 'unit.name as payroll_unit_name'
+                        : DB::raw('NULL as payroll_unit_name'),
+                ]);
+            if ($assignment !== null) {
+                $slip->payroll_grade_code = $assignment->payroll_grade_code;
+                $slip->payroll_masa_kerja = $assignment->payroll_masa_kerja;
+                $slip->payroll_unit_name = $assignment->payroll_unit_name;
+            }
+        } else {
+            $slip->payroll_grade_reference_available = 0;
+        }
+
         $slip->spouse_count = $spouseCount;
         $slip->child_count = $childCount;
 
@@ -132,7 +187,7 @@ class PayrollTukinExportService
         return $mode === '75' ? '75' : 'real';
     }
 
-    private function sourceColumns(): array
+    private function sourceColumns(bool $hasPayrollGradeReference, bool $hasMasaKerjaColumn, bool $hasUnitKerjaColumn): array
     {
         return [
             'e.employee_id', 'e.office_code', 'e.tgl_gajian', 'i.tahun', 'i.bulan',
@@ -145,6 +200,18 @@ class PayrollTukinExportService
             'j.jabatan as position_name', 'j.unit_kerja as unit_code',
             'unit.nama_kantor as unit_name', 'office.nama_kantor as office_name',
             'r.gol as grade',
+            $hasPayrollGradeReference
+                ? DB::raw('pgm.code as payroll_grade_code')
+                : DB::raw('NULL as payroll_grade_code'),
+            $hasMasaKerjaColumn
+                ? DB::raw('epa.masa_kerja as payroll_masa_kerja')
+                : DB::raw('NULL as payroll_masa_kerja'),
+            $hasUnitKerjaColumn
+                ? DB::raw('pum.name as payroll_unit_name')
+                : DB::raw('NULL as payroll_unit_name'),
+            DB::raw($hasPayrollGradeReference
+                ? '1 as payroll_grade_reference_available'
+                : '0 as payroll_grade_reference_available'),
             DB::raw('COALESCE(spouses.spouse_count, 0) as spouse_count'),
             DB::raw('COALESCE(children.child_count, 0) as child_count'),
         ];
@@ -177,22 +244,36 @@ class PayrollTukinExportService
             + $serviceAllowance + $functionalAllowance + $contractHonor;
         $installment = $this->cents($entry->angsuran_kredit ?? 0);
         $attendance = $this->cents($entry->absensi ?? 0);
-        $bpjs = $this->cents($entry->bpjs_kesehatan ?? 0) + $this->cents($entry->bpjs_tenaga_kerja ?? 0);
+        $bpjsKesehatan = $this->cents($entry->bpjs_kesehatan ?? 0);
+        $bpjsTenagaKerja = $this->cents($entry->bpjs_tenaga_kerja ?? 0);
+        $bpjs = $bpjsKesehatan + $bpjsTenagaKerja;
         $familyReturn = $this->cents($entry->pengembalian_tunj_keluarga ?? 0);
         $keris = $this->cents($entry->keris ?? 0);
         $totalDeductions = $installment + $attendance + $bpjs + $familyReturn + $keris;
         $net = $gross - $totalDeductions + $mealAllowance;
+        $grade = trim((string) ($entry->payroll_grade_code ?? ''));
+        $gradeReferenceAvailable = (int) ($entry->payroll_grade_reference_available ?? 0) === 1;
+        if ($grade === '' && ! $gradeReferenceAvailable) {
+            $grade = trim((string) ($entry->grade ?? ''));
+        }
+        if ($grade === '') {
+            $grade = '0';
+        }
+        $unitName = trim((string) ($entry->payroll_unit_name ?? ''));
+        if ($unitName === '') {
+            $unitName = trim((string) ($entry->unit_name ?? $entry->office_name ?? $entry->office_code ?? ''));
+        }
 
         return [
             'employee_id' => (string) ($entry->employee_id ?? ''),
             'employee_name' => (string) ($entry->employee_name ?? 'Nama pegawai tidak ditemukan'),
             'position_name' => (string) ($entry->position_name ?? ''),
-            'unit_name' => (string) ($entry->unit_name ?? $entry->office_name ?? $entry->office_code ?? ''),
+            'unit_name' => $unitName,
             'unit_code' => (string) ($entry->unit_code ?? ''),
             'office_name' => (string) ($entry->office_name ?? $entry->office_code ?? ''),
             'office_code' => (string) ($entry->office_code ?? ''),
             'employment_status' => (string) ($entry->status_kepeg ?? ''),
-            'grade' => (string) ($entry->grade ?? ''),
+            'grade' => $grade,
             'service_years' => $this->serviceYears($entry),
             'spouse_count' => (int) ($entry->spouse_count ?? 0),
             'child_count' => (int) ($entry->child_count ?? 0),
@@ -212,6 +293,8 @@ class PayrollTukinExportService
             'jumlah_pendapatan' => $this->money($gross),
             'potongan_angsuran' => $this->money($installment),
             'potongan_absen' => $this->money($attendance),
+            'potongan_bpjs_kesehatan' => $this->money($bpjsKesehatan),
+            'potongan_bpjs_tenaga_kerja' => $this->money($bpjsTenagaKerja),
             'potongan_bpjs' => $this->money($bpjs),
             'pengembalian_tunjangan' => $this->money($familyReturn),
             'pengalihan_keris' => $this->money($keris),
@@ -229,6 +312,10 @@ class PayrollTukinExportService
 
     private function serviceYears(object $entry): int
     {
+        if (($entry->payroll_masa_kerja ?? null) !== null && trim((string) $entry->payroll_masa_kerja) !== '') {
+            return max(0, (int) $entry->payroll_masa_kerja);
+        }
+
         if (empty($entry->tmt_kerja)) {
             return 0;
         }
@@ -236,7 +323,7 @@ class PayrollTukinExportService
         try {
             $asOf = ! empty($entry->tgl_gajian) ? Carbon::parse((string) $entry->tgl_gajian) : now();
 
-            return max(0, Carbon::parse((string) $entry->tmt_kerja)->diffInYears($asOf));
+            return max(0, (int) Carbon::parse((string) $entry->tmt_kerja)->diffInYears($asOf));
         } catch (\Throwable) {
             return 0;
         }
